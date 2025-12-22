@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v251222-6.0</title>
+  <title>Travel Sync v251222-6.1</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -101,27 +101,20 @@
         </div>
 
         <div v-if="flightCardSkin === 'ios'" class="ios-card overflow-hidden text-white shadow-xl relative group">
-          <div class="absolute inset-0 z-0">
-            <img v-if="activeFlight.bgImage" :src="activeFlight.bgImage" class="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105" />
-            <div v-else class="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-700"></div>
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/30"></div>
+          
+          <div class="absolute inset-0 z-0 bg-gradient-to-br from-[#007AFF] via-[#3685e8] to-[#00C7BE]">
+             <div class="absolute inset-0 bg-black/10"></div>
           </div>
 
           <div class="relative z-10 p-6 flex flex-col justify-between h-full min-h-[220px]">
-            <div class="flex justify-between items-start">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-white/90 flex items-center justify-center p-1 shadow-sm">
-                  <span class="text-blue-800 font-bold text-xs leading-none text-center">{{ activeFlight.airline_iata }}</span>
-                </div>
-                <div>
-                  <div class="text-2xl font-bold tracking-tight">{{ activeFlight.flight_iata }}</div>
-                  <div class="text-xs text-white/80 font-medium">{{ activeFlight.airline_name }}</div>
-                </div>
+            <div class="flex justify-between items-start mt-8"> <div>
+                 <div class="text-2xl font-bold tracking-tight">{{ activeFlight.flight_iata }}</div>
+                 <div class="text-xs text-white/80 font-medium">{{ activeFlight.airline_name }}</div>
               </div>
               
               <a v-if="activeFlight.liveLink" :href="activeFlight.liveLink" target="_blank" class="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 border border-white/20 px-3 py-1.5 rounded-full text-[11px] font-bold text-white transition-all active:scale-95 cursor-pointer">
                 <i class="ph ph-broadcast text-[#34C759] animate-pulse"></i>
-                Flighty 實況
+                {{ t('activeFlightText') }}
                 <i class="ph ph-arrow-square-out text-xs opacity-70"></i>
               </a>
             </div>
@@ -178,7 +171,7 @@
             <div class="flex flex-col items-end gap-1 absolute right-3 top-3">
                <a v-if="activeFlight.liveLink" :href="activeFlight.liveLink" target="_blank" class="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 border border-white/20 px-3 py-1.5 rounded-full text-[11px] font-bold text-white transition-all active:scale-95 cursor-pointer">
                   <i class="ph ph-broadcast text-[#34C759] animate-pulse"></i>
-                  <span class="hidden sm:inline">Flighty</span>
+                  <span>{{ t('activeFlightText') }}</span>
                   <i class="ph ph-arrow-square-out text-xs opacity-70"></i>
                </a>
             </div>
@@ -323,6 +316,34 @@
       </section>
 
       <section class="grid grid-cols-1 gap-5">
+        
+        <div class="ios-card p-5">
+           <div class="flex items-center justify-between mb-4">
+             <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+               <i class="ph-fill ph-check-square text-green-500"></i> {{ t('prepList') }}
+             </h2>
+             <button @click="openPrepModal()" class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center hover:bg-green-200 transition-colors">
+               <i class="ph-bold ph-plus"></i>
+             </button>
+           </div>
+           
+           <ul class="space-y-2">
+             <li v-for="item in prepList" :key="item.id" class="flex items-center justify-between p-3 bg-white/60 rounded-xl border border-white/50 shadow-sm group">
+               <div class="flex items-center gap-3 overflow-hidden">
+                 <button @click="toggleItemDone(item)" class="text-gray-400 hover:text-green-500 transition-colors">
+                   <i :class="item.done ? 'ph-fill ph-check-circle text-green-500' : 'ph-bold ph-circle'"></i>
+                 </button>
+                 <div class="flex flex-col min-w-0">
+                   <span :class="{'line-through text-gray-400': item.done}" class="font-medium text-slate-800 truncate">{{ item.name }}</span>
+                 </div>
+               </div>
+             </li>
+             <li v-if="prepList.length === 0" class="text-center py-6 text-gray-400 text-sm italic">
+                {{ t('noPrepItems') }}
+             </li>
+           </ul>
+        </div>
+
         <div class="ios-card p-5">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -386,6 +407,13 @@
         </div>
       </section>
 
+      <section class="ios-card p-5 bg-blue-50/50 border-blue-100">
+         <h2 class="text-sm font-bold text-blue-800 mb-2 flex items-center gap-2">
+            <i class="ph-fill ph-info"></i> {{ t('info') }}
+         </h2>
+         <p class="text-xs text-blue-900/70 leading-relaxed whitespace-pre-line">{{ infoText }}</p>
+      </section>
+
     </main>
     
     <div class="text-center mt-12 mb-4">
@@ -394,21 +422,21 @@
     </div>
 
     <nav class="fixed bottom-0 w-full max-w-md bg-white/80 backdrop-blur-xl border-t border-gray-200/50 pb-safe pt-2 px-6 flex justify-between items-center z-50 text-gray-400">
-      <button class="flex flex-col items-center gap-0.5 text-blue-600">
-        <i class="ph-fill ph-house text-xl"></i>
-        <span class="text-[10px] font-medium">{{ t('home') }}</span>
+      <button class="flex flex-col items-center gap-0 text-blue-600">
+        <i class="ph-fill ph-house text-2xl mb-0.5"></i>
+        <span class="text-[10px] font-medium leading-none">{{ t('home') }}</span>
       </button>
-      <button class="flex flex-col items-center gap-0.5 hover:text-blue-500 transition-colors">
-        <i class="ph-bold ph-map-trifold text-xl"></i>
-        <span class="text-[10px] font-medium">{{ t('map') }}</span>
+      <button class="flex flex-col items-center gap-0 hover:text-blue-500 transition-colors">
+        <i class="ph-bold ph-map-trifold text-2xl mb-0.5"></i>
+        <span class="text-[10px] font-medium leading-none">{{ t('map') }}</span>
       </button>
-      <button class="flex flex-col items-center gap-0.5 hover:text-blue-500 transition-colors">
-        <i class="ph-bold ph-wallet text-xl"></i>
-        <span class="text-[10px] font-medium">{{ t('wallet') }}</span>
+      <button class="flex flex-col items-center gap-0 hover:text-blue-500 transition-colors">
+        <i class="ph-bold ph-wallet text-2xl mb-0.5"></i>
+        <span class="text-[10px] font-medium leading-none">{{ t('wallet') }}</span>
       </button>
-      <button class="flex flex-col items-center gap-0.5 hover:text-blue-500 transition-colors">
-        <i class="ph-bold ph-gear text-xl"></i>
-        <span class="text-[10px] font-medium">{{ t('settings') }}</span>
+      <button class="flex flex-col items-center gap-0 hover:text-blue-500 transition-colors">
+        <i class="ph-bold ph-gear text-2xl mb-0.5"></i>
+        <span class="text-[10px] font-medium leading-none">{{ t('settings') }}</span>
       </button>
     </nav>
 
@@ -426,13 +454,12 @@
     createApp({
       setup() {
         // --- State ---
-        const appVersion = ref('v251222-6.0');
-        const lang = ref('zh'); // 'zh' or 'en'
+        const appVersion = ref('v251222-6.1');
+        const lang = ref('zh'); 
         const flightCardSkin = ref('hkg'); 
         const isScrolled = ref(false);
         const members = ref([1, 2]); 
         
-        // Data Refs (Initialized with mock, replaced by DB)
         const activeFlight = ref({
           airline_iata: 'CX',
           airline_name: 'Cathay Pacific',
@@ -446,7 +473,6 @@
           arr_time: '2025-12-21T14:40:00',
           duration: '3h 40m',
           status: 'On Time',
-          bgImage: 'https://images.unsplash.com/photo-1542296332-2e44a9916675?q=80&w=1000&auto=format&fit=crop',
           liveLink: 'https://flighty.com'
         });
 
@@ -455,6 +481,13 @@
              { id: 1, title: 'Arrival at KIX', time: '14:40', location: 'Kansai Airport', category: 'travel' }
           ]
         });
+
+        // New Prep List
+        const prepList = ref([
+           { id: 1, name: 'Passport & Visa', done: true },
+           { id: 2, name: 'Power Bank', done: false },
+           { id: 3, name: 'Travel Insurance', done: true }
+        ]);
 
         const shoppingList = ref([
            { id: 1, name: 'Matcha KitKat', price: 300, done: false }
@@ -466,6 +499,8 @@
            shopping: 8000
         });
 
+        const infoText = ref("Remember to fill out the Visit Japan Web form 24h before arrival.\nHotel check-in time is 15:00.");
+
         const rate = ref(0.052);
         const currentLiveRate = ref(0.0518);
         const lastRateUpdateLabel = ref('Updated 10m ago');
@@ -475,6 +510,7 @@
         // --- i18n Dictionary ---
         const i18n = {
            en: {
+              activeFlightText: 'Active Flight',
               tapToAdd: 'Tap to add flight details',
               estimatedDeparture: 'Estimated Departure',
               estimatedArrival: 'Estimated Arrival',
@@ -488,18 +524,22 @@
               itinerary: 'Itinerary',
               addEvent: 'Add Event',
               items: 'items',
+              prepList: 'Preparation',
+              noPrepItems: 'All set! No items to display.',
               shopping: 'Shopping',
               expenses: 'Expenses',
               totalSpent: 'Total Spent',
               food: 'Food',
               transport: 'Transport',
               shop: 'Shop',
+              info: 'Travel Info',
               home: 'Home',
               map: 'Map',
               wallet: 'Wallet',
               settings: 'Settings'
            },
            zh: {
+              activeFlightText: '航班實況',
               tapToAdd: '點擊新增航班資訊',
               estimatedDeparture: '預計起飛',
               estimatedArrival: '預計抵達',
@@ -513,12 +553,15 @@
               itinerary: '行程安排',
               addEvent: '新增',
               items: '項目',
+              prepList: '準備清單',
+              noPrepItems: '準備就緒！暫無項目。',
               shopping: '購物清單',
-              expenses: '旅費支出',
+              expenses: '支出',
               totalSpent: '總支出',
               food: '飲食',
               transport: '交通',
               shop: '購物',
+              info: '旅程資訊',
               home: '首頁',
               map: '地圖',
               wallet: '錢包',
@@ -565,12 +608,12 @@
           }
         };
         
-        // Mock Modals
         const openFlightModal = () => { console.log('Open Flight Modal'); };
         const openMemberModal = () => { console.log('Open Member Modal'); };
         const openRateModal = () => { console.log('Open Rate Modal'); };
         const openItineraryModal = (item) => { console.log('Itinerary', item); };
         const openShoppingModal = (item) => { console.log('Shopping', item); };
+        const openPrepModal = () => { console.log('Prep Modal'); };
         const toggleItemDone = (item) => { item.done = !item.done; };
         const openExpenseModal = () => { console.log('Expense Modal'); };
 
@@ -600,16 +643,15 @@
               if (error) throw error;
 
               if (data) {
-                 // Assuming DB columns might be JSONB or direct columns
-                 // Merge strategy: Overwrite local refs if data exists in DB
                  if (data.itinerary) itinerary.value = data.itinerary;
-                 if (data.flight_data) activeFlight.value = { ...activeFlight.value, ...data.flight_data }; // Keep activeFlight UI logic like 'bgImage' if not in DB
+                 if (data.flight_data) activeFlight.value = { ...activeFlight.value, ...data.flight_data };
                  if (data.shopping_list) shoppingList.value = data.shopping_list;
                  if (data.expenses) expenses.value = data.expenses;
+                 if (data.prep_list) prepList.value = data.prep_list; // Assuming new column exists or handled by JSONB
+                 if (data.info_text) infoText.value = data.info_text;
               }
            } catch (err) {
               console.error('Error fetching Supabase data:', err.message);
-              // Fallback to initial mock data is automatic since we initialized refs
            }
         };
 
@@ -626,7 +668,7 @@
           activeFlight, formatTime, displayDate, getStatusClass,
           rate, currentLiveRate, lastRateUpdateLabel, handleCalcInput, calcResult,
           sortedItinerary, formatDate, formatSimpleTime, getPeriod, getCategoryColor, openItineraryModal,
-          shoppingList, toggleItemDone, openShoppingModal,
+          shoppingList, prepList, infoText, toggleItemDone, openShoppingModal, openPrepModal,
           expenses, totalExpense, formatNumber, openExpenseModal,
           members, openMemberModal, openFlightModal, openRateModal, isScrolled
         };
