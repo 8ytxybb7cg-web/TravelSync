@@ -2,512 +2,591 @@
 <html lang="zh-HK">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Travel Sync System</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <title>Travel Sync v251221-5.16</title>
 
-  <!-- =========================
-       VERSION
-       ========================= -->
-  <!-- 顯示於 UI：行程標題上方（細灰字）及底部置中 -->
-  <meta name="app-version" content="v5.10-testUI" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
-  <!-- =========================
-       BASE STYLE（不改動既有視覺比例）
-       ========================= -->
   <style>
+    /* --- iOS System Variables --- */
     :root {
-      --text-main: #ffffff;
-      --text-muted: rgba(255,255,255,0.55);
-      --bg-main: #0f172a;
-      --bg-header: rgba(15,23,42,0.85);
+      --ios-bg: #F2F2F7;
+      --ios-card-bg: rgba(255, 255, 255, 0.65);
+      --ios-card-border: rgba(255, 255, 255, 0.4);
+      --ios-primary: #007AFF;
+      --ios-danger: #FF3B30;
+      --ios-warning: #FFCC00;
+      --ios-success: #34C759;
+      --glass-blur: 25px;
     }
 
     body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
-                   Roboto, Helvetica, Arial, sans-serif;
-      background: var(--bg-main);
-      color: var(--text-main);
+      background-color: var(--ios-bg);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      color: #000;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 40px; 
     }
 
-    /* =========================
-       HEADER
-       ========================= */
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: var(--bg-header);
-      backdrop-filter: blur(10px);
-      padding: 12px 16px 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
+    /* iOS Glassmorphism Card */
+    .ios-card {
+      background: var(--ios-card-bg);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--ios-card-border);
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     }
 
-    .header-top {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-bottom: 2px;
+    /* Gradient Background for Header */
+    .header-bg {
+      background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
     }
 
-    .header-main {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    /* Hide Scrollbar but keep functionality */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
     }
 
-    .trip-title {
-      font-size: 15px;
-      font-weight: 600;
-      letter-spacing: 0.3px;
+    /* Toggle Switch Transition */
+    .toggle-checkbox:checked {
+      right: 0;
+      border-color: #34C759;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+      background-color: #34C759;
     }
 
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    /* 語言切換（localStorage） */
-    .lang-toggle {
-      font-size: 11px;
-      padding: 4px 8px;
-      border-radius: 6px;
-      background: rgba(255,255,255,0.08);
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .lang-toggle.active {
-      background: rgba(255,255,255,0.18);
-    }
-
-    .user-icon {
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.2);
-    }
-
-    /* =========================
-       MAIN WRAPPER
-       ========================= */
-    main {
-      padding: 16px;
-    }
-
-    /* =========================
-       FOOTER
-       ========================= */
-    footer {
-      text-align: center;
-      font-size: 11px;
-      color: var(--text-muted);
-      padding: 20px 0 28px;
+    /* Map Container */
+    .map-container iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      border-radius: 12px;
     }
   </style>
-
-  <!-- =========================
-       SUPABASE
-       ========================= -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    /* Supabase 設定（testUI row 已存在） */
-    const SUPABASE_URL = "https://myrhatzdypiwwgmmfbuw.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_bnnah-2fsCaQnKZDoKNJQw_NuYQVvKi";
-
-    const supabase = supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_KEY
-    );
-
-    const TRIP_TABLE = "trip_data";
-    const TRIP_ROW_ID = "testUI";
-  </script>
 </head>
+<body class="bg-[#F2F2F7] min-h-screen text-slate-800">
 
-<body>
+  <div id="app" class="max-w-md mx-auto relative pb-24">
+    
+    <header class="sticky top-0 z-40 pt-12 pb-2 px-6 flex justify-between items-end bg-[#F2F2F7]/90 backdrop-blur-md transition-all duration-300"
+            :class="{ 'shadow-sm border-b border-gray-200/50': isScrolled }">
+      <div>
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Current Trip</div>
+        <h1 class="text-3xl font-bold text-black tracking-tight flex items-center gap-2">
+           HKG <i class="ph-bold ph-airplane-tilt text-blue-500"></i> KIX
+        </h1>
+      </div>
+      <button @click="openMemberModal" class="relative group">
+         <div class="w-10 h-10 rounded-full bg-gray-200 border-2 border-white shadow-sm overflow-hidden flex items-center justify-center text-gray-500 hover:scale-105 transition-transform">
+            <i class="ph-fill ph-users text-xl"></i>
+         </div>
+         <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm" v-if="members.length > 0">{{ members.length }}</span>
+      </button>
+    </header>
 
-  <!-- =========================
-       HEADER UI
-       ========================= -->
-  <header>
-    <!-- 版本顯示（細灰字，上方） -->
-    <div class="header-top">
-      TRAVEL SYNC SYSTEM · v5.10-testUI
-    </div>
+    <main class="px-5 space-y-5 mt-4">
 
-    <div class="header-main">
-      <!-- 原本行程標題，完全保留 -->
-      <div class="trip-title">
-        CURRENT TRIP · HKG → KIX
+      <div v-if="!activeFlight" class="ios-card p-6 flex flex-col items-center justify-center space-y-4 animate-pulse min-h-[220px]">
+         <div class="w-12 h-12 bg-gray-300 rounded-full"></div>
+         <div class="h-4 bg-gray-300 w-1/2 rounded"></div>
+         <button @click="openFlightModal" class="text-blue-500 font-medium text-sm">Tap to add flight details</button>
       </div>
 
-      <!-- 右側：語言切換 + 用戶圖示 -->
-      <div class="header-actions">
-        <div id="lang-zh" class="lang-toggle">繁中</div>
-        <div id="lang-en" class="lang-toggle">EN</div>
-        <div class="user-icon"></div>
+      <div v-else class="relative transition-all duration-500">
+        
+        <div class="absolute top-4 left-4 z-50">
+           <button @click="toggleSkin" 
+                   class="bg-black/10 hover:bg-black/20 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-bold text-gray-600 transition-all active:scale-95 flex items-center gap-1 cursor-pointer pointer-events-auto border border-white/20">
+             <span v-if="flightCardSkin === 'ios'">HKG <i class="ph ph-arrows-left-right ml-0.5"></i></span>
+             <span v-else>iOS <i class="ph ph-arrows-left-right ml-0.5"></i></span>
+           </button>
+        </div>
+
+        <div v-if="flightCardSkin === 'ios'" 
+             class="ios-card overflow-hidden text-white shadow-xl relative group">
+          
+          <div class="absolute inset-0 z-0">
+             <img v-if="activeFlight.bgImage" :src="activeFlight.bgImage" class="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105" />
+             <div v-else class="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-700"></div>
+             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/30"></div>
+          </div>
+
+          <div class="relative z-10 p-6 flex flex-col justify-between h-full min-h-[220px]">
+            
+            <div class="flex justify-between items-start">
+              <div class="flex items-center gap-3">
+                 <div class="w-10 h-10 rounded-lg bg-white/90 flex items-center justify-center p-1 shadow-sm">
+                    <span class="text-blue-800 font-bold text-xs leading-none text-center">{{ activeFlight.airline_iata }}</span>
+                 </div>
+                 <div>
+                    <div class="text-2xl font-bold tracking-tight">{{ activeFlight.flight_iata }}</div>
+                    <div class="text-xs text-white/80 font-medium">{{ activeFlight.airline_name }}</div>
+                 </div>
+              </div>
+              
+              <a v-if="activeFlight.liveLink" 
+                 :href="activeFlight.liveLink" 
+                 target="_blank" 
+                 class="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 border border-white/20 px-3 py-1.5 rounded-full text-[11px] font-bold text-white transition-all active:scale-95 cursor-pointer">
+                  <i class="ph ph-broadcast text-[#34C759] animate-pulse"></i>
+                  Flighty 實況
+                  <i class="ph ph-arrow-square-out text-xs opacity-70"></i>
+              </a>
+            </div>
+
+            <div class="mt-6 flex justify-between items-end">
+               <div class="text-left">
+                  <div class="text-4xl font-bold">{{ activeFlight.origin_iata }}</div>
+                  <div class="text-sm font-medium text-white/80 mt-1">
+                    {{ formatTime(activeFlight.dep_time) }}
+                  </div>
+                  <div class="text-[10px] uppercase tracking-wider text-white/60 mt-0.5">Estimated Departure</div>
+               </div>
+
+               <div class="flex flex-col items-center justify-center pb-2 opacity-80">
+                  <i class="ph-fill ph-airplane text-2xl rotate-90 mb-1"></i>
+                  <span class="text-[10px] font-mono tracking-wide">{{ activeFlight.duration || '--' }}</span>
+               </div>
+
+               <div class="text-right flex flex-col items-end">
+                  <div :class="getStatusClass(activeFlight.status)" 
+                       class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide backdrop-blur-md border border-white/10 shadow-sm mb-1 inline-block">
+                    {{ activeFlight.status || 'Scheduled' }}
+                  </div>
+
+                  <div class="text-4xl font-bold">{{ activeFlight.dest_iata }}</div>
+                  <div class="text-sm font-medium text-white/80 mt-1">
+                    {{ formatTime(activeFlight.arr_time) }}
+                  </div>
+                  <div class="text-[10px] uppercase tracking-wider text-white/60 mt-0.5">Estimated Arrival</div>
+               </div>
+            </div>
+
+            <div class="mt-5 pt-4 border-t border-white/20 flex justify-between text-xs font-medium">
+               <div class="flex gap-4">
+                 <div>
+                   <span class="block text-white/50 text-[10px] uppercase">Terminal</span>
+                   <span class="text-lg">{{ activeFlight.origin_terminal || '-' }}</span>
+                 </div>
+                 <div>
+                   <span class="block text-white/50 text-[10px] uppercase">Gate</span>
+                   <span class="text-lg">{{ activeFlight.origin_gate || '-' }}</span>
+                 </div>
+               </div>
+               <div class="text-right">
+                 <span class="block text-white/50 text-[10px] uppercase">Arrive Term</span>
+                 <span class="text-lg">{{ activeFlight.dest_terminal || '-' }}</span>
+               </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div v-else-if="flightCardSkin === 'hkg'" 
+             class="rounded-[16px] overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.12)] bg-white font-sans relative border border-gray-100">
+             
+          <div class="bg-[#00787d] text-white px-5 py-3 flex justify-between items-start relative min-h-[60px]">
+             <div class="flex flex-col">
+                <span class="text-[10px] opacity-80 uppercase tracking-widest font-semibold">GATE</span>
+                <span class="text-3xl font-bold leading-none -ml-0.5">{{ activeFlight.origin_gate || '--' }}</span>
+             </div>
+             
+             <div class="flex flex-col items-end gap-1 absolute right-3 top-3">
+                <a v-if="activeFlight.liveLink" 
+                   :href="activeFlight.liveLink" 
+                   target="_blank" 
+                   class="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 border border-white/20 px-3 py-1.5 rounded-full text-[11px] font-bold text-white transition-all active:scale-95 cursor-pointer">
+                    <i class="ph ph-broadcast text-[#34C759] animate-pulse"></i>
+                    Flighty 實況
+                    <i class="ph ph-arrow-square-out text-xs opacity-70"></i>
+                </a>
+                
+                <div :class="getStatusClass(activeFlight.status)" 
+                     class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide backdrop-blur-md border border-white/10 shadow-sm mt-1">
+                    {{ activeFlight.status || 'Scheduled' }}
+                </div>
+             </div>
+          </div>
+
+          <div class="px-5 py-5 pb-6 bg-white relative">
+             <div class="absolute top-0 left-0 w-full h-[6px] bg-[#275CC0]"></div>
+
+             <div class="flex justify-between items-end mt-2">
+                <div class="flex flex-col items-center w-1/3">
+                   <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 text-center">預計起飛</span>
+                   <span class="text-3xl font-bold text-slate-800">{{ formatTime(activeFlight.dep_time) }}</span>
+                   <span class="text-sm font-semibold text-gray-500 mt-0.5">{{ activeFlight.origin_iata }}</span>
+                </div>
+
+                <div class="flex flex-col items-center justify-center w-1/3 pb-2">
+                   <div class="flex flex-col items-center">
+                      <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-0.5 text-center">航班 FLIGHT</span>
+                      <span class="text-lg font-bold text-slate-800">{{ activeFlight.flight_iata }}</span>
+                   </div>
+                   <div class="w-full h-[1px] bg-gray-200 my-2 relative">
+                      <i class="ph-fill ph-airplane absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-1 text-gray-400 text-sm rotate-90"></i>
+                   </div>
+                   <span class="text-[10px] text-gray-400">{{ activeFlight.duration || '--' }}</span>
+                </div>
+
+                <div class="flex flex-col items-center w-1/3">
+                   <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 text-center">預計抵達</span>
+                   <span class="text-3xl font-bold text-slate-800">{{ formatTime(activeFlight.arr_time) }}</span>
+                   <span class="text-sm font-semibold text-gray-500 mt-0.5">{{ activeFlight.dest_iata }}</span>
+                </div>
+             </div>
+
+             <div class="mt-6 pt-4 border-t border-dashed border-gray-200 flex justify-between items-center">
+                <div class="flex flex-col">
+                   <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">CABIN</span>
+                   <span class="text-sm font-bold text-slate-700">ECONOMY</span>
+                </div>
+                <div class="text-right">
+                   <div class="text-xs font-bold text-[#c22e37] uppercase tracking-wide">
+                      {{ activeFlight.origin_iata }} T{{ activeFlight.origin_terminal }} <span class="mx-0.5 text-gray-400 font-normal normal-case">to</span> {{ activeFlight.dest_iata }}
+                   </div>
+                   <div class="text-[10px] text-gray-400 mt-0.5">{{ displayDate(activeFlight.dep_time) }}</div>
+                </div>
+             </div>
+
+          </div>
+        </div>
+
       </div>
-    </div>
-  </header>
 
-  <!-- =========================
-       MAIN CONTENT（後續段落填入）
-       ========================= -->
-  <main id="app">
-    <!-- Part 2 由此開始 -->
-  </main>
+      <div class="grid grid-cols-2 gap-4">
+         
+         <div class="ios-card p-4 relative overflow-hidden group">
+            <div class="flex justify-between items-start mb-2">
+               <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-lg">
+                    <i class="ph-bold ph-currency-yen"></i>
+                  </div>
+                  <span class="text-xs font-bold text-gray-500 uppercase">JPY Rate</span>
+               </div>
+               <button @click="openRateModal" class="text-gray-400 hover:text-blue-500 transition-colors">
+                 <i class="ph-bold ph-pencil-simple"></i>
+               </button>
+            </div>
+            
+            <div class="flex flex-col">
+               <div class="text-3xl font-bold text-slate-800 tracking-tight">
+                 {{ currentLiveRate ? currentLiveRate.toFixed(3) : rate }}
+               </div>
+               <div class="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                 <span v-if="currentLiveRate" class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                 {{ lastRateUpdateLabel }}
+               </div>
+            </div>
 
-  <!-- =========================
-       FOOTER VERSION
-       ========================= -->
-  <footer>
-    TRAVEL SYNC SYSTEM<br/>
-    v5.10-testUI
-  </footer>
+            <div class="mt-3 pt-3 border-t border-gray-200/50">
+               <div class="flex items-center gap-2 bg-gray-100/50 rounded-lg px-2 py-1.5">
+                  <span class="text-xs font-bold text-gray-400">HKD</span>
+                  <input type="number" placeholder="100" class="w-full bg-transparent text-sm font-semibold outline-none text-right" @input="handleCalcInput">
+               </div>
+               <div class="text-right text-xs font-bold text-blue-600 mt-1.5 px-1">
+                  = ¥{{ calcResult }}
+               </div>
+            </div>
+         </div>
 
-  <!-- =========================
-       LANGUAGE (localStorage)
-       ========================= -->
+         <div class="ios-card p-4 flex flex-col justify-between group cursor-pointer hover:bg-white/80 transition-colors">
+            <div class="flex justify-between items-start">
+               <div class="w-8 h-8 rounded-full bg-orange-100 text-orange-500 flex items-center justify-center text-lg">
+                  <i class="ph-fill ph-sun"></i>
+               </div>
+               <span class="text-xs font-bold text-gray-400">OSAKA</span>
+            </div>
+            <div class="mt-2">
+               <div class="text-3xl font-bold text-slate-800">18°C</div>
+               <div class="text-xs text-gray-500 font-medium">Sunny</div>
+            </div>
+            <div class="mt-3 text-[10px] text-gray-400">
+               H:21° L:12°
+            </div>
+         </div>
+
+      </div>
+
+      <section>
+        <div class="flex items-center justify-between mb-3 px-1">
+           <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+             <i class="ph-fill ph-calendar-check text-blue-500"></i> Itinerary
+           </h2>
+           <button @click="openItineraryModal()" class="text-blue-500 text-sm font-medium hover:bg-blue-50 px-2 py-1 rounded-lg transition-colors">
+             + Add Event
+           </button>
+        </div>
+
+        <div class="flex overflow-x-auto gap-3 pb-4 no-scrollbar -mx-5 px-5 snap-x">
+           <div v-for="(day, date) in sortedItinerary" :key="date" 
+                class="snap-center shrink-0 w-[280px] ios-card p-4 flex flex-col gap-3 h-full">
+              
+              <div class="flex justify-between items-center border-b border-gray-200/50 pb-2">
+                 <span class="font-bold text-slate-700">{{ formatDate(date) }}</span>
+                 <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">{{ day.length }} items</span>
+              </div>
+
+              <div class="flex flex-col gap-2 max-h-[200px] overflow-y-auto pr-1 custom-scroll">
+                 <div v-for="item in day" :key="item.id" @click="openItineraryModal(item)"
+                      class="bg-white/50 p-2.5 rounded-xl border border-white/40 shadow-sm flex gap-3 items-center active:scale-98 transition-transform">
+                    <div class="flex flex-col items-center justify-center min-w-[40px] text-center border-r border-gray-200 pr-2">
+                       <span class="text-[10px] text-gray-400 font-bold uppercase">{{ getPeriod(item.time) }}</span>
+                       <span class="text-sm font-bold text-slate-800">{{ formatSimpleTime(item.time) }}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                       <div class="font-semibold text-slate-800 truncate text-sm">{{ item.title }}</div>
+                       <div class="text-[11px] text-gray-500 truncate flex items-center gap-1">
+                          <i class="ph-bold ph-map-pin text-[10px]"></i> {{ item.location || 'No location' }}
+                       </div>
+                    </div>
+                    <div class="w-1.5 h-8 rounded-full" :class="getCategoryColor(item.category)"></div>
+                 </div>
+              </div>
+           </div>
+           
+           <div @click="openItineraryModal()" class="snap-center shrink-0 w-[100px] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl text-gray-400 hover:bg-gray-50 transition-colors cursor-pointer">
+              <i class="ph-bold ph-plus text-3xl mb-2"></i>
+              <span class="text-xs font-bold">Add Day</span>
+           </div>
+        </div>
+      </section>
+
+      <section class="grid grid-cols-1 gap-5">
+         
+         <div class="ios-card p-5">
+            <div class="flex items-center justify-between mb-4">
+               <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <i class="ph-fill ph-shopping-bag text-pink-500"></i> Shopping
+               </h2>
+               <button @click="openShoppingModal()" class="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center hover:bg-pink-200 transition-colors">
+                  <i class="ph-bold ph-plus"></i>
+               </button>
+            </div>
+            
+            <ul class="space-y-2">
+               <li v-for="item in shoppingList" :key="item.id" 
+                   class="flex items-center justify-between p-3 bg-white/60 rounded-xl border border-white/50 shadow-sm group">
+                  <div class="flex items-center gap-3 overflow-hidden">
+                     <button @click="toggleItemDone(item)" class="text-gray-400 hover:text-green-500 transition-colors">
+                        <i :class="item.done ? 'ph-fill ph-check-circle text-green-500' : 'ph-bold ph-circle'"></i>
+                     </button>
+                     <div class="flex flex-col min-w-0">
+                        <span :class="{'line-through text-gray-400': item.done}" class="font-medium text-slate-800 truncate">{{ item.name }}</span>
+                        <span v-if="item.price" class="text-xs text-gray-500">¥{{ item.price }}</span>
+                     </div>
+                  </div>
+                  <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                     <button @click="openShoppingModal(item)" class="text-blue-500 p-1"><i class="ph-bold ph-pencil"></i></button>
+                  </div>
+               </li>
+               <li v-if="shoppingList.length === 0" class="text-center py-6 text-gray-400 text-sm italic">
+                  No items yet. Time to shop!
+               </li>
+            </ul>
+         </div>
+
+      </section>
+
+      <section class="ios-card p-5 bg-gradient-to-br from-slate-800 to-slate-900 text-white border-none">
+         <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-bold flex items-center gap-2">
+               <i class="ph-fill ph-receipt text-yellow-400"></i> Expenses
+            </h2>
+            <button @click="openExpenseModal" class="bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full text-xs font-bold transition-colors">
+               + Add
+            </button>
+         </div>
+         
+         <div class="flex items-end gap-2 mb-6">
+            <span class="text-4xl font-bold tracking-tight">¥{{ formatNumber(totalExpense) }}</span>
+            <span class="text-sm text-gray-400 mb-1.5">Total Spent</span>
+         </div>
+
+         <div class="grid grid-cols-3 gap-2">
+            <div class="bg-white/10 rounded-lg p-2 text-center">
+               <div class="text-[10px] text-gray-400 uppercase tracking-wider">Food</div>
+               <div class="font-bold text-sm mt-0.5">¥{{ formatNumber(expenses.food || 0) }}</div>
+            </div>
+            <div class="bg-white/10 rounded-lg p-2 text-center">
+               <div class="text-[10px] text-gray-400 uppercase tracking-wider">Transport</div>
+               <div class="font-bold text-sm mt-0.5">¥{{ formatNumber(expenses.transport || 0) }}</div>
+            </div>
+            <div class="bg-white/10 rounded-lg p-2 text-center">
+               <div class="text-[10px] text-gray-400 uppercase tracking-wider">Shop</div>
+               <div class="font-bold text-sm mt-0.5">¥{{ formatNumber(expenses.shopping || 0) }}</div>
+            </div>
+         </div>
+      </section>
+
+    </main>
+
+    <nav class="fixed bottom-0 w-full max-w-md bg-white/80 backdrop-blur-xl border-t border-gray-200/50 pb-safe pt-2 px-6 flex justify-between items-center z-50 text-gray-400">
+       <button class="flex flex-col items-center gap-0.5 text-blue-600">
+          <i class="ph-fill ph-house text-xl"></i>
+          <span class="text-[10px] font-medium">Home</span>
+       </button>
+       <button class="flex flex-col items-center gap-0.5 hover:text-blue-500 transition-colors">
+          <i class="ph-bold ph-map-trifold text-xl"></i>
+          <span class="text-[10px] font-medium">Map</span>
+       </button>
+       <button class="flex flex-col items-center gap-0.5 hover:text-blue-500 transition-colors">
+          <i class="ph-bold ph-wallet text-xl"></i>
+          <span class="text-[10px] font-medium">Wallet</span>
+       </button>
+       <button class="flex flex-col items-center gap-0.5 hover:text-blue-500 transition-colors">
+          <i class="ph-bold ph-gear text-xl"></i>
+          <span class="text-[10px] font-medium">Settings</span>
+       </button>
+    </nav>
+
+  </div>
+
   <script>
-    const langButtons = {
-      zh: document.getElementById("lang-zh"),
-      en: document.getElementById("lang-en")
-    };
+    const { createApp, ref, computed, onMounted } = Vue;
 
-    function applyLanguage(lang) {
-      localStorage.setItem("ui_lang", lang);
-      langButtons.zh.classList.toggle("active", lang === "zh");
-      langButtons.en.classList.toggle("active", lang === "en");
-      document.documentElement.lang = lang === "zh" ? "zh-HK" : "en-GB";
-    }
+    createApp({
+      setup() {
+        // --- State ---
+        // 2. Default Skin set to HKG
+        const flightCardSkin = ref('hkg'); 
+        
+        const activeFlight = ref({
+           airline_iata: 'CX',
+           airline_name: 'Cathay Pacific',
+           flight_iata: 'CX506',
+           origin_iata: 'HKG',
+           origin_terminal: '1',
+           origin_gate: '24',
+           dest_iata: 'KIX',
+           dest_terminal: '1',
+           dep_time: '2025-12-21T10:00:00',
+           arr_time: '2025-12-21T14:40:00',
+           duration: '3h 40m',
+           status: 'On Time',
+           bgImage: 'https://images.unsplash.com/photo-1542296332-2e44a9916675?q=80&w=1000&auto=format&fit=crop',
+           liveLink: 'https://flighty.com' // Mock link for demo
+        });
 
-    const savedLang = localStorage.getItem("ui_lang") || "zh";
-    applyLanguage(savedLang);
+        const rate = ref(0.052);
+        const currentLiveRate = ref(0.0518);
+        const lastRateUpdateLabel = ref('Updated 10m ago');
+        const calcInput = ref('');
+        const calcResult = ref(0);
 
-    langButtons.zh.onclick = () => applyLanguage("zh");
-    langButtons.en.onclick = () => applyLanguage("en");
+        const itinerary = ref({
+           '2025-12-21': [
+              { id: 1, title: 'Arrival at KIX', time: '14:40', location: 'Kansai Airport', category: 'travel' },
+              { id: 2, title: 'Check-in Hotel', time: '16:30', location: 'Osaka Marriott', category: 'stay' },
+              { id: 3, title: 'Dinner at Dotonbori', time: '19:00', location: 'Namba', category: 'food' }
+           ],
+           '2025-12-22': [
+              { id: 4, title: 'USJ All Day', time: '09:00', location: 'Universal Studios', category: 'fun' }
+           ]
+        });
+
+        const shoppingList = ref([
+           { id: 1, name: 'Matcha KitKat', price: 300, done: false },
+           { id: 2, name: 'Skin Care', price: 5000, done: true }
+        ]);
+
+        const expenses = ref({
+           food: 12000,
+           transport: 4500,
+           shopping: 8000
+        });
+        
+        const members = ref([1,2]); 
+        const isScrolled = ref(false);
+
+        // --- Methods ---
+        const toggleSkin = () => {
+           flightCardSkin.value = flightCardSkin.value === 'ios' ? 'hkg' : 'ios';
+        };
+
+        const formatTime = (isoString) => {
+           if (!isoString) return '--:--';
+           const date = new Date(isoString);
+           return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        };
+
+        const displayDate = (isoString) => {
+           if (!isoString) return '';
+           const date = new Date(isoString);
+           return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase();
+        };
+
+        const getStatusClass = (status) => {
+           switch(status?.toLowerCase()) {
+              case 'on time': return 'bg-green-500/80 text-white';
+              case 'delayed': return 'bg-yellow-500/80 text-white';
+              case 'cancelled': return 'bg-red-500/80 text-white';
+              case 'landed': return 'bg-blue-500/80 text-white';
+              default: return 'bg-gray-500/50 text-white';
+           }
+        };
+
+        const handleCalcInput = (e) => {
+           const val = parseFloat(e.target.value);
+           if (!isNaN(val)) {
+              calcResult.value = (val / (currentLiveRate.value || rate.value)).toFixed(0);
+           } else {
+              calcResult.value = 0;
+           }
+        };
+        
+        const openFlightModal = () => { console.log('Open Flight Modal'); };
+        const openMemberModal = () => { console.log('Open Member Modal'); };
+        const openRateModal = () => { console.log('Open Rate Modal'); };
+        const openItineraryModal = (item) => { console.log('Itinerary', item); };
+        const openShoppingModal = (item) => { console.log('Shopping', item); };
+        const toggleItemDone = (item) => { item.done = !item.done; };
+        const openExpenseModal = () => { console.log('Expense Modal'); };
+
+        // Helper for Itinerary
+        const sortedItinerary = computed(() => itinerary.value);
+        const formatDate = (dateStr) => {
+           const d = new Date(dateStr);
+           return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        };
+        const formatSimpleTime = (time) => time;
+        const getPeriod = (time) => parseInt(time.split(':')[0]) < 12 ? 'AM' : 'PM';
+        const getCategoryColor = (cat) => {
+           const map = { travel: 'bg-blue-400', stay: 'bg-purple-400', food: 'bg-orange-400', fun: 'bg-pink-400' };
+           return map[cat] || 'bg-gray-400';
+        };
+        const formatNumber = (num) => num.toLocaleString();
+        const totalExpense = computed(() => Object.values(expenses.value).reduce((a,b)=>a+b,0));
+
+        // Scroll listener
+        onMounted(() => {
+           window.addEventListener('scroll', () => {
+              isScrolled.value = window.scrollY > 10;
+           });
+        });
+
+        return {
+           flightCardSkin, toggleSkin,
+           activeFlight, formatTime, displayDate, getStatusClass,
+           rate, currentLiveRate, lastRateUpdateLabel, handleCalcInput, calcResult,
+           sortedItinerary, formatDate, formatSimpleTime, getPeriod, getCategoryColor, openItineraryModal,
+           shoppingList, toggleItemDone, openShoppingModal,
+           expenses, totalExpense, formatNumber, openExpenseModal,
+           members, openMemberModal, openFlightModal, openRateModal, isScrolled
+        };
+      }
+    }).mount('#app');
   </script>
-
-<!-- =========================
-     PART 1 END
-     ========================= -->
-
-<!-- =========================
-     PART 2 / 4
-     FLIGHT CARD（HKG / iOS SKIN 共存）
-     ========================= -->
-
-<style>
-  /* =========================
-     FLIGHT CARD – COMMON
-     ========================= */
-  .flight-card {
-    border-radius: 18px;
-    overflow: hidden;
-    margin-bottom: 18px;
-  }
-
-  /* =========================
-     HKG SKIN（只影響 HKG）
-     ========================= */
-  .flight-card.hkg {
-    background: #1f2937;
-  }
-
-  /* Skin toggle（修正：不再只影響 header） */
-  .skin-toggle {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 8px;
-    font-size: 11px;
-    color: rgba(255,255,255,0.6);
-  }
-
-  .skin-toggle span {
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 6px;
-  }
-
-  .skin-toggle span.active {
-    background: rgba(255,255,255,0.18);
-  }
-
-  /* =========================
-     HKG – GATE SECTION (3.2)
-     ========================= */
-  .hkg-gate {
-    background: #353e53;
-    color: #e9eb4f;
-    text-align: center;
-    padding: 16px 0;
-    font-size: 26px;
-    font-weight: 600;
-    letter-spacing: 1px;
-  }
-
-  /* =========================
-     HKG – INFO SECTION (3.3)
-     ========================= */
-  .hkg-info {
-    background: #bf443b;
-    color: #ffffff;
-    padding: 12px 14px;
-    font-size: 12px;
-    line-height: 1.4;
-  }
-
-  .hkg-info .row {
-    margin-bottom: 4px;
-  }
-
-  .hkg-info .row:last-child {
-    margin-bottom: 0;
-  }
-
-  /* =========================
-     iOS SKIN（完全不受影響）
-     ========================= */
-  .flight-card.ios {
-    background: linear-gradient(135deg,#3b82f6,#2563eb);
-    padding: 14px;
-    font-size: 13px;
-  }
-
-</style>
-
-<!-- =========================
-     SKIN TOGGLE（只切 Flight Card）
-     ========================= -->
-<div class="skin-toggle">
-  <span id="skin-hkg" class="active">HKG</span>
-  <span id="skin-ios">iOS</span>
-</div>
-
-<!-- =========================
-     FLIGHT CARD
-     ========================= -->
-<div id="flightCard" class="flight-card hkg">
-
-  <!-- HKG SKIN -->
-  <div class="hkg-skin">
-
-    <!-- 登機閘口（置中） -->
-    <div class="hkg-gate">
-      24
-    </div>
-
-    <!-- 下方資訊區 -->
-    <div class="hkg-info">
-      <div class="row">CABIN · ECONOMY</div>
-      <div class="row">HKG T1 to KIX</div>
-      <div class="row">21 DEC</div>
-    </div>
-
-  </div>
-
-  <!-- iOS SKIN -->
-  <div class="ios-skin" style="display:none;">
-    Gate 24 · Economy<br/>
-    HKG → KIX · 21 Dec
-  </div>
-
-</div>
-
-<script>
-  /* =========================
-     SKIN TOGGLE LOGIC
-     ========================= */
-  const flightCard = document.getElementById("flightCard");
-  const skinHkgBtn = document.getElementById("skin-hkg");
-  const skinIosBtn = document.getElementById("skin-ios");
-
-  const hkgSkin = flightCard.querySelector(".hkg-skin");
-  const iosSkin = flightCard.querySelector(".ios-skin");
-
-  function applySkin(skin) {
-    if (skin === "hkg") {
-      flightCard.classList.add("hkg");
-      flightCard.classList.remove("ios");
-      hkgSkin.style.display = "block";
-      iosSkin.style.display = "none";
-      skinHkgBtn.classList.add("active");
-      skinIosBtn.classList.remove("active");
-    } else {
-      flightCard.classList.add("ios");
-      flightCard.classList.remove("hkg");
-      hkgSkin.style.display = "none";
-      iosSkin.style.display = "block";
-      skinHkgBtn.classList.remove("active");
-      skinIosBtn.classList.add("active");
-    }
-    localStorage.setItem("flight_skin", skin);
-  }
-
-  const savedSkin = localStorage.getItem("flight_skin") || "hkg";
-  applySkin(savedSkin);
-
-  skinHkgBtn.onclick = () => applySkin("hkg");
-  skinIosBtn.onclick = () => applySkin("ios");
-</script>
-
-<!-- =========================
-     PART 2 END
-     ========================= -->
-
-<!-- =========================
-     PART 3 / 4
-     TRIP DATA + SUPABASE (testUI)
-     ========================= -->
-
-<style>
-  /* =========================
-     SECTION COMMON
-     ========================= */
-  .section {
-    margin-bottom: 22px;
-  }
-
-  .section-title {
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 10px;
-    color: rgba(255,255,255,0.85);
-  }
-
-  .card {
-    background: rgba(255,255,255,0.06);
-    border-radius: 14px;
-    padding: 14px;
-    font-size: 12px;
-    line-height: 1.5;
-  }
-
-  .card + .card {
-    margin-top: 10px;
-  }
-</style>
-
-<!-- =========================
-     TRIP SECTION
-     ========================= -->
-<div class="section" id="tripSection">
-  <div class="section-title" data-i18n="tripTitle">
-    行程資料
-  </div>
-
-  <div class="card" id="tripContent">
-    Loading...
-  </div>
-</div>
-
-<script>
-  /* =========================
-     SUPABASE LOAD
-     ========================= */
-  async function loadTripData() {
-    const { data, error } = await supabase
-      .from(TRIP_TABLE)
-      .select("*")
-      .eq("id", TRIP_ROW_ID)
-      .single();
-
-    if (error || !data) {
-      console.warn("Supabase 讀取失敗，使用 localStorage");
-      return loadLocalTrip();
-    }
-
-    localStorage.setItem("trip_cache_testUI", JSON.stringify(data));
-    renderTrip(data);
-  }
-
-  function loadLocalTrip() {
-    const cached = localStorage.getItem("trip_cache_testUI");
-    if (cached) {
-      renderTrip(JSON.parse(cached));
-    } else {
-      document.getElementById("tripContent").innerText =
-        "無法載入行程資料";
-    }
-  }
-
-  function renderTrip(data) {
-    /* 假設 testUI row 已包含欄位：
-       title / start_date / end_date / notes */
-    const html = `
-      <strong>${data.title || "HKG → KIX"}</strong><br/>
-      ${data.start_date || ""} – ${data.end_date || ""}<br/><br/>
-      ${data.notes || ""}
-    `;
-    document.getElementById("tripContent").innerHTML = html;
-  }
-
-  loadTripData();
-</script>
-
-<!-- =========================
-     I18N TEXT（localStorage）
-     ========================= -->
-<script>
-  const i18n = {
-    zh: {
-      tripTitle: "行程資料"
-    },
-    en: {
-      tripTitle: "Trip Information"
-    }
-  };
-
-  function applyI18n() {
-    const lang = localStorage.getItem("ui_lang") || "zh";
-    document
-      .querySelectorAll("[data-i18n]")
-      .forEach(el => {
-        const key = el.dataset.i18n;
-        el.innerText = i18n[lang][key] || el.innerText;
-      });
-  }
-
-  applyI18n();
-</script>
-
-<!-- =========================
-     PART 3 END
-     ========================= -->
-
-<!-- =========================
-     PART 4 / 4
-     FINAL INIT + EOF
-     ========================= -->
-
-<script>
-  /* =========================
-     GLOBAL INIT
-     ========================= */
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-      // 回到頁面時可重新同步
-      loadTripData();
-    }
-  });
-
-  /* =========================
-     SAFETY CHECK
-     ========================= */
-  console.info(
-    "Travel Sync System v5.10-testUI loaded",
-    {
-      lang: localStorage.getItem("ui_lang"),
-      skin: localStorage.getItem("flight_skin")
-    }
-  );
-</script>
-
-<!-- =========================
-     END OF FILE
-     ========================= -->
-
 </body>
 </html>
