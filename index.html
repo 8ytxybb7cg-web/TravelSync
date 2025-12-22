@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v251221-5.16</title>
+  <title>Travel Sync v251221-5.20</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -18,10 +18,6 @@
       --ios-bg: #F2F2F7;
       --ios-card-bg: rgba(255, 255, 255, 0.65);
       --ios-card-border: rgba(255, 255, 255, 0.4);
-      --ios-primary: #007AFF;
-      --ios-danger: #FF3B30;
-      --ios-warning: #FFCC00;
-      --ios-success: #34C759;
       --glass-blur: 25px;
     }
 
@@ -43,12 +39,6 @@
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     }
 
-    /* Gradient Background for Header */
-    .header-bg {
-      background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
-    }
-
-    /* Hide Scrollbar but keep functionality */
     .no-scrollbar::-webkit-scrollbar {
       display: none;
     }
@@ -65,47 +55,48 @@
     .toggle-checkbox:checked + .toggle-label {
       background-color: #34C759;
     }
-
-    /* Map Container */
-    .map-container iframe {
-      width: 100%;
-      height: 100%;
-      border: 0;
-      border-radius: 12px;
-    }
   </style>
 </head>
 <body class="bg-[#F2F2F7] min-h-screen text-slate-800">
 
-  <div id="app" class="max-w-md mx-auto relative pb-24">
+  <div id="app" class="max-w-md mx-auto relative pb-32">
     
-    <header class="sticky top-0 z-40 pt-12 pb-2 px-6 flex justify-between items-end bg-[#F2F2F7]/90 backdrop-blur-md transition-all duration-300"
+    <header class="sticky top-0 z-[100] pt-12 pb-2 px-6 flex justify-between items-end bg-[#F2F2F7]/90 backdrop-blur-md transition-all duration-300"
             :class="{ 'shadow-sm border-b border-gray-200/50': isScrolled }">
       <div>
-        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Current Trip</div>
+        <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">
+           {{ version }}
+        </div>
         <h1 class="text-3xl font-bold text-black tracking-tight flex items-center gap-2">
            HKG <i class="ph-bold ph-airplane-tilt text-blue-500"></i> KIX
         </h1>
       </div>
-      <button @click="openMemberModal" class="relative group">
-         <div class="w-10 h-10 rounded-full bg-gray-200 border-2 border-white shadow-sm overflow-hidden flex items-center justify-center text-gray-500 hover:scale-105 transition-transform">
-            <i class="ph-fill ph-users text-xl"></i>
-         </div>
-         <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm" v-if="members.length > 0">{{ members.length }}</span>
-      </button>
+
+      <div class="flex flex-col items-end gap-2">
+         <button @click="toggleLang" class="text-[10px] font-bold bg-gray-200/80 hover:bg-gray-300 px-2 py-0.5 rounded-md text-gray-600 transition-colors uppercase tracking-wider">
+            {{ currentLang === 'zh-HK' ? 'EN (UK)' : '繁體 (HK)' }}
+         </button>
+
+         <button @click="openMemberModal" class="relative group">
+            <div class="w-10 h-10 rounded-full bg-gray-200 border-2 border-white shadow-sm overflow-hidden flex items-center justify-center text-gray-500 hover:scale-105 transition-transform">
+               <i class="ph-fill ph-users text-xl"></i>
+            </div>
+            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm" v-if="members.length > 0">{{ members.length }}</span>
+         </button>
+      </div>
     </header>
 
     <main class="px-5 space-y-5 mt-4">
 
-      <div v-if="!activeFlight" class="ios-card p-6 flex flex-col items-center justify-center space-y-4 animate-pulse min-h-[220px]">
+      <div v-if="loading" class="ios-card p-6 flex flex-col items-center justify-center space-y-4 animate-pulse min-h-[220px]">
          <div class="w-12 h-12 bg-gray-300 rounded-full"></div>
          <div class="h-4 bg-gray-300 w-1/2 rounded"></div>
-         <button @click="openFlightModal" class="text-blue-500 font-medium text-sm">Tap to add flight details</button>
+         <div class="text-xs text-gray-400">Loading trip data...</div>
       </div>
 
       <div v-else class="relative transition-all duration-500">
         
-        <div class="absolute top-4 left-4 z-50">
+        <div class="absolute top-4 left-4 z-30">
            <button @click="toggleSkin" 
                    class="bg-black/10 hover:bg-black/20 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] font-bold text-gray-600 transition-all active:scale-95 flex items-center gap-1 cursor-pointer pointer-events-auto border border-white/20">
              <span v-if="flightCardSkin === 'ios'">HKG <i class="ph ph-arrows-left-right ml-0.5"></i></span>
@@ -123,7 +114,6 @@
           </div>
 
           <div class="relative z-10 p-6 flex flex-col justify-between h-full min-h-[220px]">
-            
             <div class="flex justify-between items-start">
               <div class="flex items-center gap-3">
                  <div class="w-10 h-10 rounded-lg bg-white/90 flex items-center justify-center p-1 shadow-sm">
@@ -134,13 +124,10 @@
                     <div class="text-xs text-white/80 font-medium">{{ activeFlight.airline_name }}</div>
                  </div>
               </div>
-              
-              <a v-if="activeFlight.liveLink" 
-                 :href="activeFlight.liveLink" 
-                 target="_blank" 
+              <a v-if="activeFlight.liveLink" :href="activeFlight.liveLink" target="_blank" 
                  class="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 border border-white/20 px-3 py-1.5 rounded-full text-[11px] font-bold text-white transition-all active:scale-95 cursor-pointer">
                   <i class="ph ph-broadcast text-[#34C759] animate-pulse"></i>
-                  Flighty 實況
+                  {{ t('flightyLive') }}
                   <i class="ph ph-arrow-square-out text-xs opacity-70"></i>
               </a>
             </div>
@@ -148,10 +135,8 @@
             <div class="mt-6 flex justify-between items-end">
                <div class="text-left">
                   <div class="text-4xl font-bold">{{ activeFlight.origin_iata }}</div>
-                  <div class="text-sm font-medium text-white/80 mt-1">
-                    {{ formatTime(activeFlight.dep_time) }}
-                  </div>
-                  <div class="text-[10px] uppercase tracking-wider text-white/60 mt-0.5">Estimated Departure</div>
+                  <div class="text-sm font-medium text-white/80 mt-1">{{ formatTime(activeFlight.dep_time) }}</div>
+                  <div class="text-[10px] uppercase tracking-wider text-white/60 mt-0.5">{{ t('estDep') }}</div>
                </div>
 
                <div class="flex flex-col items-center justify-center pb-2 opacity-80">
@@ -160,78 +145,69 @@
                </div>
 
                <div class="text-right flex flex-col items-end">
-                  <div :class="getStatusClass(activeFlight.status)" 
-                       class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide backdrop-blur-md border border-white/10 shadow-sm mb-1 inline-block">
+                  <div :class="getStatusClass(activeFlight.status)" class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide backdrop-blur-md border border-white/10 shadow-sm mb-1 inline-block">
                     {{ activeFlight.status || 'Scheduled' }}
                   </div>
-
                   <div class="text-4xl font-bold">{{ activeFlight.dest_iata }}</div>
-                  <div class="text-sm font-medium text-white/80 mt-1">
-                    {{ formatTime(activeFlight.arr_time) }}
-                  </div>
-                  <div class="text-[10px] uppercase tracking-wider text-white/60 mt-0.5">Estimated Arrival</div>
+                  <div class="text-sm font-medium text-white/80 mt-1">{{ formatTime(activeFlight.arr_time) }}</div>
+                  <div class="text-[10px] uppercase tracking-wider text-white/60 mt-0.5">{{ t('estArr') }}</div>
                </div>
             </div>
 
             <div class="mt-5 pt-4 border-t border-white/20 flex justify-between text-xs font-medium">
                <div class="flex gap-4">
                  <div>
-                   <span class="block text-white/50 text-[10px] uppercase">Terminal</span>
+                   <span class="block text-white/50 text-[10px] uppercase">{{ t('terminal') }}</span>
                    <span class="text-lg">{{ activeFlight.origin_terminal || '-' }}</span>
                  </div>
                  <div>
-                   <span class="block text-white/50 text-[10px] uppercase">Gate</span>
+                   <span class="block text-white/50 text-[10px] uppercase">{{ t('gate') }}</span>
                    <span class="text-lg">{{ activeFlight.origin_gate || '-' }}</span>
                  </div>
                </div>
                <div class="text-right">
-                 <span class="block text-white/50 text-[10px] uppercase">Arrive Term</span>
+                 <span class="block text-white/50 text-[10px] uppercase">{{ t('arrTerm') }}</span>
                  <span class="text-lg">{{ activeFlight.dest_terminal || '-' }}</span>
                </div>
             </div>
-
           </div>
         </div>
 
         <div v-else-if="flightCardSkin === 'hkg'" 
              class="rounded-[16px] overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.12)] bg-white font-sans relative border border-gray-100">
              
-          <div class="bg-[#00787d] text-white px-5 py-3 flex justify-between items-start relative min-h-[60px]">
-             <div class="flex flex-col">
-                <span class="text-[10px] opacity-80 uppercase tracking-widest font-semibold">GATE</span>
-                <span class="text-3xl font-bold leading-none -ml-0.5">{{ activeFlight.origin_gate || '--' }}</span>
+          <div class="bg-[#353E53] text-white px-5 py-3 flex justify-between items-start relative min-h-[60px]">
+             <div class="flex flex-col items-center ml-1">
+                <span class="text-[10px] opacity-80 uppercase tracking-widest font-semibold">{{ t('gate') }}</span>
+                <span class="text-3xl font-bold leading-none text-[#E9EB4F]">{{ activeFlight.origin_gate || '--' }}</span>
              </div>
              
              <div class="flex flex-col items-end gap-1 absolute right-3 top-3">
-                <a v-if="activeFlight.liveLink" 
-                   :href="activeFlight.liveLink" 
-                   target="_blank" 
+                <a v-if="activeFlight.liveLink" :href="activeFlight.liveLink" target="_blank" 
                    class="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 border border-white/20 px-3 py-1.5 rounded-full text-[11px] font-bold text-white transition-all active:scale-95 cursor-pointer">
                     <i class="ph ph-broadcast text-[#34C759] animate-pulse"></i>
-                    Flighty 實況
+                    {{ t('flightyLive') }}
                     <i class="ph ph-arrow-square-out text-xs opacity-70"></i>
                 </a>
-                
-                <div :class="getStatusClass(activeFlight.status)" 
-                     class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide backdrop-blur-md border border-white/10 shadow-sm mt-1">
+                <div :class="getStatusClass(activeFlight.status)" class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide backdrop-blur-md border border-white/10 shadow-sm mt-1">
                     {{ activeFlight.status || 'Scheduled' }}
                 </div>
              </div>
           </div>
 
-          <div class="px-5 py-5 pb-6 bg-white relative">
+          <div class="px-5 py-5 pb-0 bg-white relative">
              <div class="absolute top-0 left-0 w-full h-[6px] bg-[#275CC0]"></div>
 
-             <div class="flex justify-between items-end mt-2">
+             <div class="flex justify-between items-end mt-2 mb-6">
                 <div class="flex flex-col items-center w-1/3">
-                   <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 text-center">預計起飛</span>
+                   <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 text-center">{{ t('estDep') }}</span>
                    <span class="text-3xl font-bold text-slate-800">{{ formatTime(activeFlight.dep_time) }}</span>
                    <span class="text-sm font-semibold text-gray-500 mt-0.5">{{ activeFlight.origin_iata }}</span>
                 </div>
 
                 <div class="flex flex-col items-center justify-center w-1/3 pb-2">
                    <div class="flex flex-col items-center">
-                      <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-0.5 text-center">航班 FLIGHT</span>
+                      <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-0.5 text-center">{{ t('flightLabel') }}</span>
                       <span class="text-lg font-bold text-slate-800">{{ activeFlight.flight_iata }}</span>
                    </div>
                    <div class="w-full h-[1px] bg-gray-200 my-2 relative">
@@ -241,22 +217,22 @@
                 </div>
 
                 <div class="flex flex-col items-center w-1/3">
-                   <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 text-center">預計抵達</span>
+                   <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 text-center">{{ t('estArr') }}</span>
                    <span class="text-3xl font-bold text-slate-800">{{ formatTime(activeFlight.arr_time) }}</span>
                    <span class="text-sm font-semibold text-gray-500 mt-0.5">{{ activeFlight.dest_iata }}</span>
                 </div>
              </div>
 
-             <div class="mt-6 pt-4 border-t border-dashed border-gray-200 flex justify-between items-center">
+             <div class="mt-2 py-3 px-5 -mx-5 bg-[#BF443B] text-white flex justify-between items-center">
                 <div class="flex flex-col">
-                   <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">CABIN</span>
-                   <span class="text-sm font-bold text-slate-700">ECONOMY</span>
+                   <span class="text-[10px] opacity-80 font-bold uppercase tracking-widest">{{ t('cabin') }}</span>
+                   <span class="text-sm font-bold">ECONOMY</span>
                 </div>
                 <div class="text-right">
-                   <div class="text-xs font-bold text-[#c22e37] uppercase tracking-wide">
-                      {{ activeFlight.origin_iata }} T{{ activeFlight.origin_terminal }} <span class="mx-0.5 text-gray-400 font-normal normal-case">to</span> {{ activeFlight.dest_iata }}
+                   <div class="text-xs font-bold uppercase tracking-wide">
+                      {{ activeFlight.origin_iata }} T{{ activeFlight.origin_terminal }} <span class="mx-0.5 opacity-80 font-normal normal-case">to</span> {{ activeFlight.dest_iata }}
                    </div>
-                   <div class="text-[10px] text-gray-400 mt-0.5">{{ displayDate(activeFlight.dep_time) }}</div>
+                   <div class="text-[10px] opacity-80 mt-0.5">{{ displayDate(activeFlight.dep_time) }}</div>
                 </div>
              </div>
 
@@ -266,7 +242,6 @@
       </div>
 
       <div class="grid grid-cols-2 gap-4">
-         
          <div class="ios-card p-4 relative overflow-hidden group">
             <div class="flex justify-between items-start mb-2">
                <div class="flex items-center gap-2">
@@ -275,7 +250,7 @@
                   </div>
                   <span class="text-xs font-bold text-gray-500 uppercase">JPY Rate</span>
                </div>
-               <button @click="openRateModal" class="text-gray-400 hover:text-blue-500 transition-colors">
+               <button class="text-gray-400 hover:text-blue-500 transition-colors">
                  <i class="ph-bold ph-pencil-simple"></i>
                </button>
             </div>
@@ -286,7 +261,7 @@
                </div>
                <div class="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
                  <span v-if="currentLiveRate" class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                 {{ lastRateUpdateLabel }}
+                 Updated 10m ago
                </div>
             </div>
 
@@ -310,22 +285,19 @@
             </div>
             <div class="mt-2">
                <div class="text-3xl font-bold text-slate-800">18°C</div>
-               <div class="text-xs text-gray-500 font-medium">Sunny</div>
+               <div class="text-xs text-gray-500 font-medium">{{ t('sunny') }}</div>
             </div>
-            <div class="mt-3 text-[10px] text-gray-400">
-               H:21° L:12°
-            </div>
+            <div class="mt-3 text-[10px] text-gray-400">H:21° L:12°</div>
          </div>
-
       </div>
 
       <section>
         <div class="flex items-center justify-between mb-3 px-1">
            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-             <i class="ph-fill ph-calendar-check text-blue-500"></i> Itinerary
+             <i class="ph-fill ph-calendar-check text-blue-500"></i> {{ t('itinerary') }}
            </h2>
-           <button @click="openItineraryModal()" class="text-blue-500 text-sm font-medium hover:bg-blue-50 px-2 py-1 rounded-lg transition-colors">
-             + Add Event
+           <button class="text-blue-500 text-sm font-medium hover:bg-blue-50 px-2 py-1 rounded-lg transition-colors">
+             + {{ t('addEvent') }}
            </button>
         </div>
 
@@ -338,8 +310,8 @@
                  <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">{{ day.length }} items</span>
               </div>
 
-              <div class="flex flex-col gap-2 max-h-[200px] overflow-y-auto pr-1 custom-scroll">
-                 <div v-for="item in day" :key="item.id" @click="openItineraryModal(item)"
+              <div class="flex flex-col gap-2 max-h-[200px] overflow-y-auto pr-1">
+                 <div v-for="item in day" :key="item.id"
                       class="bg-white/50 p-2.5 rounded-xl border border-white/40 shadow-sm flex gap-3 items-center active:scale-98 transition-transform">
                     <div class="flex flex-col items-center justify-center min-w-[40px] text-center border-r border-gray-200 pr-2">
                        <span class="text-[10px] text-gray-400 font-bold uppercase">{{ getPeriod(item.time) }}</span>
@@ -355,22 +327,16 @@
                  </div>
               </div>
            </div>
-           
-           <div @click="openItineraryModal()" class="snap-center shrink-0 w-[100px] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl text-gray-400 hover:bg-gray-50 transition-colors cursor-pointer">
-              <i class="ph-bold ph-plus text-3xl mb-2"></i>
-              <span class="text-xs font-bold">Add Day</span>
-           </div>
         </div>
       </section>
 
       <section class="grid grid-cols-1 gap-5">
-         
          <div class="ios-card p-5">
             <div class="flex items-center justify-between mb-4">
                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                  <i class="ph-fill ph-shopping-bag text-pink-500"></i> Shopping
+                  <i class="ph-fill ph-shopping-bag text-pink-500"></i> {{ t('shopping') }}
                </h2>
-               <button @click="openShoppingModal()" class="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center hover:bg-pink-200 transition-colors">
+               <button class="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center hover:bg-pink-200 transition-colors">
                   <i class="ph-bold ph-plus"></i>
                </button>
             </div>
@@ -388,32 +354,27 @@
                      </div>
                   </div>
                   <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                     <button @click="openShoppingModal(item)" class="text-blue-500 p-1"><i class="ph-bold ph-pencil"></i></button>
+                     <button class="text-blue-500 p-1"><i class="ph-bold ph-pencil"></i></button>
                   </div>
-               </li>
-               <li v-if="shoppingList.length === 0" class="text-center py-6 text-gray-400 text-sm italic">
-                  No items yet. Time to shop!
                </li>
             </ul>
          </div>
-
       </section>
 
       <section class="ios-card p-5 bg-gradient-to-br from-slate-800 to-slate-900 text-white border-none">
          <div class="flex justify-between items-center mb-4">
             <h2 class="text-lg font-bold flex items-center gap-2">
-               <i class="ph-fill ph-receipt text-yellow-400"></i> Expenses
+               <i class="ph-fill ph-receipt text-yellow-400"></i> {{ t('expenses') }}
             </h2>
-            <button @click="openExpenseModal" class="bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full text-xs font-bold transition-colors">
+            <button class="bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full text-xs font-bold transition-colors">
                + Add
             </button>
          </div>
          
          <div class="flex items-end gap-2 mb-6">
             <span class="text-4xl font-bold tracking-tight">¥{{ formatNumber(totalExpense) }}</span>
-            <span class="text-sm text-gray-400 mb-1.5">Total Spent</span>
+            <span class="text-sm text-gray-400 mb-1.5">{{ t('totalSpent') }}</span>
          </div>
-
          <div class="grid grid-cols-3 gap-2">
             <div class="bg-white/10 rounded-lg p-2 text-center">
                <div class="text-[10px] text-gray-400 uppercase tracking-wider">Food</div>
@@ -431,6 +392,11 @@
       </section>
 
     </main>
+    
+    <div class="mt-8 mb-4 text-center">
+       <div class="text-[10px] font-bold text-gray-400 tracking-widest uppercase">TRAVEL SYNC SYSTEM</div>
+       <div class="text-[9px] text-gray-300 mt-0.5">{{ version }}</div>
+    </div>
 
     <nav class="fixed bottom-0 w-full max-w-md bg-white/80 backdrop-blur-xl border-t border-gray-200/50 pb-safe pt-2 px-6 flex justify-between items-center z-50 text-gray-400">
        <button class="flex flex-col items-center gap-0.5 text-blue-600">
@@ -456,32 +422,93 @@
   <script>
     const { createApp, ref, computed, onMounted } = Vue;
 
+    // 2. Initialize Supabase
+    const supabaseUrl = 'https://myrhatzdypiwwgmmfbuw.supabase.co';
+    const supabaseKey = 'sb_publishable_bnnah-2fsCaQnKZDoKNJQw_NuYQVvKi'; // Kept as provided
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
     createApp({
       setup() {
         // --- State ---
-        // 2. Default Skin set to HKG
+        // 1. Version Update
+        const version = ref('v251221-5.20');
+        const loading = ref(false);
         const flightCardSkin = ref('hkg'); 
         
+        // 4. i18n
+        const currentLang = ref('zh-HK');
+        const translations = {
+           'zh-HK': {
+              flightyLive: 'Flighty 實況',
+              estDep: '預計起飛',
+              estArr: '預計抵達',
+              terminal: '客運大樓',
+              gate: '登機閘口',
+              arrTerm: '抵達大樓',
+              flightLabel: '航班 FLIGHT',
+              cabin: '艙等',
+              sunny: '天晴',
+              itinerary: '行程表',
+              addEvent: '新增活動',
+              shopping: '購物清單',
+              expenses: '開支記錄',
+              totalSpent: '總消費'
+           },
+           'en-UK': {
+              flightyLive: 'Flighty Live',
+              estDep: 'Est. Departure',
+              estArr: 'Est. Arrival',
+              terminal: 'Terminal',
+              gate: 'Gate',
+              arrTerm: 'Arr. Term',
+              flightLabel: 'FLIGHT',
+              cabin: 'CABIN',
+              sunny: 'Sunny',
+              itinerary: 'Itinerary',
+              addEvent: 'Add Event',
+              shopping: 'Shopping',
+              expenses: 'Expenses',
+              totalSpent: 'Total Spent'
+           }
+        };
+
+        const t = (key) => translations[currentLang.value][key] || key;
+        const toggleLang = () => {
+           currentLang.value = currentLang.value === 'zh-HK' ? 'en-UK' : 'zh-HK';
+        };
+
+        // Data placeholders
         const activeFlight = ref({
-           airline_iata: 'CX',
-           airline_name: 'Cathay Pacific',
-           flight_iata: 'CX506',
-           origin_iata: 'HKG',
-           origin_terminal: '1',
-           origin_gate: '24',
-           dest_iata: 'KIX',
-           dest_terminal: '1',
-           dep_time: '2025-12-21T10:00:00',
-           arr_time: '2025-12-21T14:40:00',
-           duration: '3h 40m',
-           status: 'On Time',
+           airline_iata: 'CX', airline_name: 'Cathay Pacific', flight_iata: 'CX506',
+           origin_iata: 'HKG', origin_terminal: '1', origin_gate: '24',
+           dest_iata: 'KIX', dest_terminal: '1',
+           dep_time: '2025-12-21T10:00:00', arr_time: '2025-12-21T14:40:00',
+           duration: '3h 40m', status: 'On Time',
            bgImage: 'https://images.unsplash.com/photo-1542296332-2e44a9916675?q=80&w=1000&auto=format&fit=crop',
-           liveLink: 'https://flighty.com' // Mock link for demo
+           liveLink: 'https://flighty.com'
         });
+
+        // 2. Fetch Logic (Stub for demonstration with ID testUI)
+        const fetchTripData = async () => {
+           loading.value = true;
+           const { data, error } = await supabase
+              .from('trip_data')
+              .select('*')
+              .eq('id', 'testUI')
+              .single();
+           
+           if (data && !error) {
+              console.log('Fetched data:', data);
+              // Map DB fields to state if necessary in future
+              // e.g., activeFlight.value = data.flight_info;
+           } else {
+              console.log('Using default/mock data (Fetch error or no data)');
+           }
+           loading.value = false;
+        };
 
         const rate = ref(0.052);
         const currentLiveRate = ref(0.0518);
-        const lastRateUpdateLabel = ref('Updated 10m ago');
         const calcInput = ref('');
         const calcResult = ref(0);
 
@@ -501,89 +528,62 @@
            { id: 2, name: 'Skin Care', price: 5000, done: true }
         ]);
 
-        const expenses = ref({
-           food: 12000,
-           transport: 4500,
-           shopping: 8000
-        });
-        
+        const expenses = ref({ food: 12000, transport: 4500, shopping: 8000 });
         const members = ref([1,2]); 
         const isScrolled = ref(false);
 
-        // --- Methods ---
-        const toggleSkin = () => {
-           flightCardSkin.value = flightCardSkin.value === 'ios' ? 'hkg' : 'ios';
+        // Methods
+        const toggleSkin = () => { flightCardSkin.value = flightCardSkin.value === 'ios' ? 'hkg' : 'ios'; };
+        const formatTime = (iso) => {
+           if (!iso) return '--:--';
+           return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
         };
-
-        const formatTime = (isoString) => {
-           if (!isoString) return '--:--';
-           const date = new Date(isoString);
-           return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        const displayDate = (iso) => {
+           if (!iso) return '';
+           return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase();
         };
-
-        const displayDate = (isoString) => {
-           if (!isoString) return '';
-           const date = new Date(isoString);
-           return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase();
+        const getStatusClass = (s) => {
+           const low = s?.toLowerCase();
+           if(low === 'on time') return 'bg-green-500/80 text-white';
+           if(low === 'delayed') return 'bg-yellow-500/80 text-white';
+           if(low === 'cancelled') return 'bg-red-500/80 text-white';
+           if(low === 'landed') return 'bg-blue-500/80 text-white';
+           return 'bg-gray-500/50 text-white';
         };
-
-        const getStatusClass = (status) => {
-           switch(status?.toLowerCase()) {
-              case 'on time': return 'bg-green-500/80 text-white';
-              case 'delayed': return 'bg-yellow-500/80 text-white';
-              case 'cancelled': return 'bg-red-500/80 text-white';
-              case 'landed': return 'bg-blue-500/80 text-white';
-              default: return 'bg-gray-500/50 text-white';
-           }
-        };
-
         const handleCalcInput = (e) => {
            const val = parseFloat(e.target.value);
-           if (!isNaN(val)) {
-              calcResult.value = (val / (currentLiveRate.value || rate.value)).toFixed(0);
-           } else {
-              calcResult.value = 0;
-           }
+           if (!isNaN(val)) calcResult.value = (val / (currentLiveRate.value || rate.value)).toFixed(0);
+           else calcResult.value = 0;
         };
-        
-        const openFlightModal = () => { console.log('Open Flight Modal'); };
-        const openMemberModal = () => { console.log('Open Member Modal'); };
-        const openRateModal = () => { console.log('Open Rate Modal'); };
-        const openItineraryModal = (item) => { console.log('Itinerary', item); };
-        const openShoppingModal = (item) => { console.log('Shopping', item); };
-        const toggleItemDone = (item) => { item.done = !item.done; };
-        const openExpenseModal = () => { console.log('Expense Modal'); };
 
-        // Helper for Itinerary
+        // Helpers
         const sortedItinerary = computed(() => itinerary.value);
-        const formatDate = (dateStr) => {
-           const d = new Date(dateStr);
-           return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-        };
-        const formatSimpleTime = (time) => time;
-        const getPeriod = (time) => parseInt(time.split(':')[0]) < 12 ? 'AM' : 'PM';
-        const getCategoryColor = (cat) => {
-           const map = { travel: 'bg-blue-400', stay: 'bg-purple-400', food: 'bg-orange-400', fun: 'bg-pink-400' };
-           return map[cat] || 'bg-gray-400';
-        };
-        const formatNumber = (num) => num.toLocaleString();
+        const formatDate = (d) => new Date(d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        const formatSimpleTime = (t) => t;
+        const getPeriod = (t) => parseInt(t.split(':')[0]) < 12 ? 'AM' : 'PM';
+        const getCategoryColor = (c) => ({ travel: 'bg-blue-400', stay: 'bg-purple-400', food: 'bg-orange-400', fun: 'bg-pink-400' }[c] || 'bg-gray-400');
+        const formatNumber = (n) => n.toLocaleString();
         const totalExpense = computed(() => Object.values(expenses.value).reduce((a,b)=>a+b,0));
+        
+        // Modals Stub
+        const openMemberModal = () => console.log('Member Modal');
+        const toggleItemDone = (item) => item.done = !item.done;
 
-        // Scroll listener
         onMounted(() => {
-           window.addEventListener('scroll', () => {
-              isScrolled.value = window.scrollY > 10;
-           });
+           window.addEventListener('scroll', () => { isScrolled.value = window.scrollY > 10; });
+           fetchTripData();
         });
 
         return {
+           version, loading,
+           currentLang, t, toggleLang,
            flightCardSkin, toggleSkin,
            activeFlight, formatTime, displayDate, getStatusClass,
-           rate, currentLiveRate, lastRateUpdateLabel, handleCalcInput, calcResult,
-           sortedItinerary, formatDate, formatSimpleTime, getPeriod, getCategoryColor, openItineraryModal,
-           shoppingList, toggleItemDone, openShoppingModal,
-           expenses, totalExpense, formatNumber, openExpenseModal,
-           members, openMemberModal, openFlightModal, openRateModal, isScrolled
+           rate, currentLiveRate, handleCalcInput, calcResult,
+           sortedItinerary, formatDate, formatSimpleTime, getPeriod, getCategoryColor,
+           shoppingList, toggleItemDone,
+           expenses, totalExpense, formatNumber,
+           members, openMemberModal, isScrolled
         };
       }
     }).mount('#app');
