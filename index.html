@@ -55,11 +55,16 @@
     .toggle-checkbox:checked + .toggle-label {
       background-color: #34C759;
     }
+    
+    /* Pre-load Cloak: 避免 Vue 尚未載入時顯示亂碼 */
+    [v-cloak] {
+      display: none;
+    }
   </style>
 </head>
 <body class="bg-[#F2F2F7] min-h-screen text-slate-800">
 
-  <div id="app" class="max-w-md mx-auto relative pb-32">
+  <div id="app" v-cloak class="max-w-md mx-auto relative pb-32">
     
     <header class="sticky top-0 z-[100] pt-12 pb-2 px-6 flex justify-between items-end bg-[#F2F2F7]/90 backdrop-blur-md transition-all duration-300"
             :class="{ 'shadow-sm border-b border-gray-200/50': isScrolled }">
@@ -73,7 +78,7 @@
       </div>
 
       <div class="flex flex-col items-end gap-2">
-         <button @click="toggleLang" class="text-[10px] font-bold bg-gray-200/80 hover:bg-gray-300 px-2 py-0.5 rounded-md text-gray-600 transition-colors uppercase tracking-wider">
+         <button @click="toggleLang" class="text-[10px] font-bold bg-gray-200/80 hover:bg-gray-300 px-2 py-0.5 rounded-md text-gray-600 transition-colors uppercase tracking-wider cursor-pointer">
             {{ currentLang === 'zh-HK' ? 'EN (UK)' : '繁體 (HK)' }}
          </button>
 
@@ -422,20 +427,30 @@
   <script>
     const { createApp, ref, computed, onMounted } = Vue;
 
-    // 2. Initialize Supabase
+    // Supabase Config
     const supabaseUrl = 'https://myrhatzdypiwwgmmfbuw.supabase.co';
-    const supabaseKey = 'sb_publishable_bnnah-2fsCaQnKZDoKNJQw_NuYQVvKi'; // Kept as provided
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    const supabaseKey = 'sb_publishable_bnnah-2fsCaQnKZDoKNJQw_NuYQVvKi';
+
+    // Safe Initialization: Avoid crash if window.supabase is missing or key is invalid
+    let supabase = null;
+    try {
+        if (window.supabase) {
+            supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        } else {
+            console.warn('Supabase JS library not loaded.');
+        }
+    } catch (e) {
+        console.error('Supabase Init Error:', e);
+    }
 
     createApp({
       setup() {
         // --- State ---
-        // 1. Version Update
         const version = ref('v251221-5.20');
         const loading = ref(false);
         const flightCardSkin = ref('hkg'); 
         
-        // 4. i18n
+        // i18n
         const currentLang = ref('zh-HK');
         const translations = {
            'zh-HK': {
@@ -472,12 +487,16 @@
            }
         };
 
-        const t = (key) => translations[currentLang.value][key] || key;
+        const t = (key) => {
+            const langData = translations[currentLang.value];
+            return (langData && langData[key]) ? langData[key] : key;
+        };
+
         const toggleLang = () => {
            currentLang.value = currentLang.value === 'zh-HK' ? 'en-UK' : 'zh-HK';
         };
 
-        // Data placeholders
+        // Default Data
         const activeFlight = ref({
            airline_iata: 'CX', airline_name: 'Cathay Pacific', flight_iata: 'CX506',
            origin_iata: 'HKG', origin_terminal: '1', origin_gate: '24',
@@ -488,23 +507,30 @@
            liveLink: 'https://flighty.com'
         });
 
-        // 2. Fetch Logic (Stub for demonstration with ID testUI)
+        // Fetch Logic with Error Handling
         const fetchTripData = async () => {
-           loading.value = true;
-           const { data, error } = await supabase
-              .from('trip_data')
-              .select('*')
-              .eq('id', 'testUI')
-              .single();
+           if (!supabase) return; // Skip if Supabase not init
            
-           if (data && !error) {
-              console.log('Fetched data:', data);
-              // Map DB fields to state if necessary in future
-              // e.g., activeFlight.value = data.flight_info;
-           } else {
-              console.log('Using default/mock data (Fetch error or no data)');
+           loading.value = true;
+           try {
+               const { data, error } = await supabase
+                  .from('trip_data')
+                  .select('*')
+                  .eq('id', 'testUI')
+                  .single();
+               
+               if (data && !error) {
+                  console.log('Fetched data:', data);
+                  // You can bind data here, e.g.:
+                  // if(data.flight_info) activeFlight.value = data.flight_info;
+               } else {
+                  console.log('Using default data (No record or Error)');
+               }
+           } catch (err) {
+               console.error('Fetch error:', err);
+           } finally {
+               loading.value = false;
            }
-           loading.value = false;
         };
 
         const rate = ref(0.052);
@@ -565,7 +591,6 @@
         const formatNumber = (n) => n.toLocaleString();
         const totalExpense = computed(() => Object.values(expenses.value).reduce((a,b)=>a+b,0));
         
-        // Modals Stub
         const openMemberModal = () => console.log('Member Modal');
         const toggleItemDone = (item) => item.done = !item.done;
 
