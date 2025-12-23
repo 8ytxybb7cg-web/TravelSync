@@ -120,399 +120,6 @@
 <body class="bg-[#F2F2F7] min-h-screen text-slate-800">
 
   <div id="app" class="max-w-md mx-auto relative pb-32">
-</div>
-
-<script>
-  const { createApp, ref, reactive, computed, onMounted, nextTick, watch } = Vue;
-  const { createClient } = supabase;
-
-    // --- Supabase Config ---
-    const SUPABASE_URL = 'https://myrhatzdypiwwgmmfbuw.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_bnnah-2fsCaQnKZDoKNJQw_NuYQVvKi';
-    const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
-    const TRIP_ID = 'testUI'; // Use specific ID as requested
-
-    createApp({
-      setup() {
-        // --- Global State ---
-        const appVersion = ref('v251222-6.2');
-        const lang = ref('zh'); 
-        const flightCardSkin = ref('ios'); // Default to iOS to show off new style
-        const isScrolled = ref(false);
-        const members = ref([1, 2]); // Default members
-        const syncState = ref('synced'); // saving, loading, error
-
-        // --- Data Refs (Merging 5.09 functionality) ---
-        // Pre-trip
-        const prepList = ref([
-           { id: 101, name: 'Passport & Visa', done: true },
-           { id: 102, name: 'Power Bank', done: false }
-        ]);
-        const newPreNote = reactive({ name: '', isDone: false });
-        
-        // Itinerary
-        const itinerary = ref({
-          '2025-12-21': [
-             { id: 1, title: 'Arrival at KIX', time: '14:40', location: 'Kansai Airport', category: 'travel', note: 'Pick up JR Pass' }
-          ]
-        });
-        const newItineraryItem = reactive({ id: null, title: '', time: '', location: '', category: 'travel', note: '', dateKey: '' });
-
-        // Shopping
-        const shoppingList = ref([
-           { id: 201, name: 'Matcha KitKat', price: 300, done: false }
-        ]);
-        const newShoppingItem = reactive({ id: null, name: '', price: '', done: false });
-
-        // Expenses
-        const expenses = ref([
-            // Example data structure from 5.09
-            { id: 301, name: 'Dinner', amount: 12000, currency: 'JPY', category: '餐飲', payer: 1, involved: [1,2], paymentMethod: 'cash', date: '2025-12-21' }
-        ]);
-        const newExpense = reactive({ 
-            id: null, name: '', amount: '', currency: 'JPY', category: '餐飲', 
-            payer: '', involved: [], paymentMethod: 'cash', date: '' 
-        });
-        const expenseFilter = ref('all');
-        const isDraggingExpense = ref(false);
-
-        // Flight Data (Expanded for 5.09 visuals)
-        const activeFlight = ref({
-          airline_iata: 'CX', airline_name: 'Cathay Pacific', flight_iata: 'CX506',
-          origin_iata: 'HKG', origin_terminal: '1', origin_gate: '24',
-          dest_iata: 'KIX', dest_terminal: '1',
-          dep_time: '2025-12-21T10:00:00', arr_time: '2025-12-21T14:40:00',
-          duration: '3h 40m', status: 'On Time', liveLink: 'https://flighty.com',
-          note: 'Economy' // Added from 5.09
-        });
-
-        // Info/Notes
-        const infoText = ref("Remember to fill out the Visit Japan Web form.");
-
-        // Rates & Calc
-        const rate = ref(0.052);
-        const currentLiveRate = ref(0.0518);
-        const lastRateUpdateLabel = ref('Updated 10m ago');
-        const calcInput = ref('');
-        const calcResult = ref(0);
-
-        // --- Modals Control ---
-        const modalState = reactive({
-            flight: false,
-            member: false,
-            rate: false,
-            itinerary: false,
-            shopping: false,
-            prep: false,
-            expense: false,
-            settlement: false // New settlement view
-        });
-
-        // --- i18n Dictionary (Expanded for 5.09 Features) ---
-        const i18n = {
-           en: {
-              activeFlightText: 'Active Flight',
-              tapToAdd: 'Tap to add flight details',
-              estimatedDeparture: 'Estimated Departure',
-              estimatedArrival: 'Estimated Arrival',
-              terminal: 'Terminal', gate: 'Gate', arriveTerm: 'Arrive Term', flight: 'Flight', cabin: 'Cabin', to: 'to',
-              rate: 'JPY Rate',
-              itinerary: 'Itinerary', addEvent: 'Add Event', items: 'items',
-              prepList: 'Preparation', noPrepItems: 'All set! No items to display.',
-              shopping: 'Shopping', expenses: 'Expenses', totalSpent: 'Total Spent',
-              food: 'Food', transport: 'Transport', shop: 'Shop', info: 'Travel Info',
-              home: 'Home', map: 'Map', wallet: 'Wallet', settings: 'Settings',
-              // New 5.09 Terms
-              edit: 'Edit', delete: 'Delete', save: 'Save', cancel: 'Cancel',
-              newItem: 'New Item', editItem: 'Edit Item',
-              payer: 'Payer', involved: 'Involved', selectAll: 'Select All',
-              method: 'Method', cash: 'Cash', credit: 'Card',
-              settlement: 'Settlement', shouldPay: 'Should Pay', shouldReceive: 'Should Receive',
-              confirmDelete: 'Are you sure?',
-              calcDone: 'Done'
-           },
-           zh: {
-              activeFlightText: '航班實況',
-              tapToAdd: '點擊新增航班資訊',
-              estimatedDeparture: '預計起飛',
-              estimatedArrival: '預計抵達',
-              terminal: '客運大樓', gate: '登機閘口', arriveTerm: '抵達大樓', flight: '航班', cabin: '艙等', to: '前往',
-              rate: '日圓匯率',
-              itinerary: '行程安排', addEvent: '新增', items: '項目',
-              prepList: '準備清單', noPrepItems: '準備就緒！暫無項目。',
-              shopping: '購物清單', expenses: '支出', totalSpent: '總支出',
-              food: '飲食', transport: '交通', shop: '購物', info: '旅程資訊',
-              home: '首頁', map: '地圖', wallet: '錢包', settings: '設定',
-              // New 5.09 Terms
-              edit: '編輯', delete: '刪除', save: '儲存', cancel: '取消',
-              newItem: '新增項目', editItem: '編輯項目',
-              payer: '支付者', involved: '分帳人', selectAll: '全選',
-              method: '支付', cash: '現金', credit: '信用卡',
-              settlement: '結算', shouldPay: '需支付', shouldReceive: '需收取',
-              confirmDelete: '確定刪除？',
-              calcDone: '完成'
-           }
-        };
-
-        const t = (key) => i18n[lang.value][key] || key;
-        const toggleLang = () => { lang.value = lang.value === 'zh' ? 'en' : 'zh'; };
-
-        // Helper to generate IDs
-        const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
-
-        // --- Methods (Ported & Merged) ---
-        const toggleSkin = () => {
-          flightCardSkin.value = flightCardSkin.value === 'ios' ? 'hkg' : 'ios';
-        };
-
-        const formatTime = (isoString) => {
-          if (!isoString) return '--:--';
-          // Handle simple time string "HH:MM" vs ISO
-          if(isoString.length === 5 && isoString.includes(':')) return isoString; 
-          const date = new Date(isoString);
-          return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-        };
-
-        const displayDate = (isoString) => {
-          if (!isoString) return '';
-          const date = new Date(isoString);
-          return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase();
-        };
-
-        const getStatusClass = (status) => {
-           [cite_start]// 5.09 style status classes [cite: 290-292]
-           switch(status?.toLowerCase()) {
-              case 'on time': return 'text-[#34C759] bg-[#34C759]/15 border border-[#34C759]/20';
-              case 'delayed': return 'text-[#FF3B30] bg-[#FF3B30]/15 border border-[#FF3B30]/20';
-              case 'boarding': return 'text-[#FFCC00] bg-[#FFCC00]/15 border border-[#FFCC00]/20';
-              case 'landed': return 'text-[#007AFF] bg-[#007AFF]/15 border border-[#007AFF]/20';
-              default: return 'bg-white/10 text-white border-white/20';
-           }
-        };
-
-        [cite_start]// --- Calculator Logic [cite: 327-335] ---
-        const handleCalcInput = (key) => {
-             let val = String(newExpense.amount || '');
-             if (val === '0' && key !== '.' && !['+','-','*','/'].includes(key)) val = '';
-             
-             if (key === 'C') {
-                 newExpense.amount = '';
-             } else if (key === 'DEL') {
-                 newExpense.amount = val.slice(0, -1);
-             } else if (key === '=') {
-                 try {
-                     if(!val) return;
-                     // Safety replace for eval
-                     const safeVal = val.replace(/[^0-9+\-*/.]/g, ''); 
-                     newExpense.amount = eval(safeVal); [cite_start]//[span_0](end_span)
-                 } catch (e) {}
-             } else {
-                 const lastChar = val.slice(-1);
-                 const isOp = ['+','-','*','/'].includes(key);
-                 const lastIsOp = ['+','-','*','/'].includes(lastChar);
-                 if (isOp && lastIsOp) {
-                     newExpense.amount = val.slice(0, -1) + key;
-                 } else {
-                     newExpense.amount = val + key;
-                 }
-             }
-        };
-
-        // --- CRUD Operations (Generic) ---
-        // Helper to open specific modals with default data
-        const openModal = (type, item = null) => {
-            if(type === 'expense') {
-                const def = { 
-                    id: null, name:'', amount:'', currency:'JPY', category:'餐飲', 
-                    paymentMethod:'cash', date: new Date().toISOString().split('T')[0],
-                    payer: members.value[0], involved: [...members.value], 
-                    exchangeRate: null 
-                };
-                Object.assign(newExpense, item ? JSON.parse(JSON.stringify(item)) : def);
-                modalState.expense = true;
-            } else if (type === 'shopping') {
-                Object.assign(newShoppingItem, item ? JSON.parse(JSON.stringify(item)) : { id: null, name: '', price: '', done: false });
-                modalState.shopping = true;
-            } else if (type === 'itinerary') {
-                Object.assign(newItineraryItem, item ? JSON.parse(JSON.stringify(item)) : { id: null, title: '', time: '', location: '', category: 'travel', note: '' });
-                modalState.itinerary = true;
-            } else if (type === 'prep') {
-                Object.assign(newPreNote, item ? JSON.parse(JSON.stringify(item)) : { id: null, name: '', isDone: false });
-                modalState.prep = true;
-            }
-        };
-
-        const saveItem = (type) => {
-             // Logic to push to arrays and sync
-             if(type === 'expense') {
-                 if(!newExpense.amount) return;
-                 const saveObj = { ...newExpense, id: newExpense.id || generateId() };
-                 [span_1](start_span)// Ensure order index logic from 5.09[span_1](end_span)
-                 if(!saveObj.id) saveObj.order_index = expenses.value.length; 
-                 
-                 const idx = expenses.value.findIndex(e => e.id === saveObj.id);
-                 if(idx !== -1) expenses.value.splice(idx, 1, saveObj);
-                 else expenses.value.push(saveObj);
-                 modalState.expense = false;
-             }
-             else if(type === 'shopping') {
-                 const saveObj = { ...newShoppingItem, id: newShoppingItem.id || generateId() };
-                 const idx = shoppingList.value.findIndex(e => e.id === saveObj.id);
-                 if(idx !== -1) shoppingList.value.splice(idx, 1, saveObj);
-                 else shoppingList.value.push(saveObj);
-                 modalState.shopping = false;
-             }
-             else if(type === 'itinerary') {
-                 const saveObj = { ...newItineraryItem, id: newItineraryItem.id || generateId() };
-                 // 5.09 Logic: Sort by time
-                 const targetDate = '2025-12-21'; // Simplified for demo, mapped to dates in real app
-                 if(!itinerary.value[targetDate]) itinerary.value[targetDate] = [];
-                 
-                 const idx = itinerary.value[targetDate].findIndex(e => e.id === saveObj.id);
-                 if(idx !== -1) itinerary.value[targetDate].splice(idx, 1, saveObj);
-                 else itinerary.value[targetDate].push(saveObj);
-                 
-                 [span_2](start_span)// Sort[span_2](end_span)
-                 itinerary.value[targetDate].sort((a,b) => (a.time || '23:59').localeCompare(b.time || '23:59'));
-                 modalState.itinerary = false;
-             }
-             saveAll();
-        };
-
-        const deleteItem = (type, id) => {
-             if(!confirm(t('confirmDelete'))) return;
-             if(type === 'expense') expenses.value = expenses.value.filter(e => e.id !== id);
-             if(type === 'shopping') shoppingList.value = shoppingList.value.filter(e => e.id !== id);
-             // Itinerary deletion logic requires finding the day, simplified here:
-             Object.keys(itinerary.value).forEach(date => {
-                 itinerary.value[date] = itinerary.value[date].filter(e => e.id !== id);
-             });
-             saveAll();
-        };
-
-        [cite_start]// --- SortableJS Logic [cite: 417-435] ---
-        const initSortable = (elClass, listRef) => {
-            const els = document.querySelectorAll(elClass);
-            els.forEach(el => {
-                Sortable.create(el, {
-                    handle: '.drag-handle',
-                    animation: 150,
-                    delay: 150, delayOnTouchOnly: true,
-                    onEnd: (evt) => {
-                        // Mutate array
-                        const item = listRef.value.splice(evt.oldIndex, 1)[0];
-                        listRef.value.splice(evt.newIndex, 0, item);
-                        saveAll();
-                    }
-                });
-            });
-        };
-
-        // --- Computed Properties ---
-        [cite_start]const totalExpense = computed(() => { // [cite: 336-339]
-             const liveRate = Number(currentLiveRate.value) || 0.052;
-             let totalHKD = 0;
-             expenses.value.forEach(e => {
-                 let amt = Number(e.amount) || 0;
-                 let hkdAmt = 0;
-                 if(e.currency === 'JPY') hkdAmt = amt * 0.052; // Fixed rate for demo
-                 else if(e.currency === 'HKD') hkdAmt = amt;
-                 totalHKD += hkdAmt;
-             });
-             return totalHKD;
-        });
-        
-        const expensesBreakdown = computed(() => {
-             const cats = { food: 0, transport: 0, shopping: 0 };
-             expenses.value.forEach(e => {
-                 let amt = Number(e.amount) || 0;
-                 // Simple mapping
-                 if(e.category === '餐飲') cats.food += amt;
-                 if(e.category === '交通') cats.transport += amt;
-                 if(e.category === '購物') cats.shopping += amt;
-             });
-             return cats;
-        });
-
-        [cite_start]const settlementList = computed(() => { // [cite: 317-322]
-             const balances = {};
-             members.value.forEach(m => balances[m] = 0);
-             expenses.value.forEach(e => {
-                 let amount = Number(e.amount) || 0;
-                 let hkdAmt = (e.currency === 'JPY' ? amount * 0.052 : amount); // Simplified conversion
-                 
-                 const payer = e.payer || members.value[0];
-                 const involved = e.involved && e.involved.length > 0 ? e.involved : members.value;
-                 
-                 if(balances[payer] === undefined) balances[payer] = 0;
-                 balances[payer] += hkdAmt;
-                 
-                 const splitAmt = hkdAmt / involved.length;
-                 involved.forEach(p => {
-                     if(balances[p] === undefined) balances[p] = 0;
-                     balances[p] -= splitAmt;
-                 });
-             });
-             return Object.keys(balances).map(k => ({ name: k, amount: balances[k] })).filter(x => Math.abs(x.amount) > 1);
-        });
-
-        [cite_start]// --- Supabase Sync [cite: 441-453] ---
-        const fetchTripData = async () => {
-           try {
-              syncState.value = 'loading';
-              const { data, error } = await sb.from('trip_data').select('*').eq('id', TRIP_ID).single();
-              if (data?.content) {
-                 const c = data.content;
-                 if(c.itinerary) itinerary.value = c.itinerary;
-                 if(c.expenses) expenses.value = c.expenses;
-                 if(c.shoppingList) shoppingList.value = c.shoppingList;
-                 if(c.members) members.value = c.members;
-                 if(c.prepList) prepList.value = c.prepList;
-              }
-              syncState.value = 'synced';
-           } catch (err) { console.error(err); syncState.value = 'error'; }
-        };
-
-        [cite_start]const saveAll = async () => { // [cite: 450-453]
-            syncState.value = 'saving';
-            const payload = {
-                itinerary: itinerary.value,
-                expenses: expenses.value,
-                shoppingList: shoppingList.value,
-                members: members.value,
-                prepList: prepList.value,
-                updated_at: Date.now()
-            };
-            await sb.from('trip_data').upsert({ id: TRIP_ID, content: payload });
-            setTimeout(() => syncState.value = 'synced', 500);
-        };
-
-        // --- Lifecycle ---
-        onMounted(() => {
-          window.addEventListener('scroll', () => { isScrolled.value = window.scrollY > 10; });
-          fetchTripData();
-          // Init Sortable after DOM render
-          nextTick(() => {
-             // We will initialize sortable via watch or manual init in template refs in Part 3
-          });
-        });
-
-        // Watchers to re-init sortable
-        watch(() => shoppingList.value.length, () => nextTick(() => initSortable('.shopping-list-container', shoppingList)));
-
-        return {
-          appVersion, lang, t, toggleLang, flightCardSkin, toggleSkin,
-          activeFlight, formatTime, displayDate, getStatusClass,
-          rate, currentLiveRate, lastRateUpdateLabel, handleCalcInput, calcResult, calcInput,
-          itinerary, newItineraryItem, shoppingList, newShoppingItem, expenses, newExpense, expenseFilter,
-          prepList, newPreNote, members, infoText,
-          modalState, openModal, saveItem, deleteItem,
-          totalExpense, expensesBreakdown, settlementList,
-          isScrolled, syncState, isDraggingExpense, formatNumber: (n) => Number(n).toLocaleString()
-        };
-      }
-    }).mount('#app');
-  </script>
 
     <header 
       class="sticky top-0 z-50 pt-12 pb-2 px-6 flex justify-between items-end bg-[#F2F2F7]/90 backdrop-blur-md transition-all duration-300"
@@ -1006,6 +613,340 @@
             </div>
         </div>
     </div>
+  </div> 
 
-  </div> </body>
+  <script>
+    const { createApp, ref, reactive, computed, onMounted, nextTick, watch } = Vue;
+    const { createClient } = supabase;
+
+    // --- Supabase Config ---
+    const SUPABASE_URL = 'https://myrhatzdypiwwgmmfbuw.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_bnnah-2fsCaQnKZDoKNJQw_NuYQVvKi';
+    const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+    const TRIP_ID = 'testUI';
+
+    createApp({
+      setup() {
+        // --- Global State ---
+        const appVersion = ref('v251222-6.2');
+        const lang = ref('zh'); 
+        const flightCardSkin = ref('ios');
+        const isScrolled = ref(false);
+        const members = ref([1, 2]);
+        const syncState = ref('synced');
+
+        // --- Data Refs ---
+        const prepList = ref([
+           { id: 101, name: 'Passport & Visa', done: true },
+           { id: 102, name: 'Power Bank', done: false }
+        ]);
+        const newPreNote = reactive({ name: '', isDone: false });
+        
+        const itinerary = ref({
+          '2025-12-21': [
+             { id: 1, title: 'Arrival at KIX', time: '14:40', location: 'Kansai Airport', category: 'travel', note: 'Pick up JR Pass' }
+          ]
+        });
+        const newItineraryItem = reactive({ id: null, title: '', time: '', location: '', category: 'travel', note: '', dateKey: '' });
+
+        const shoppingList = ref([
+           { id: 201, name: 'Matcha KitKat', price: 300, done: false }
+        ]);
+        const newShoppingItem = reactive({ id: null, name: '', price: '', done: false });
+
+        const expenses = ref([
+            { id: 301, name: 'Dinner', amount: 12000, currency: 'JPY', category: '餐飲', payer: 1, involved: [1,2], paymentMethod: 'cash', date: '2025-12-21' }
+        ]);
+        const newExpense = reactive({ 
+            id: null, name: '', amount: '', currency: 'JPY', category: '餐飲', 
+            payer: '', involved: [], paymentMethod: 'cash', date: '' 
+        });
+        const expenseFilter = ref('all');
+        const isDraggingExpense = ref(false);
+
+        const activeFlight = ref({
+          airline_iata: 'CX', airline_name: 'Cathay Pacific', flight_iata: 'CX506',
+          origin_iata: 'HKG', origin_terminal: '1', origin_gate: '24',
+          dest_iata: 'KIX', dest_terminal: '1',
+          dep_time: '2025-12-21T10:00:00', arr_time: '2025-12-21T14:40:00',
+          duration: '3h 40m', status: 'On Time', liveLink: 'https://flighty.com',
+          note: 'Economy'
+        });
+
+        const infoText = ref("Remember to fill out the Visit Japan Web form.");
+        const rate = ref(0.052);
+        const currentLiveRate = ref(0.0518);
+        const lastRateUpdateLabel = ref('Updated 10m ago');
+        const calcInput = ref('');
+        const calcResult = ref(0);
+
+        // --- Modals Control ---
+        const modalState = reactive({
+            flight: false, member: false, rate: false,
+            itinerary: false, shopping: false, prep: false,
+            expense: false, settlement: false
+        });
+
+        // --- i18n Dictionary ---
+        const i18n = {
+           en: {
+              activeFlightText: 'Active Flight', tapToAdd: 'Tap to add flight details',
+              estimatedDeparture: 'Estimated Departure', estimatedArrival: 'Estimated Arrival',
+              terminal: 'Terminal', gate: 'Gate', arriveTerm: 'Arrive Term', flight: 'Flight', cabin: 'Cabin', to: 'to',
+              rate: 'JPY Rate', itinerary: 'Itinerary', addEvent: 'Add Event', items: 'items',
+              prepList: 'Preparation', noPrepItems: 'All set! No items to display.',
+              shopping: 'Shopping', expenses: 'Expenses', totalSpent: 'Total Spent',
+              food: 'Food', transport: 'Transport', shop: 'Shop', info: 'Travel Info',
+              home: 'Home', map: 'Map', wallet: 'Wallet', settings: 'Settings',
+              edit: 'Edit', delete: 'Delete', save: 'Save', cancel: 'Cancel',
+              newItem: 'New Item', editItem: 'Edit Item',
+              payer: 'Payer', involved: 'Involved', selectAll: 'Select All',
+              method: 'Method', cash: 'Cash', credit: 'Card',
+              settlement: 'Settlement', shouldPay: 'Should Pay', shouldReceive: 'Should Receive',
+              confirmDelete: 'Are you sure?', calcDone: 'Done'
+           },
+           zh: {
+              activeFlightText: '航班實況', tapToAdd: '點擊新增航班資訊',
+              estimatedDeparture: '預計起飛', estimatedArrival: '預計抵達',
+              terminal: '客運大樓', gate: '登機閘口', arriveTerm: '抵達大樓', flight: '航班', cabin: '艙等', to: '前往',
+              rate: '日圓匯率', itinerary: '行程安排', addEvent: '新增', items: '項目',
+              prepList: '準備清單', noPrepItems: '準備就緒！暫無項目。',
+              shopping: '購物清單', expenses: '支出', totalSpent: '總支出',
+              food: '飲食', transport: '交通', shop: '購物', info: '旅程資訊',
+              home: '首頁', map: '地圖', wallet: '錢包', settings: '設定',
+              edit: '編輯', delete: '刪除', save: '儲存', cancel: '取消',
+              newItem: '新增項目', editItem: '編輯項目',
+              payer: '支付者', involved: '分帳人', selectAll: '全選',
+              method: '支付', cash: '現金', credit: '信用卡',
+              settlement: '結算', shouldPay: '需支付', shouldReceive: '需收取',
+              confirmDelete: '確定刪除？', calcDone: '完成'
+           }
+        };
+        const t = (key) => i18n[lang.value][key] || key;
+        const toggleLang = () => { lang.value = lang.value === 'zh' ? 'en' : 'zh'; };
+        const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
+
+        // --- Methods ---
+        const toggleSkin = () => { flightCardSkin.value = flightCardSkin.value === 'ios' ? 'hkg' : 'ios'; };
+        
+        const formatTime = (isoString) => {
+          if (!isoString) return '--:--';
+          if(isoString.length === 5 && isoString.includes(':')) return isoString;
+          const date = new Date(isoString);
+          return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        };
+        
+        const displayDate = (isoString) => {
+          if (!isoString) return '';
+          const date = new Date(isoString);
+          return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase();
+        };
+
+        const getStatusClass = (status) => {
+           switch(status?.toLowerCase()) {
+              case 'on time': return 'text-[#34C759] bg-[#34C759]/15 border border-[#34C759]/20';
+              case 'delayed': return 'text-[#FF3B30] bg-[#FF3B30]/15 border border-[#FF3B30]/20';
+              case 'boarding': return 'text-[#FFCC00] bg-[#FFCC00]/15 border border-[#FFCC00]/20';
+              case 'landed': return 'text-[#007AFF] bg-[#007AFF]/15 border border-[#007AFF]/20';
+              default: return 'bg-white/10 text-white border-white/20';
+           }
+        };
+
+        const handleCalcInput = (key) => {
+             let val = String(newExpense.amount || '');
+             if (val === '0' && key !== '.' && !['+','-','*','/'].includes(key)) val = '';
+             if (key === 'C') {
+                 newExpense.amount = '';
+             } else if (key === 'DEL') {
+                 newExpense.amount = val.slice(0, -1);
+             } else if (key === '=') {
+                 try {
+                     if(!val) return;
+                     const safeVal = val.replace(/[^0-9+\-*/.]/g, '');
+                     newExpense.amount = eval(safeVal); 
+                 } catch (e) {}
+             } else {
+                 const lastChar = val.slice(-1);
+                 const isOp = ['+','-','*','/'].includes(key);
+                 const lastIsOp = ['+','-','*','/'].includes(lastChar);
+                 if (isOp && lastIsOp) {
+                     newExpense.amount = val.slice(0, -1) + key;
+                 } else {
+                     newExpense.amount = val + key;
+                 }
+             }
+        };
+
+        const openModal = (type, item = null) => {
+            if(type === 'expense') {
+                const def = { 
+                    id: null, name:'', amount:'', currency:'JPY', category:'餐飲', 
+                    paymentMethod:'cash', date: new Date().toISOString().split('T')[0],
+                    payer: members.value[0], involved: [...members.value], 
+                    exchangeRate: null 
+                };
+                Object.assign(newExpense, item ? JSON.parse(JSON.stringify(item)) : def);
+                modalState.expense = true;
+            } else if (type === 'shopping') {
+                Object.assign(newShoppingItem, item ? JSON.parse(JSON.stringify(item)) : { id: null, name: '', price: '', done: false });
+                modalState.shopping = true;
+            } else if (type === 'itinerary') {
+                Object.assign(newItineraryItem, item ? JSON.parse(JSON.stringify(item)) : { id: null, title: '', time: '', location: '', category: 'travel', note: '' });
+                modalState.itinerary = true;
+            } else if (type === 'prep') {
+                Object.assign(newPreNote, item ? JSON.parse(JSON.stringify(item)) : { id: null, name: '', isDone: false });
+                modalState.prep = true;
+            }
+        };
+
+        const saveItem = (type) => {
+             if(type === 'expense') {
+                 if(!newExpense.amount) return;
+                 const saveObj = { ...newExpense, id: newExpense.id || generateId() };
+                 if(!saveObj.id) saveObj.order_index = expenses.value.length;
+                 const idx = expenses.value.findIndex(e => e.id === saveObj.id);
+                 if(idx !== -1) expenses.value.splice(idx, 1, saveObj);
+                 else expenses.value.push(saveObj);
+                 modalState.expense = false;
+             }
+             else if(type === 'shopping') {
+                 const saveObj = { ...newShoppingItem, id: newShoppingItem.id || generateId() };
+                 const idx = shoppingList.value.findIndex(e => e.id === saveObj.id);
+                 if(idx !== -1) shoppingList.value.splice(idx, 1, saveObj);
+                 else shoppingList.value.push(saveObj);
+                 modalState.shopping = false;
+             }
+             else if(type === 'itinerary') {
+                 const saveObj = { ...newItineraryItem, id: newItineraryItem.id || generateId() };
+                 const targetDate = '2025-12-21'; 
+                 if(!itinerary.value[targetDate]) itinerary.value[targetDate] = [];
+                 const idx = itinerary.value[targetDate].findIndex(e => e.id === saveObj.id);
+                 if(idx !== -1) itinerary.value[targetDate].splice(idx, 1, saveObj);
+                 else itinerary.value[targetDate].push(saveObj);
+                 
+                 itinerary.value[targetDate].sort((a,b) => (a.time || '23:59').localeCompare(b.time || '23:59'));
+                 modalState.itinerary = false;
+             }
+             saveAll();
+        };
+
+        const deleteItem = (type, id) => {
+             if(!confirm(t('confirmDelete'))) return;
+             if(type === 'expense') expenses.value = expenses.value.filter(e => e.id !== id);
+             if(type === 'shopping') shoppingList.value = shoppingList.value.filter(e => e.id !== id);
+             Object.keys(itinerary.value).forEach(date => {
+                 itinerary.value[date] = itinerary.value[date].filter(e => e.id !== id);
+             });
+             saveAll();
+        };
+
+        const initSortable = (elClass, listRef) => {
+            const els = document.querySelectorAll(elClass);
+            els.forEach(el => {
+                Sortable.create(el, {
+                    handle: '.drag-handle',
+                    animation: 150, delay: 150, delayOnTouchOnly: true,
+                    onEnd: (evt) => {
+                        const item = listRef.value.splice(evt.oldIndex, 1)[0];
+                        listRef.value.splice(evt.newIndex, 0, item);
+                        saveAll();
+                    }
+                });
+            });
+        };
+
+        // --- Computed ---
+        const totalExpense = computed(() => {
+             let totalHKD = 0;
+             expenses.value.forEach(e => {
+                 let amt = Number(e.amount) || 0;
+                 let hkdAmt = 0;
+                 if(e.currency === 'JPY') hkdAmt = amt * 0.052; 
+                 else if(e.currency === 'HKD') hkdAmt = amt;
+                 totalHKD += hkdAmt;
+             });
+             return totalHKD;
+        });
+
+        const expensesBreakdown = computed(() => {
+             const cats = { food: 0, transport: 0, shopping: 0 };
+             expenses.value.forEach(e => {
+                 let amt = Number(e.amount) || 0;
+                 if(e.category === '餐飲') cats.food += amt;
+                 if(e.category === '交通') cats.transport += amt;
+                 if(e.category === '購物') cats.shopping += amt;
+             });
+             return cats;
+        });
+
+        const settlementList = computed(() => {
+             const balances = {};
+             members.value.forEach(m => balances[m] = 0);
+             expenses.value.forEach(e => {
+                 let amount = Number(e.amount) || 0;
+                 let hkdAmt = (e.currency === 'JPY' ? amount * 0.052 : amount);
+                 const payer = e.payer || members.value[0];
+                 const involved = e.involved && e.involved.length > 0 ? e.involved : members.value;
+                 
+                 if(balances[payer] === undefined) balances[payer] = 0;
+                 balances[payer] += hkdAmt;
+                 const splitAmt = hkdAmt / involved.length;
+                 involved.forEach(p => {
+                     if(balances[p] === undefined) balances[p] = 0;
+                     balances[p] -= splitAmt;
+                 });
+             });
+             return Object.keys(balances).map(k => ({ name: k, amount: balances[k] })).filter(x => Math.abs(x.amount) > 1);
+        });
+
+        // --- Sync ---
+        const fetchTripData = async () => {
+           try {
+              syncState.value = 'loading';
+              const { data, error } = await sb.from('trip_data').select('*').eq('id', TRIP_ID).single();
+              if (data?.content) {
+                 const c = data.content;
+                 if(c.itinerary) itinerary.value = c.itinerary;
+                 if(c.expenses) expenses.value = c.expenses;
+                 if(c.shoppingList) shoppingList.value = c.shoppingList;
+                 if(c.members) members.value = c.members;
+                 if(c.prepList) prepList.value = c.prepList;
+              }
+              syncState.value = 'synced';
+           } catch (err) { console.error(err); syncState.value = 'error'; }
+        };
+
+        const saveAll = async () => {
+            syncState.value = 'saving';
+            const payload = {
+                itinerary: itinerary.value, expenses: expenses.value,
+                shoppingList: shoppingList.value, members: members.value,
+                prepList: prepList.value, updated_at: Date.now()
+            };
+            await sb.from('trip_data').upsert({ id: TRIP_ID, content: payload });
+            setTimeout(() => syncState.value = 'synced', 500);
+        };
+
+        // --- Lifecycle ---
+        onMounted(() => {
+          window.addEventListener('scroll', () => { isScrolled.value = window.scrollY > 10; });
+          fetchTripData();
+        });
+
+        watch(() => shoppingList.value.length, () => nextTick(() => initSortable('.shopping-list-container', shoppingList)));
+
+        return {
+          appVersion, lang, t, toggleLang, flightCardSkin, toggleSkin,
+          activeFlight, formatTime, displayDate, getStatusClass,
+          rate, currentLiveRate, lastRateUpdateLabel, handleCalcInput, calcResult, calcInput,
+          itinerary, newItineraryItem, shoppingList, newShoppingItem, expenses, newExpense, expenseFilter,
+          prepList, newPreNote, members, infoText,
+          modalState, openModal, saveItem, deleteItem,
+          totalExpense, expensesBreakdown, settlementList,
+          isScrolled, syncState, isDraggingExpense, formatNumber: (n) => Number(n).toLocaleString()
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
 </html>
