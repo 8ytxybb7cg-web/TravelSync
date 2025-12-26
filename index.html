@@ -1,14 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-  <script>
-  window.onerror = function(msg, url, line, col, error) {
-    var extra = !col ? '' : '\ncolumn: ' + col;
-    extra += !error ? '' : '\nerror: ' + error;
-    alert("Error: " + msg + "\nurl: " + url + "\nline: " + line + extra);
-    return false;
-  };
-</script>
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
@@ -860,10 +852,11 @@ createApp({
     const supabaseUrl = 'https://myrhatzdypiwwgmmfbuw.supabase.co';
     const supabaseKey = 'sb_publishable_bnnah-2fsCaQnKZDoKNJQw_NuYQVvKi';
     
-    // 初始化 Supabase (如果沒有 Key 則為 null，系統會自動降級為 LocalStorage 模式)
-    const supabase = (typeof supabase !== 'undefined' && supabaseUrl.includes('http')) 
-                     ? supabase.createClient(supabaseUrl, supabaseKey) 
-                     : null;
+    // 初始化 Supabase（若 SDK 或 URL 不存在，則降級為 local mode）
+const supabase =
+  window.supabase && supabaseUrl.startsWith('http')
+    ? window.supabase.createClient(supabaseUrl, supabaseKey)
+    : null;
 
     // ================= 2. STATE (狀態管理) =================
     const currentTab = ref('home'); 
