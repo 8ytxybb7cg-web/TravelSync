@@ -841,7 +841,7 @@
     
     <div ref="sortableContainer" class="hidden"></div>
     
-  </div> ```
+  </div>
 <script>
 const { createApp, ref, computed, reactive, onMounted, watch, nextTick } = Vue;
 
@@ -851,7 +851,6 @@ createApp({
     //  ★ 請在此填入您的 Supabase URL 和 Key (用於資料庫同步與圖片上傳)
     const supabaseUrl = 'https://myrhatzdypiwwgmmfbuw.supabase.co';
     const supabaseKey = 'sb_publishable_bnnah-2fsCaQnKZDoKNJQw_NuYQVvKi';
-
     
     // 初始化 Supabase (如果沒有 Key 則為 null，系統會自動降級為 LocalStorage 模式)
     const supabase = (typeof supabase !== 'undefined' && supabaseUrl.includes('http')) 
