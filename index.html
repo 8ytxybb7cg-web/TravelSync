@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-HK"> <head> <meta charset="utf-8" /> <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" /> <meta name="robots" content="noindex, nofollow"> <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)"> <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)"> <title>Travel Sync Ultimate v7.02</title>
+<html lang="zh-HK"> <head> <meta charset="utf-8" /> <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" /> <meta name="robots" content="noindex, nofollow"> <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)"> <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)"> <title>Travel Sync Ultimate (v251227-7.02)</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -74,45 +74,15 @@
 
 /* --- 3. Lists &amp; Itinerary --- */
 /* iPhone Calendar Style */
-
-    /* 6.02 Demo Style Card (Updated) */
-    .cal-stripe-item {
-        background: white;
-        border-radius: 16px;
-        padding: 12px 16px;
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-        border: 1px solid rgba(0,0,0,0.03);
-        position: relative;
-        overflow: hidden;
-    }
-    /* 左側時間盒 */
-    .item-time-box {
-        min-width: 55px;
-        text-align: center;
-        border-right: 1px solid #F2F2F7;
-        padding-right: 12px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-    .item-time-main {
-        font-size: 17px;
-        font-weight: 800;
-        color: #1c1c1e;
-        line-height: 1;
-        font-variant-numeric: tabular-nums;
-    }
-    .item-time-sub {
-        font-size: 10px;
-        font-weight: 700;
-        color: #8E8E93;
-        text-transform: uppercase;
-        margin-top: 3px;
-    }
+.cal-stripe-item {
+    background: rgba(255,255,255,0.85);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    padding: 12px 16px; display: flex; align-items: flex-start; gap: 12px;
+    border-left: 4px solid #007AFF; /* Default Stripe */
+    backdrop-filter: blur(10px);
+}
+.cal-stripe-item:first-child { border-top-right-radius: 12px; }
+.cal-stripe-item:last-child { border-bottom-right-radius: 12px; border-bottom: none; }
 
 /* Prep List */
 .prep-item {
@@ -389,33 +359,22 @@
        </div>
        
        <div class="mt-2 space-y-2 min-h-[60px]">
-                    <div class="mt-4 px-1 space-y-3 min-h-[60px]">
-              <div v-for="item in currentDayItinerary" :key="item.id" 
-                   class="cal-stripe-item active:scale-[0.98] transition-transform"
-                   @click="handleItineraryClick(item)">
-                 
-                 <div class="item-time-box">
-                    <span class="item-time-main">{{ item.time }}</span>
-                    <span class="item-time-sub">{{ parseInt(item.time) >= 12 ? 'PM' : 'AM' }}</span>
-                 </div>
-
-                 <div class="flex-1 min-w-0">
-                    <div class="font-bold text-gray-900 text-[15px] truncate leading-tight">{{ item.title }}</div>
-                    <div class="text-xs text-gray-500 mt-1 truncate flex items-center gap-1">
-                        <i v-if="item.location" class="ph-fill ph-map-pin text-blue-500 text-[10px]"></i>
-                        {{ item.location || '---' }}
-                    </div>
-                 </div>
-                 
-                 <div class="text-gray-300">
-                    <i class="ph-bold ph-caret-right text-sm"></i>
-                 </div>
-              </div>
-
-              <div v-if="currentDayItinerary.length === 0" class="text-center py-8 text-xs text-gray-400 bg-white/50 rounded-2xl border border-dashed border-gray-200 mx-1">
-                 {{ t('noActivity') }}
-              </div>
-           </div>
+          <div v-for="item in currentDayItinerary" :key="item.id" 
+               class="cal-stripe-item rounded-xl group active:scale-[0.99] transition-transform"
+               @click="handleItineraryClick(item)">
+             <div class="flex-1 min-w-0">
+                <div class="font-bold text-gray-900 text-sm truncate">{{ item.title }}</div>
+                <div class="text-xs text-gray-500 mt-0.5 truncate flex items-center gap-1">
+                    <i v-if="item.location" class="ph-fill ph-map-pin text-[10px]"></i>
+                    {{ item.location || 'No Location' }}
+                </div>
+             </div>
+             <div class="text-xs font-bold text-gray-400 whitespace-nowrap pt-0.5">{{ item.time }}</div>
+          </div>
+          <div v-if="currentDayItinerary.length === 0" class="text-center py-6 text-xs text-gray-400 bg-white/50 rounded-xl border border-dashed border-gray-200">
+             {{ t('noActivity') }}
+          </div>
+       </div>
     </div>
 
     <div>
