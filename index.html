@@ -6,14 +6,12 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
-<title>Travel Sync v7.05</title>
-
+<title>Travel Sync Ultimate (v251227-7.02)</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/vue@3/dist/vue.global.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@phosphor-icons/web@2.0.3" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js" crossorigin="anonymous"></script>
-
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <style>
 /* --- 1. Variables & Base --- */
 :root {
@@ -30,7 +28,8 @@ touch-action: pan-y;
 color: #1c1c1e;
 overflow-x: hidden;
 }
-   /* Background Layer */
+
+/* Background Layer */
 .bg-layer {
     position: fixed; inset: 0; z-index: -1; pointer-events: none;
 }
@@ -137,7 +136,6 @@ overflow-x: hidden;
         text-transform: uppercase;
         margin-top: 3px;
     }
-.cal-stripe-item:last-child { border-bottom-right-radius: 12px; border-bottom: none; }
 
 /* Prep List */
 .prep-item {
@@ -182,17 +180,11 @@ overflow-x: hidden;
 
 /* Sortable Ghost */
 .sortable-ghost { opacity: 0.4; background: #E5E5EA; }
-    </style>
-</head>
-<body>
-<div class="bg-layer">
-<img src="./IMG_7005.jpeg"
-class="w-full h-full object-cover blur-[4px] scale-105"
-alt="Background">
-<div class="absolute inset-0 bg-white/70 backdrop-blur-[2px]"></div>
-</div>
+</style>
+</head> <body>
+<div class="bg-layer"> <img src="./IMG_7005.jpeg" class="w-full h-full object-cover blur-[4px] scale-105" alt="Background"> <div class="absolute inset-0 bg-white/70 backdrop-blur-[2px]"></div> </div>
 <div id="app" class="h-full flex flex-col relative" v-cloak>
-    <div class="address-popup" :class="{ 'active': showAddressCard }">
+<div class="address-popup" :class="{ 'active': showAddressCard }">
    <div class="flex justify-between items-start mb-2">
       <h3 class="font-bold text-lg text-gray-800">{{ addressCardData.title }}</h3>
       <button @click="showAddressCard = false" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
@@ -419,7 +411,8 @@ alt="Background">
           </div>
        </div>
        
-                  <div class="mt-4 px-1 space-y-3 min-h-[60px]">
+       <div class="mt-2 space-y-2 min-h-[60px]">
+                    <div class="mt-4 px-1 space-y-3 min-h-[60px]">
               <div v-for="item in currentDayItinerary" :key="item.id" 
                    class="cal-stripe-item active:scale-[0.98] transition-transform"
                    @click="handleItineraryClick(item)">
@@ -446,6 +439,8 @@ alt="Background">
                  {{ t('noActivity') }}
               </div>
            </div>
+    </div>
+
     <div>
        <div class="flex justify-between items-center mb-2 px-1">
           <h3 class="text-lg font-bold text-gray-800">{{ t('prepList') }}</h3>
@@ -542,7 +537,8 @@ alt="Background">
         {{ t('add') }}
     </button>
 </main>
-    <main v-if="currentTab === 'expense'" class="flex-1 overflow-y-auto pb-32 pt-safe px-5 bg-gray-50">
+
+<main v-if="currentTab === 'expense'" class="flex-1 overflow-y-auto pb-32 pt-safe px-5 bg-gray-50">
         <div class="flex justify-between items-center mb-6">
            <h2 class="text-3xl font-bold text-black">{{ t('expense') }}</h2>
            <button @click="openSubPage('expenseEdit')" class="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg active:scale-90 transition-transform">
@@ -851,15 +847,11 @@ const { createApp, ref, computed, reactive, onMounted, watch, nextTick } = Vue;
 createApp({
   setup() {
     // 1. Config
-    const supabaseUrl = 'https://myrhatzdypiwwgmmfbuw.supabase.co';
-    const supabaseKey = 'sb_publishable_bnnah-2fsCaQnKZDoKNJQw_NuYQVvKi';
-        let supabase = null;
+    const supabaseUrl = 'YOUR_SUPABASE_URL';
+    const supabaseKey = 'YOUR_SUPABASE_KEY';
+    let supabase = null;
     if (typeof window.supabase !== 'undefined' && supabaseUrl.startsWith('http')) {
-        try {
-            supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-        } catch (error) {
-            console.error("Supabase Init Error:", error);
-        }
+        supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
     }
 
     // 2. State
@@ -868,7 +860,7 @@ createApp({
     const lang = ref(localStorage.getItem('ts_lang') || 'zh'); // Local
     const flightSkin = ref(localStorage.getItem('ts_skin') || 'ios'); // Local
     
-        // Sync Data
+    // Sync Data
     const settings = reactive({
         origin: 'HKG', destination: 'KIX',
         dateRange: { start: '2026-03-22', end: '2026-03-27' },
@@ -1094,7 +1086,7 @@ createApp({
     const getTabIcon = (t) => ({home:'ph-house', itinerary:'ph-calendar-blank', expense:'ph-wallet', info:'ph-info'}[t]);
     const getStatusClass = (s) => s==='On Time'?'text-green-400':(s==='Delayed'?'text-red-400':'text-blue-400');
     const isInstagramLink = (l) => l && l.includes('instagram.com');
-                const openLink = (l) => window.open(l, '_blank');
+    const openLink = (l) => window.open(l, '_blank');
     const getGoogleMapUrl = (loc) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`;
     const getGoogleNavUrl = (loc) => `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(loc)}`;
 
