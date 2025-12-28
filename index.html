@@ -1085,80 +1085,10 @@
         };
 
         // --- Init ---
-                // --- Watchers for Sortable Re-init ---
-        // 當分頁切換時，等待 DOM 更新後重新綁定拖曳功能
-        watch(currentTab, (val) => {
-            nextTick(() => {
-                if (val === 'home') {
-                    initSortable('sortable-pre-notes', preTripNotes);
-                    initSortable('sortable-shopping', shoppingList);
-                }
-                if (val === 'itinerary') {
-                    // 行程頁若有拖曳需求可在此加入
-                }
-                if (val === 'expense' && expenseFilter.value === 'all') {
-                    initSortable('sortable-expenses', expenses, true); // true for re-indexing
-                }
-            });
-        });
-
-        // 記帳篩選改變時，重新綁定或銷毀拖曳
-        watch(expenseFilter, (val) => {
-            if (currentTab.value === 'expense') {
-                nextTick(() => {
-                    if (val === 'all') initSortable('sortable-expenses', expenses, true);
-                });
-            }
-        });
-
-        // 通用 Sortable 初始化函數
-        const initSortable = (id, listRef, isExpense = false) => {
-            const el = document.getElementById(id);
-            if (!el) return;
-            // 先銷毀舊的 instance (如果有) - 這裡簡化為直接建立新的，SortableJS 會處理
-            // 若需更嚴謹可儲存 instance 參照
-            new Sortable(el, {
-                handle: '.drag-handle',
-                animation: 150,
-                delay: 150,
-                delayOnTouchOnly: true,
-                onEnd: (evt) => {
-                    const item = listRef.value.splice(evt.oldIndex, 1)[0];
-                    listRef.value.splice(evt.newIndex, 0, item);
-                    
-                    // 記帳頁面需要重新計算 order_index 以確保排序正確儲存
-                    if (isExpense) {
-                        listRef.value.forEach((x, i) => x.order_index = i);
-                    }
-                    saveAll();
-                }
-            });
-        };
-
-        // --- Init ---
         onMounted(async () => {
            await fetchData();
            fetchRate();
            fetchWeather();
-           
-           // 初始載入 Home Tab 的拖曳
-           nextTick(() => {
-               if(currentTab.value === 'home') {
-                   initSortable('sortable-pre-notes', preTripNotes);
-                   initSortable('sortable-shopping', shoppingList);
-               }
-           });
-           
-           // 定時更新
-           setInterval(fetchRate, 600000); // 10 mins
-           setInterval(fetchWeather, 600000);
-           
-           // 視窗喚醒時自動同步
-           document.addEventListener('visibilitychange', () => {
-               if(document.visibilityState === 'visible') fetchData();
-           });
-        });
-
            
            // Init Sortable
            nextTick(() => {
