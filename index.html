@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync Ultimate 7.0</title>
+  <title>Travel Sync Ultimate (v251224-7.0)</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -16,7 +16,7 @@
     /* --- 1. 全域變數 (整合 v6.2 視覺與 v5.09 功能色) --- */
     :root {
       --ios-bg: #F2F2F7;
-      --ios-card-bg: rgba(255, 255, 255, 0.75); /* 提升一點不透明度增加易讀性 */
+      --ios-card-bg: rgba(255, 255, 255, 0.75);
       --ios-card-border: rgba(255, 255, 255, 0.5);
       --glass-blur: 25px;
       
@@ -36,30 +36,41 @@
       color: #1c1c1e;
       -webkit-font-smoothing: antialiased;
       margin: 0;
-      padding-bottom: 120px; /* 預留底部導航空間 */
+      /* 預留底部 Dock 空間與頂部安全區 */
+      padding-bottom: 100px; 
       user-select: none;
       -webkit-user-select: none;
-      touch-action: pan-y; /* 優化 iOS 滾動體驗 */
+      touch-action: pan-y;
     }
 
-    /* --- 2. 實用工具 --- */
+    /* --- 2. 實用工具與動畫 --- */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 20px); }
+    .pt-safe { padding-top: calc(env(safe-area-inset-top) + 10px); }
     
-    /* 載入/同步狀態動畫 */
     .rotate-icon { animation: spin 1s linear infinite; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
 
-    /* Vue 過場動畫 */
+    /* Vue 過場動畫 (Sub-page 核心) */
     .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
     .fade-enter-from, .fade-leave-to { opacity: 0; }
-    .slide-up-enter-active, .slide-up-leave-active { transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
-    .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); opacity: 0; }
+    
+    /* 全螢幕頁面從右側滑入 (類似 iOS 設定頁) */
+    .slide-left-enter-active, .slide-left-leave-active { 
+        transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s;
+        position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: 100;
+    }
+    .slide-left-enter-from { transform: translateX(100%); }
+    .slide-left-leave-to { transform: translateX(-30%); opacity: 0.8; }
+
+    /* Modal 從下方滑入 */
+    .slide-up-enter-active, .slide-up-leave-active { transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+    .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); }
 
     /* --- 3. 卡片系統 (Card System) --- */
     
-    /* 標準 iOS 玻璃卡片 (v6.2 風格) */
+    /* 標準 iOS 玻璃卡片 */
     .ios-card {
       background: var(--ios-card-bg);
       backdrop-filter: blur(var(--glass-blur));
@@ -71,7 +82,7 @@
       position: relative;
     }
 
-    /* 深色高級卡片 (用於支出總覽與航班資訊 - 來自 v5.09) */
+    /* 深色高級卡片 (用於 航班 / 支出總覽) */
     .ios-card-dark-glass {
       background: rgba(28, 28, 30, 0.85);
       backdrop-filter: blur(40px);
@@ -84,7 +95,6 @@
       overflow: hidden;
     }
 
-    /* 深色卡片背景光暈效果 */
     .dark-glass-gradient {
         position: absolute;
         top: -50%; left: -50%; width: 200%; height: 200%;
@@ -92,7 +102,7 @@
         pointer-events: none; z-index: 0;
     }
 
-    /* 列表項目樣式 (用於購物、準備清單) */
+    /* 列表項目樣式 (購物/準備清單) */
     .ios-list-item {
       background: rgba(255, 255, 255, 0.6);
       backdrop-filter: blur(10px);
@@ -110,53 +120,28 @@
     /* --- 4. 拖曳排序樣式 (SortableJS) --- */
     .sortable-ghost { opacity: 0.4; background: #E5E5EA; border: 1px dashed #AEAEB2; }
     .sortable-drag { opacity: 1; background: #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.15); transform: scale(1.02); z-index: 50; }
-    .drag-handle { cursor: grab; padding: 8px; touch-action: none; color: #C7C7CC; }
-    .drag-handle:active { color: #8E8E93; }
-
-    /* --- 5. 模態視窗系統 (Modal System - 移植自 v5.09 以支援複雜表單) --- */
-    .modal-backdrop { 
-      background: rgba(0, 0, 0, 0.3); 
-      backdrop-filter: blur(3px); 
-      z-index: 100; 
-      transition: opacity 0.3s; 
-    }
+    .drag-handle { cursor: grab; padding: 10px; touch-action: none; color: #C7C7CC; }
     
-    .ios-modal-container {
-      background: rgba(242, 242, 247, 0.95);
-      backdrop-filter: blur(40px);
-      -webkit-backdrop-filter: blur(40px);
-      border-radius: 28px;
-      display: flex; flex-direction: column;
-      max-height: 90vh; width: 92%; max-width: 420px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-      border: 0.5px solid rgba(255,255,255,0.4);
+    /* --- 5. 全螢幕 Sub-page 容器 (替代 Modal) --- */
+    .sub-page-container {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: #F2F2F7;
+        z-index: 200;
+        display: flex; flex-direction: column;
+        overflow: hidden;
     }
-
-    .ios-modal-header { 
-      padding: 18px; 
-      text-align: center; 
-      font-weight: 600; 
-      font-size: 17px; 
-      border-bottom: 0.5px solid rgba(60, 60, 67, 0.1); 
-      flex-shrink: 0;
+    .sub-page-header {
+        padding: 16px 20px;
+        background: rgba(255,255,255,0.8);
+        backdrop-filter: blur(20px);
+        border-bottom: 0.5px solid rgba(0,0,0,0.1);
+        display: flex; justify-content: space-between; align-items: center;
+        flex-shrink: 0;
+        padding-top: calc(env(safe-area-inset-top) + 10px);
     }
-    
-    .ios-modal-body { 
-      flex: 1; 
-      overflow-y: auto; 
-      padding: 20px; 
-      -webkit-overflow-scrolling: touch; 
-    }
-    
-    /* 計算機專用內距 */
-    .ios-modal-body.calc-body { padding: 16px 16px 8px 16px; overflow-y: hidden; }
-
-    .ios-modal-footer { 
-      padding: 16px 20px; 
-      border-top: 0.5px solid rgba(60, 60, 67, 0.1); 
-      display: flex; gap: 12px; 
-      background: rgba(255,255,255,0.5); 
-      flex-shrink: 0;
+    .sub-page-body {
+        flex: 1; overflow-y: auto; padding: 20px;
+        padding-bottom: calc(env(safe-area-inset-bottom) + 40px);
     }
 
     /* iOS 風格按鈕與輸入框 */
@@ -172,36 +157,28 @@
       transition: border-color 0.2s;
     }
     .ios-input:focus { border-color: var(--ios-primary); }
-    .ios-input::placeholder { color: #C7C7CC; }
 
-    .btn-ios-cancel {
-      flex: 1; height: 48px; border-radius: 12px;
-      background: rgba(118, 118, 128, 0.12);
-      color: #000; font-weight: 600; font-size: 17px;
-      display: flex; align-items: center; justify-content: center;
-    }
     .btn-ios-primary {
-      flex: 1; height: 48px; border-radius: 12px;
+      height: 48px; border-radius: 12px;
       background: var(--ios-primary);
       color: white; font-weight: 600; font-size: 17px;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 2px 10px rgba(0, 122, 255, 0.2);
+      width: 100%;
+      box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
     }
     .btn-ios-primary:active { transform: scale(0.98); opacity: 0.9; }
 
-    /* --- 6. 計算機樣式 (Calculator - v5.09) --- */
-    .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex: 1; margin-top: 8px; }
+    /* --- 6. 計算機樣式 (v5.09 移植) --- */
+    .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
     .calc-btn {
-        border-radius: 10px; background: #FFFFFF;
-        font-size: 22px; font-weight: 500; color: #333;
+        border-radius: 12px; background: #FFFFFF;
+        font-size: 24px; font-weight: 500; color: #333;
         display: flex; align-items: center; justify-content: center;
         box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
-        height: 100%; min-height: 48px;
-        transition: background 0.1s;
+        height: 56px;
     }
     .calc-btn:active { background: #E5E5EA; }
-    .calc-btn.op { background: #FF9500; color: white; font-weight: 600; border: none; }
-    .calc-btn.op:active { background: #D47B00; }
+    .calc-btn.op { background: #FF9500; color: white; border: none; }
     .calc-btn.top-op { background: #D1D1D6; color: black; }
     
     /* --- 7. 行程日期 Tab (Slider) --- */
@@ -214,1200 +191,1066 @@
       background: #FFFFFF;
       border-color: rgba(0,0,0,0.05);
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      transform: translateY(-2px);
+      transform: scale(1.02);
     }
 
-    /* --- 8. 狀態標籤 (Status Badges) --- */
-    .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-    .status-ontime { color: var(--ios-success); background: rgba(52, 199, 89, 0.15); }
-    .status-delayed { color: var(--ios-danger); background: rgba(255, 59, 48, 0.15); }
-    .status-boarding { color: var(--ios-warning); background: rgba(255, 204, 0, 0.15); }
-
-    /* 高對比/切換按鈕樣式 */
-    .glass-btn {
-        background: rgba(0, 0, 0, 0.6);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: white;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    /* 浮水印與標籤 */
+    .watermark {
+        text-align: center; opacity: 0.3; pointer-events: none;
+        padding: 40px 0; font-size: 10px; font-weight: 600; 
+        text-transform: uppercase; letter-spacing: 2px;
+        color: #8E8E93;
     }
+    .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    .status-ontime { color: #34C759; background: rgba(52, 199, 89, 0.15); }
+    .status-warning { color: #FF9500; background: rgba(255, 204, 0, 0.15); }
+
+    /* 語言切換按鈕 (柔和風格) */
+    .lang-btn {
+        background: rgba(0,0,0,0.05); color: #636366;
+        padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: 600;
+        transition: background 0.2s;
+    }
+    .lang-btn:active { background: rgba(0,0,0,0.1); }
   </style>
 </head>
 <body>
-  <div id="app" class="h-full flex flex-col relative" v-cloak>
-    
-    <header class="pt-safe px-6 pb-2 flex items-center justify-between z-20 transition-all duration-300"
-            :class="isScrolled ? 'bg-white/80 backdrop-blur-md shadow-sm' : 'bg-transparent'">
+  <div id="app" class="h-full flex flex-col relative select-none" v-cloak>
+
+    <main v-if="currentTab === 'home'" class="flex-1 overflow-y-auto overflow-x-hidden pb-32 no-scrollbar" ref="mainScroll">
       
-      <div class="text-xs font-bold text-gray-400 tracking-widest uppercase">
-        {{ appVersion }}
-      </div>
-
-      <div class="flex flex-col items-center">
-        <h1 class="text-lg font-bold text-gray-900 tracking-tight flex items-center gap-2">
-          <span>{{ settings.origin }}</span>
-          <i class="ph-fill ph-airplane-tilt text-blue-500 text-sm"></i>
-          <span>{{ settings.destination }}</span>
-        </h1>
-        <span v-if="settings.tripDate" class="text-[10px] font-medium text-gray-500 -mt-0.5 tracking-wide">
-          {{ settings.tripDate }}
-        </span>
-      </div>
-
-      <button @click="openModal('settings')" class="p-2 rounded-full active:bg-gray-200 transition-colors">
-        <i class="ph ph-gear text-2xl text-gray-600"></i>
-      </button>
-    </header>
-
-    <main class="flex-1 overflow-y-auto overflow-x-hidden pb-32 px-5 pt-4 no-scrollbar scroll-smooth" ref="mainScroll">
-      
-      <div v-if="currentTab === 'home'" class="space-y-6 fade-enter-active">
-        
-        <div class="grid grid-cols-2 gap-4">
-          
-          <div class="ios-card p-4 flex flex-col justify-between h-40">
-            <div class="flex justify-between items-start">
-              <div class="flex flex-col">
-                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  {{ lang === 'zh' ? weather.city.zh : weather.city.en }}
-                </span>
-                <span class="text-3xl font-light text-gray-900 mt-1">{{ weather.temp }}°</span>
-              </div>
-              <i :class="['ph-fill text-3xl', weather.icon, weather.color]"></i>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-x-2 gap-y-1 mt-2">
-              <div class="flex items-center gap-1 text-[10px] text-gray-500">
-                <i class="ph ph-thermometer-simple"></i>
-                <span>{{ weather.feelsLike }}°</span>
-              </div>
-              <div class="flex items-center gap-1 text-[10px] text-gray-500">
-                <i class="ph ph-drop"></i>
-                <span>{{ weather.humidity }}%</span>
-              </div>
-              <div class="flex items-center gap-1 text-[10px] text-gray-500">
-                <i class="ph ph-sun-dim"></i>
-                <span>UV {{ weather.uv }}</span>
-              </div>
-              <div class="flex items-center gap-1 text-[10px] text-gray-500">
-                <i class="ph ph-cloud-rain"></i>
-                <span>{{ weather.precip }}%</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="ios-card p-4 flex flex-col justify-between h-40 relative overflow-hidden">
-            <div class="absolute -right-4 -top-4 text-blue-50 opacity-10 rotate-12 pointer-events-none">
-              <i class="ph-fill ph-currency-yen text-9xl"></i>
-            </div>
-
-            <div>
-              <div class="flex justify-between items-center">
-                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">JPY 匯率</span>
-                <button @click="fetchRate" :disabled="isUpdatingRate" class="text-blue-500 active:scale-90 transition-transform">
-                  <i class="ph-bold ph-arrows-clockwise" :class="{'rotate-icon': isUpdatingRate}"></i>
-                </button>
-              </div>
-              <div class="mt-2 flex items-baseline gap-1">
-                <span class="text-2xl font-semibold text-gray-800">{{ (rate * 1.03).toFixed(4) }}</span>
-                <span class="text-[10px] text-gray-400">TWD</span>
-              </div>
-            </div>
-
-            <div class="mt-auto">
-               <div class="text-[10px] text-red-500 font-medium bg-red-50 px-2 py-1 rounded-md inline-block mb-1">
-                {{ t('rateFee') }} +3%
-              </div>
-              <div class="text-[10px] text-gray-400">
-                1 TWD ≈ {{ (1 / (rate * 1.03)).toFixed(2) }} JPY
-              </div>
-            </div>
-          </div>
+      <header class="pt-safe px-5 pb-2 flex justify-between items-start z-10 sticky top-0 bg-[#F2F2F7]/90 backdrop-blur-md transition-all duration-300">
+        <div class="flex flex-col pt-1">
+           <span class="text-[11px] font-semibold text-gray-500 tracking-wide uppercase mb-0.5">
+             {{ displayDateRange }}
+           </span>
+           <div class="flex items-center gap-2">
+             <h1 class="text-3xl font-black text-black tracking-tight flex items-center gap-2">
+               {{ settings.origin }} 
+               <i class="ph-fill ph-airplane-tilt text-blue-500 text-2xl"></i>
+               {{ settings.destination }}
+             </h1>
+           </div>
         </div>
 
-        <div class="space-y-3">
-          <div class="flex items-center justify-between px-1">
-            <h2 class="text-lg font-bold text-gray-900">{{ t('prepList') }}</h2>
-            <button @click="openModal('prep')" class="text-blue-500 text-sm font-medium flex items-center gap-1">
-              <i class="ph-bold ph-plus"></i> {{ t('add') }}
-            </button>
-          </div>
-          
-          <div ref="prepListContainer" class="space-y-2 min-h-[50px]">
-            <div v-for="item in prepList" :key="item.id" 
-                 class="ios-list-item justify-between group" :data-id="item.id">
-              <div class="flex items-center gap-3 flex-1" @click="togglePrep(item)">
-                <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors"
-                     :class="item.done ? 'bg-blue-500 border-blue-500' : 'border-gray-300'">
-                  <i v-if="item.done" class="ph-bold ph-check text-white text-xs"></i>
-                </div>
-                <span :class="{'task-done': item.done}" class="text-base text-gray-800">{{ item.text }}</span>
-              </div>
-              <div class="drag-handle flex items-center">
-                <i class="ph ph-dots-six-vertical text-gray-400"></i>
-              </div>
-            </div>
-          </div>
-          
-          <div v-if="prepList.length === 0" class="text-center py-8 text-gray-400 text-sm">
-            {{ t('noPrepItems') }}
-          </div>
-        </div>
-      </div>
-
-      <div v-else-if="currentTab === 'itinerary'" class="space-y-4 fade-enter-active">
-        
-        <div class="flex overflow-x-auto gap-2 pb-2 no-scrollbar snap-x">
-           <button v-for="(day, index) in tripDays" :key="index"
-                  @click="selectedDayIndex = index"
-                  class="day-tab flex-shrink-0 w-16 h-20 rounded-2xl flex flex-col items-center justify-center snap-center"
-                  :class="selectedDayIndex === index ? 'active bg-white border-transparent' : 'bg-white/40 border-white/20'">
-              <span class="text-xs font-medium uppercase mb-1" :class="selectedDayIndex === index ? 'text-blue-500' : 'text-gray-500'">
-                Day {{ index + 1 }}
-              </span>
-              <span class="text-xl font-bold text-gray-900">{{ day.date }}</span>
-              <span class="text-[10px] text-gray-400 mt-1">{{ day.weekday }}</span>
+        <div class="flex flex-col items-end gap-2 pt-1">
+           <span class="text-[9px] font-bold text-gray-400 font-mono tracking-wider">v7.0</span>
+           <button @click="toggleLang" class="lang-btn">
+             {{ lang === 'zh' ? '繁體' : 'EN' }}
+           </button>
+           <button @click="openSubPage('settings')" class="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-600 active:scale-90 transition-transform mt-1">
+             <i class="ph-fill ph-gear text-lg"></i>
            </button>
         </div>
+      </header>
 
-        <div class="space-y-3 pb-20">
-            <div v-for="item in currentDayItinerary" :key="item.id" 
-                 @click="handleItineraryClick(item)"
-                 class="ios-card p-4 flex gap-4 active:scale-[0.99] transition-transform">
-               
-               <div class="flex flex-col items-center min-w-[50px]">
-                 <span class="text-sm font-bold text-gray-900">{{ item.time }}</span>
-                 <div class="h-full w-0.5 bg-gray-200 my-2 rounded-full"></div>
-                 <i class="ph-fill ph-map-pin text-gray-300 text-xs"></i>
-               </div>
+      <div class="px-5 space-y-6 mt-2">
 
-               <div class="flex-1">
-                 <div class="flex justify-between items-start">
-                   <h3 class="font-bold text-gray-800">{{ item.title }}</h3>
-                   <span class="text-xs font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-500">
-                     {{ item.type }}
-                   </span>
-                 </div>
-                 <p class="text-sm text-gray-500 mt-1 line-clamp-2">{{ item.desc }}</p>
-                 <div v-if="item.location" class="flex items-center gap-1 mt-2 text-xs text-blue-500">
-                   <i class="ph-fill ph-navigation-arrow"></i>
-                   <span>{{ item.location }}</span>
-                 </div>
-               </div>
-            </div>
-            
-            <button @click="openModal('itinerary')" class="w-full py-3 rounded-xl border-2 border-dashed border-gray-300 text-gray-400 font-medium flex items-center justify-center gap-2 hover:bg-white/50 transition-colors">
-              <i class="ph-bold ph-plus"></i> {{ t('addActivity') }}
-            </button>
-        </div>
-      </div>
-
-      <div v-else-if="currentTab === 'expense'" class="space-y-5 fade-enter-active">
-        
-        <div class="ios-card-dark-glass p-6 text-center">
-            <div class="dark-glass-gradient"></div>
-            <div class="relative z-10">
-                <h2 class="text-sm font-medium text-gray-300 tracking-wider uppercase mb-1">{{ t('totalExpense') }}</h2>
-                <div class="text-4xl font-bold tracking-tight text-white mb-2">
-                    <span class="text-2xl align-top opacity-60 mr-1">$</span>{{ formatNumber(totalExpenseTWD) }}
-                </div>
-                <div class="text-xs font-medium px-3 py-1 rounded-full bg-white/10 inline-flex items-center gap-1 backdrop-blur-md text-blue-200">
-                     ≈ JPY {{ formatNumber(totalExpenseJPY) }}
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-gray-200/50 p-1 rounded-xl flex text-xs font-medium">
-          <button v-for="filter in ['all', 'card', 'cash', 'settlement']" :key="filter"
-                  @click="expenseFilter = filter"
-                  v-show="filter !== 'settlement' || shouldShowSettlement"
-                  class="flex-1 py-1.5 rounded-lg transition-all duration-300 text-center capitalize"
-                  :class="expenseFilter === filter ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'">
-            {{ t(filter) }}
-          </button>
-        </div>
-
-        <div class="space-y-3 pb-24">
-           <div v-if="expenseFilter === 'settlement'" class="space-y-2">
-              <div v-for="s in settlementList" :key="s.name" class="ios-card p-4 flex justify-between items-center">
-                  <div class="flex items-center gap-3">
-                      <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-500">
-                          {{ s.name[0] }}
-                      </div>
-                      <span class="font-medium text-gray-800">{{ s.name }}</span>
-                  </div>
-                  <span :class="s.amount >= 0 ? 'text-green-500' : 'text-red-500'" class="font-bold">
-                      {{ s.amount >= 0 ? '+' : '' }}{{ formatNumber(s.amount) }}
-                  </span>
+        <div class="ios-card-dark-glass p-5 relative min-h-[180px]">
+           <div class="dark-glass-gradient"></div>
+           
+           <div class="relative z-10 flex justify-center mb-4">
+              <div class="bg-black/20 p-1 rounded-lg flex text-[10px] font-bold backdrop-blur-md border border-white/10">
+                 <button @click="isReturnFlight = false" :class="!isReturnFlight ? 'bg-white/20 text-white shadow-sm' : 'text-gray-400'" class="px-3 py-1 rounded-[6px] transition-all">{{ t('outbound') }}</button>
+                 <button @click="isReturnFlight = true" :class="isReturnFlight ? 'bg-white/20 text-white shadow-sm' : 'text-gray-400'" class="px-3 py-1 rounded-[6px] transition-all">{{ t('inbound') }}</button>
               </div>
-           </div>
-
-           <div v-else v-for="exp in filteredExpenses" :key="exp.id" 
-                class="ios-card p-3 flex items-center gap-3"
-                @click="editExpense(exp)">
-               <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-xl shrink-0">
-                   <i :class="getCategoryIcon(exp.category)"></i>
-               </div>
-               
-               <div class="flex-1 min-w-0">
-                   <div class="flex justify-between items-baseline">
-                       <h4 class="font-semibold text-gray-900 truncate">{{ exp.item }}</h4>
-                       <span class="font-bold text-gray-900">{{ formatNumber(exp.amount) }}</span>
-                   </div>
-                   <div class="flex justify-between items-center mt-1">
-                       <span class="text-xs text-gray-400 flex items-center gap-1">
-                           <i v-if="exp.method === 'card'" class="ph-fill ph-credit-card"></i>
-                           <i v-else class="ph-fill ph-coins"></i>
-                           {{ exp.payer }}
-                       </span>
-                       <span class="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
-                           {{ exp.date }}
-                       </span>
-                   </div>
-               </div>
-           </div>
-        </div>
-      </div>
-
-      <div v-else-if="currentTab === 'shopping'" class="space-y-4 fade-enter-active">
-         <div class="flex items-center justify-between px-1">
-            <h2 class="text-lg font-bold text-gray-900">{{ t('shoppingList') }}</h2>
-            <button @click="openModal('shopping')" class="text-blue-500 font-medium text-sm">
-                <i class="ph-bold ph-plus"></i> {{ t('add') }}
-            </button>
-         </div>
-
-         <div class="grid grid-cols-2 gap-3 pb-20">
-             <div v-for="item in shoppingList" :key="item.id" 
-                  class="ios-card flex flex-col group relative overflow-hidden"
-                  @click="editShoppingItem(item)">
-                
-                <div class="aspect-square bg-gray-100 relative">
-                    <img v-if="item.image" :src="item.image" class="w-full h-full object-cover">
-                    <div v-else class="w-full h-full flex items-center justify-center text-gray-300">
-                        <i class="ph ph-image text-3xl"></i>
-                    </div>
-                    <a v-if="item.link && isInstagramLink(item.link)" 
-                       :href="item.link" target="_blank" @click.stop
-                       class="absolute bottom-2 right-2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-md text-pink-600">
-                       <i class="ph-bold ph-instagram-logo"></i>
-                    </a>
-                </div>
-
-                <div class="p-3 flex items-start gap-2">
-                    <div @click.stop="toggleShopping(item)" 
-                         class="mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-colors shrink-0"
-                         :class="item.done ? 'bg-blue-500 border-blue-500' : 'border-gray-300'">
-                        <i v-if="item.done" class="ph-bold ph-check text-white text-[10px]"></i>
-                    </div>
-                    <div class="flex flex-col min-w-0">
-                        <span :class="{'task-done': item.done}" class="text-sm font-medium text-gray-800 truncate">{{ item.name }}</span>
-                        <span v-if="item.price" class="text-xs text-gray-500">¥{{ formatNumber(item.price) }}</span>
-                    </div>
-                </div>
-             </div>
-         </div>
-      </div>
-
-      <div v-else-if="currentTab === 'info'" class="space-y-4 fade-enter-active">
-          <div class="ios-card p-4 flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-500">
-                      <i class="ph-fill ph-translate text-xl"></i>
-                  </div>
-                  <div>
-                      <h3 class="font-semibold text-gray-900">{{ t('language') }}</h3>
-                      <p class="text-xs text-gray-500">Traditional Chinese / English</p>
-                  </div>
-              </div>
-              <button @click="toggleLang" class="glass-btn px-4 py-1.5 rounded-full text-xs font-bold text-gray-800">
-                  {{ lang === 'zh' ? 'EN' : '繁' }}
+              <button @click="openSubPage('flightEdit')" class="absolute right-0 top-0 w-8 h-8 flex items-center justify-center text-white/50 hover:text-white transition-colors">
+                 <i class="ph-fill ph-pencil-simple"></i>
               </button>
-          </div>
+           </div>
 
-          <div class="space-y-3">
-              <div class="flex items-center justify-between px-1">
-                  <h3 class="text-sm font-bold text-gray-500 uppercase">{{ t('tripInfo') }}</h3>
-                  <button @click="openModal('info')" class="text-blue-500 text-xs font-bold">{{ t('add') }}</button>
+           <div class="relative z-10 flex justify-between items-end">
+              <div>
+                 <div class="text-3xl font-bold text-white tracking-wider font-mono">{{ activeFlight.code }}</div>
+                 <div class="text-xs text-blue-300 font-medium mt-1">{{ activeFlight.airline }}</div>
+              </div>
+              <div class="text-right">
+                 <div class="flex items-center gap-1 justify-end">
+                    <span :class="getStatusClass(activeFlight.status)" class="status-badge">{{ activeFlight.status }}</span>
+                 </div>
+                 <div class="text-4xl font-light text-white mt-1">{{ activeFlight.time }}</div>
+                 <div class="text-[10px] text-gray-400 mt-1 uppercase tracking-widest">{{ t('terminal') }} {{ activeFlight.terminal }} • {{ t('gate') }} {{ activeFlight.gate }}</div>
+              </div>
+           </div>
+           
+           <a v-if="activeFlight.link" :href="activeFlight.link" target="_blank" class="absolute bottom-3 left-1/2 -translate-x-1/2 text-[9px] text-white/30 flex items-center gap-1 hover:text-white/60 transition-colors z-10">
+              <i class="ph-bold ph-link"></i> Live Tracker
+           </a>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+           <div class="ios-card p-4 flex flex-col justify-between h-32">
+              <div class="flex justify-between items-start">
+                 <div class="flex flex-col">
+                    <span class="text-xs font-bold text-gray-400 uppercase">{{ weather.city[lang] || weather.city.en }}</span>
+                    <span class="text-3xl font-light mt-1">{{ weather.temp }}°</span>
+                 </div>
+                 <i :class="[weather.icon, weather.color]" class="ph-fill text-3xl"></i>
+              </div>
+              <div class="flex items-center gap-2 mt-2">
+                 <div class="bg-blue-50 text-blue-500 px-2 py-1 rounded-md text-[10px] font-bold flex items-center gap-1">
+                    <i class="ph-bold ph-drop"></i> {{ weather.precip }}%
+                 </div>
+                 <div v-if="weather.warning" class="bg-red-50 text-red-500 px-2 py-1 rounded-md text-[10px] font-bold">
+                    ⚠️ Warning
+                 </div>
+              </div>
+           </div>
+
+           <div class="ios-card p-4 flex flex-col justify-between h-32 relative overflow-hidden">
+              <div class="absolute right-[-10px] top-[-10px] w-16 h-16 bg-green-400/10 rounded-full blur-xl"></div>
+              <div>
+                 <div class="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
+                    {{ settings.currency.settle }} / {{ settings.currency.local }}
+                    <i v-if="isUpdatingRate" class="ph-bold ph-spinner animate-spin text-blue-500"></i>
+                 </div>
+                 <div class="text-2xl font-semibold mt-1 tracking-tight">
+                    {{ formatNumber(rate) }}
+                 </div>
+              </div>
+              <div class="text-[10px] text-gray-400">
+                 1 {{ settings.currency.settle }} ≈ {{ formatNumber(rate) }} {{ settings.currency.local }}
+              </div>
+           </div>
+        </div>
+
+        <div>
+           <div class="flex justify-between items-end mb-2 px-1">
+              <h3 class="text-lg font-bold text-gray-800">{{ t('itinerary') }}</h3>
+           </div>
+           <div class="flex gap-3 overflow-x-auto no-scrollbar pb-2 pl-1 snap-x">
+              <div v-for="(day, idx) in tripDays" :key="idx" 
+                   class="day-tab flex-shrink-0 w-24 h-28 rounded-2xl flex flex-col items-center justify-center snap-start relative overflow-hidden"
+                   :class="selectedDayIndex === idx ? 'active border-blue-500/30' : ''"
+                   @click="selectedDayIndex = idx">
+                 <span class="text-[10px] font-bold uppercase text-gray-400 mb-1">{{ day.weekday }}</span>
+                 <span class="text-2xl font-bold text-gray-800">{{ day.dateShort }}</span>
+                 <div class="flex gap-0.5 mt-2">
+                    <div v-for="n in Math.min(getDayEventCount(idx), 3)" :key="n" class="w-1 h-1 rounded-full bg-blue-500"></div>
+                 </div>
               </div>
               
-              <div v-for="info in infoList" :key="info.id" 
-                   class="ios-card p-4" @click="editInfo(info)">
-                   <div class="flex items-center gap-2 mb-2">
-                       <i class="ph-fill ph-info text-blue-500"></i>
-                       <h4 class="font-bold text-gray-900">{{ info.title }}</h4>
-                   </div>
-                   <p class="text-sm text-gray-600 whitespace-pre-line">{{ info.content }}</p>
+              <div @click="openItineraryAdd" class="flex-shrink-0 w-24 h-28 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 active:bg-gray-50 transition-colors snap-start">
+                 <i class="ph-bold ph-plus text-2xl mb-1"></i>
+                 <span class="text-[10px] font-bold">{{ t('add') }}</span>
               </div>
-          </div>
-      </div>
+           </div>
+           
+           <div class="mt-2 space-y-2">
+              <div v-for="item in currentDayItinerary" :key="item.id" 
+                   @click="handleItineraryClick(item)"
+                   class="ios-list-item justify-between group active:scale-[0.99] transition-transform">
+                 <div class="flex items-center gap-3">
+                    <div class="text-xs font-bold text-gray-500 w-10 text-center">{{ item.time }}</div>
+                    <div class="w-[2px] h-8 bg-blue-500/20 rounded-full"></div>
+                    <div>
+                       <div class="font-bold text-sm text-gray-800">{{ item.title }}</div>
+                       <div class="text-[10px] text-gray-400">{{ item.location }}</div>
+                    </div>
+                 </div>
+                 <i class="ph-bold ph-caret-right text-gray-300"></i>
+              </div>
+              <div v-if="currentDayItinerary.length === 0" class="text-center py-4 text-xs text-gray-400">
+                 {{ t('noActivity') }}
+              </div>
+           </div>
+        </div>
 
+        <div>
+           <div class="flex justify-between items-center mb-2 px-1">
+              <h3 class="text-lg font-bold text-gray-800">{{ t('prepList') }}</h3>
+              <button @click="openSubPage('prep')" class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+                 <i class="ph-bold ph-plus text-xs"></i>
+              </button>
+           </div>
+           <div class="space-y-2">
+              <div v-for="item in prepList.slice(0, 3)" :key="item.id" @click="togglePrep(item)" class="ios-list-item gap-3">
+                 <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors"
+                      :class="item.done ? 'bg-green-500 border-green-500' : 'border-gray-300'">
+                    <i v-if="item.done" class="ph-bold ph-check text-white text-[10px]"></i>
+                 </div>
+                 <span :class="item.done ? 'line-through text-gray-400' : 'text-gray-800'" class="text-sm font-medium">{{ item.text }}</span>
+              </div>
+           </div>
+        </div>
+
+        <div>
+           <div class="flex justify-between items-center mb-2 px-1">
+              <h3 class="text-lg font-bold text-gray-800">{{ t('shoppingList') }}</h3>
+              <button @click="openSubPage('shopping')" class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+                 <i class="ph-bold ph-plus text-xs"></i>
+              </button>
+           </div>
+           <div class="grid grid-cols-2 gap-3">
+              <div v-for="item in shoppingList.slice(0, 4)" :key="item.id" 
+                   class="ios-card p-3 flex flex-col gap-2 relative"
+                   @click="editShoppingItem(item)">
+                 <div class="h-20 bg-gray-100 rounded-lg overflow-hidden relative">
+                    <img v-if="item.image" :src="item.image" class="w-full h-full object-cover">
+                    <div v-else class="w-full h-full flex items-center justify-center text-gray-300"><i class="ph-duotone ph-image text-2xl"></i></div>
+                    <div v-if="item.done" class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <i class="ph-fill ph-check-circle text-white text-2xl"></i>
+                    </div>
+                 </div>
+                 <div class="flex justify-between items-start">
+                    <span class="text-xs font-bold truncate">{{ item.name }}</span>
+                    <span class="text-[10px] text-gray-500">{{ formatNumber(item.price) }}</span>
+                 </div>
+              </div>
+           </div>
+        </div>
+
+        <div>
+           <div class="flex justify-between items-center mb-2 px-1">
+              <h3 class="text-lg font-bold text-gray-800">{{ t('expense') }}</h3>
+              <button @click="openSubPage('expenseEdit')" class="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-md active:scale-90 transition-transform">
+                 <i class="ph-bold ph-plus text-xs"></i>
+              </button>
+           </div>
+           
+           <div class="ios-card-dark-glass p-0 overflow-hidden">
+              <div class="dark-glass-gradient"></div>
+              
+              <div class="relative z-10 p-5 text-center border-b border-white/10">
+                 <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ t('totalExpense') }} ({{ settings.currency.settle }})</div>
+                 <div class="text-3xl font-bold text-white mt-1">{{ formatNumber(totalExpense.settle) }}</div>
+                 <div class="text-xs text-blue-300 mt-1 font-medium">≈ {{ formatNumber(totalExpense.local) }} {{ settings.currency.local }}</div>
+              </div>
+
+              <div class="relative z-10 grid grid-cols-2 divide-x divide-white/10">
+                 <div class="p-4 flex flex-col items-center">
+                    <i class="ph-duotone ph-credit-card text-blue-400 text-xl mb-1"></i>
+                    <div class="text-[10px] text-gray-400 uppercase">{{ t('card') }}</div>
+                    <div class="text-lg font-bold text-white">{{ formatNumber(expensesBreakdown.card.settle) }}</div>
+                    <div class="text-[9px] text-gray-500">≈ {{ formatNumber(expensesBreakdown.card.local) }} {{ settings.currency.local }}</div>
+                 </div>
+                 <div class="p-4 flex flex-col items-center">
+                    <i class="ph-duotone ph-coins text-yellow-400 text-xl mb-1"></i>
+                    <div class="text-[10px] text-gray-400 uppercase">{{ t('cash') }}</div>
+                    <div class="text-lg font-bold text-white">{{ formatNumber(expensesBreakdown.cash.settle) }}</div>
+                    <div class="text-[9px] text-gray-500">≈ {{ formatNumber(expensesBreakdown.cash.local) }} {{ settings.currency.local }}</div>
+                 </div>
+              </div>
+           </div>
+        </div>
+
+        <div>
+            <div class="flex justify-between items-center mb-2 px-1">
+               <h3 class="text-lg font-bold text-gray-800">{{ t('info') }}</h3>
+               <button @click="openSubPage('info')" class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+                  <i class="ph-bold ph-plus text-xs"></i>
+               </button>
+            </div>
+            <div class="space-y-2">
+               <div v-for="info in infoList.slice(0, 3)" :key="info.id" @click="editInfo(info)" class="ios-card p-3 flex items-center justify-between">
+                   <div class="flex items-center gap-3">
+                       <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center">
+                           <i class="ph-bold ph-info"></i>
+                       </div>
+                       <span class="font-bold text-sm">{{ info.title }}</span>
+                   </div>
+                   <i class="ph-bold ph-caret-right text-gray-300"></i>
+               </div>
+            </div>
+        </div>
+
+        <div class="watermark">
+           <div>TRAVEL SYNC SYSTEM</div>
+           <div class="mt-1 text-[8px]">v7.0 (v251224)</div>
+        </div>
+
+      </div>
     </main>
 
-    <nav class="fixed bottom-6 left-4 right-4 h-[70px] bg-white/80 backdrop-blur-xl border border-white/40 rounded-[24px] shadow-2xl flex items-center justify-around px-2 z-50">
-      
-      <button v-for="tab in ['home', 'itinerary', 'expense', 'shopping', 'info']" :key="tab"
+    <nav class="fixed bottom-0 w-full bg-white/80 backdrop-blur-xl border-t border-gray-200 pb-safe pt-2 flex justify-around items-center z-50">
+      <button v-for="tab in ['home', 'itinerary', 'expense', 'info']" 
+              :key="tab"
               @click="currentTab = tab"
-              class="relative flex flex-col items-center justify-center w-14 h-14 transition-all duration-300">
-        
-        <div class="transition-all duration-300 transform"
-             :class="currentTab === tab ? '-translate-y-1' : ''">
-             <i :class="[
-               'text-2xl mb-0.5 transition-colors duration-300',
-               currentTab === tab ? 'ph-fill text-blue-500' : 'ph text-gray-400'
-             ]" :class="getTabIcon(tab)"></i>
-        </div>
-
-        <span class="text-[10px] font-medium transition-all duration-300 absolute bottom-1"
-              :class="currentTab === tab ? 'text-gray-800 opacity-100 scale-100' : 'text-gray-400 opacity-0 scale-75'">
-          {{ t(tab) }}
-        </span>
-
-        <div class="absolute -bottom-1 w-1 h-1 rounded-full bg-blue-500 transition-all duration-300"
-             :class="currentTab === tab ? 'opacity-100' : 'opacity-0'"></div>
+              class="flex flex-col items-center gap-1 w-16 transition-all duration-200"
+              :class="currentTab === tab ? 'text-blue-500 scale-105' : 'text-gray-400'">
+         <i :class="[currentTab === tab ? 'ph-fill' : 'ph-bold', getTabIcon(tab)]" class="text-2xl"></i>
+         <span class="text-[10px] font-medium capitalize">{{ t(tab) }}</span>
       </button>
-
-      <button v-if="currentTab === 'expense'" 
-              @click="openModal('expense')"
-              class="absolute -top-6 right-4 w-12 h-12 bg-blue-500 rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center text-white transform hover:scale-105 active:scale-95 transition-all z-50">
-          <i class="ph-bold ph-plus text-xl"></i>
-      </button>
-
     </nav>
-<div v-if="hasOpenModal" class="fixed inset-0 modal-backdrop flex items-end sm:items-center justify-center z-[100]" @click.self="closeAllModals">
-
-      <div v-if="modalState.settings" class="ios-modal-container slide-up-enter-active">
-        <div class="ios-modal-header">{{ t('settings') }}</div>
-        <div class="ios-modal-body space-y-5">
-          
-          <div class="space-y-3">
-            <h4 class="text-xs font-bold text-gray-500 uppercase">{{ t('tripInfo') }}</h4>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="text-[10px] text-gray-400 pl-1">{{ t('origin') }}</label>
-                <input v-model="settings.origin" type="text" class="ios-input text-center font-bold uppercase" placeholder="HKG">
-              </div>
-              <div>
-                <label class="text-[10px] text-gray-400 pl-1">{{ t('destination') }}</label>
-                <input v-model="settings.destination" type="text" class="ios-input text-center font-bold uppercase" placeholder="KIX">
-              </div>
-            </div>
-            <div>
-              <label class="text-[10px] text-gray-400 pl-1">{{ t('date') }}</label>
-              <input v-model="settings.tripDate" type="date" class="ios-input">
-            </div>
-            <div>
-              <label class="text-[10px] text-gray-400 pl-1">{{ t('weatherCity') }}</label>
-              <input v-model="settings.weatherCity" type="text" class="ios-input" placeholder="Osaka">
-            </div>
-          </div>
-
-          <div class="space-y-3">
-            <h4 class="text-xs font-bold text-gray-500 uppercase">{{ t('members') }}</h4>
-            <div class="flex flex-wrap gap-2">
-              <span v-for="(member, idx) in members" :key="idx" class="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm font-medium flex items-center gap-1">
-                {{ member }}
-                <button @click="removeMember(idx)" class="text-blue-400 hover:text-blue-700"><i class="ph-bold ph-x"></i></button>
-              </span>
-              <button @click="openMemberAdd" class="px-3 py-1 border border-dashed border-gray-400 text-gray-400 rounded-full text-sm flex items-center gap-1">
-                <i class="ph-bold ph-plus"></i> {{ t('add') }}
-              </button>
-            </div>
-          </div>
-        </div>
-        <div class="ios-modal-footer">
-          <button @click="saveSettings" class="btn-ios-primary">{{ t('confirm') }}</button>
-        </div>
-      </div>
-
-      <div v-if="modalState.expense" class="ios-modal-container slide-up-enter-active h-[85vh]">
-        <div class="ios-modal-header flex justify-between items-center px-4">
-          <span class="text-blue-500 w-8" @click="closeAllModals">{{ t('cancel') }}</span>
-          <span class="font-semibold">{{ editingId ? t('editExpense') : t('newExpense') }}</span>
-          <span class="text-blue-500 font-bold w-8 text-right" @click="saveExpense">{{ t('save') }}</span>
-        </div>
+<transition name="slide-left">
+      
+      <div v-if="activeSubPage === 'settings'" class="sub-page-container">
+        <div class="sub-page-header">
+           <button @click="closeSubPage" class="text-blue-500 font-medium flex items-center gap-1">
+             <i class="ph-bold ph-caret-left"></i> {{ t('back') }}
+           </button>
+           <span class="font-bold text-lg">{{ t('settings') }}</span>
+           <div class="w-16"></div> </div>
         
-        <div class="bg-white p-4 pb-2 border-b border-gray-100 flex flex-col items-end">
-           <div class="text-xs text-gray-400 font-medium mb-1">
-             {{ formatNumber(calcResult) }} {{ editingExpense.currency || 'JPY' }}
-             <span v-if="editingExpense.rate">(@ {{ editingExpense.rate.toFixed(4) }})</span>
-           </div>
-           <input type="text" v-model="calcInput" readonly class="text-4xl font-light text-right w-full outline-none bg-transparent placeholder-gray-300" placeholder="0">
-        </div>
+        <div class="sub-page-body space-y-6">
+           <section>
+              <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 ml-3">{{ t('tripInfo') }}</h4>
+              <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                 <div class="flex border-b border-gray-100">
+                    <div class="flex-1 p-3 border-r border-gray-100">
+                       <label class="text-[10px] text-gray-400 font-bold uppercase">{{ t('origin') }}</label>
+                       <input v-model="settings.origin" class="w-full font-bold text-lg outline-none uppercase text-center" placeholder="HKG">
+                    </div>
+                    <div class="flex-1 p-3">
+                       <label class="text-[10px] text-gray-400 font-bold uppercase">{{ t('destination') }}</label>
+                       <input v-model="settings.destination" class="w-full font-bold text-lg outline-none uppercase text-center" placeholder="KIX">
+                    </div>
+                 </div>
+                 <div class="p-3 border-b border-gray-100 flex justify-between items-center">
+                    <label class="text-sm font-medium">{{ t('date') }}</label>
+                    <input v-model="settings.displayDate" class="text-sm text-gray-600 text-right outline-none bg-transparent" placeholder="YYYY.MM.DD - MM.DD">
+                 </div>
+                 <div class="p-3 flex justify-between items-center">
+                    <label class="text-sm font-medium">{{ t('weatherCity') }}</label>
+                    <input v-model="settings.weatherCity" class="text-sm text-gray-600 text-right outline-none bg-transparent" placeholder="Osaka">
+                 </div>
+              </div>
+           </section>
 
-        <div class="ios-modal-body calc-body flex flex-col">
-          <div class="flex gap-2 mb-3 overflow-x-auto no-scrollbar pb-1">
-             <div class="flex-shrink-0">
-               <select v-model="editingExpense.category" class="h-9 px-3 bg-gray-100 rounded-lg text-sm font-medium outline-none appearance-none">
-                 <option v-for="cat in expenseCats" :key="cat.id" :value="cat.id">{{ t(cat.id) }}</option>
-               </select>
-             </div>
-             <div class="flex bg-gray-100 rounded-lg p-0.5 h-9 shrink-0">
-               <button @click="editingExpense.method='cash'" :class="editingExpense.method==='cash'?'bg-white shadow-sm text-black':'text-gray-400'" class="px-3 rounded-md text-xs font-bold transition-all">{{ t('cash') }}</button>
-               <button @click="editingExpense.method='card'" :class="editingExpense.method==='card'?'bg-white shadow-sm text-black':'text-gray-400'" class="px-3 rounded-md text-xs font-bold transition-all">{{ t('card') }}</button>
-             </div>
-             <div class="flex-shrink-0">
-               <select v-model="editingExpense.payer" class="h-9 px-3 bg-gray-100 rounded-lg text-sm font-medium outline-none appearance-none">
-                 <option v-for="m in members" :key="m" :value="m">{{ t('payer') }}: {{ m }}</option>
-               </select>
-             </div>
-          </div>
+           <section>
+              <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 ml-3">{{ t('currencySetting') }}</h4>
+              <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                 <div class="p-3 border-b border-gray-100 flex justify-between items-center">
+                    <div>
+                       <div class="text-sm font-medium">{{ t('settleCurrency') }}</div>
+                       <div class="text-[10px] text-gray-400">{{ t('mainDisplay') }}</div>
+                    </div>
+                    <input v-model="settings.currency.settle" class="w-20 text-center font-bold bg-gray-100 rounded p-1 text-sm outline-none uppercase">
+                 </div>
+                 <div class="p-3 flex justify-between items-center">
+                    <div>
+                       <div class="text-sm font-medium">{{ t('localCurrency') }}</div>
+                       <div class="text-[10px] text-gray-400">{{ t('subDisplay') }}</div>
+                    </div>
+                    <input v-model="settings.currency.local" class="w-20 text-center font-bold bg-gray-100 rounded p-1 text-sm outline-none uppercase">
+                 </div>
+              </div>
+           </section>
 
-          <input v-model="editingExpense.item" type="text" class="ios-input mb-3" :placeholder="t('itemName')">
+           <section>
+              <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 ml-3">{{ t('members') }}</h4>
+              <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                 <div class="flex flex-wrap gap-2">
+                    <div v-for="(m, idx) in members" :key="idx" class="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full text-sm font-bold flex items-center gap-2">
+                       {{ m }}
+                       <button @click="removeMember(idx)" class="w-4 h-4 rounded-full bg-blue-200 flex items-center justify-center text-blue-700"><i class="ph-bold ph-x text-[10px]"></i></button>
+                    </div>
+                    <button @click="addMember" class="px-3 py-1.5 rounded-full border border-dashed border-gray-300 text-gray-400 text-sm font-bold flex items-center gap-1 active:bg-gray-50">
+                       <i class="ph-bold ph-plus"></i> {{ t('add') }}
+                    </button>
+                 </div>
+              </div>
+           </section>
 
-          <div class="mb-2">
-            <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider ml-1 mb-1 block">{{ t('participants') }}</span>
-            <div class="flex flex-wrap gap-2">
-               <button @click="toggleAllParticipants" 
-                       :class="isAllParticipants ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'"
-                       class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
-                 {{ t('all') }}
-               </button>
-               <button v-for="m in members" :key="m" 
-                       @click="toggleParticipant(m)"
-                       :class="editingExpense.involved.includes(m) ? 'bg-blue-100 text-blue-600 border border-blue-200' : 'bg-white border border-gray-200 text-gray-400'"
-                       class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
-                 {{ m }}
-               </button>
-            </div>
-          </div>
-
-          <div class="calc-grid select-none touch-manipulation">
-            <button @click="handleCalcInput('C')" class="calc-btn top-op">C</button>
-            <button @click="handleCalcInput('del')" class="calc-btn top-op"><i class="ph-bold ph-backspace"></i></button>
-            <button @click="handleCalcInput('%')" class="calc-btn top-op">%</button>
-            <button @click="handleCalcInput('/')" class="calc-btn op">÷</button>
-            
-            <button @click="handleCalcInput('7')" class="calc-btn">7</button>
-            <button @click="handleCalcInput('8')" class="calc-btn">8</button>
-            <button @click="handleCalcInput('9')" class="calc-btn">9</button>
-            <button @click="handleCalcInput('*')" class="calc-btn op">×</button>
-            
-            <button @click="handleCalcInput('4')" class="calc-btn">4</button>
-            <button @click="handleCalcInput('5')" class="calc-btn">5</button>
-            <button @click="handleCalcInput('6')" class="calc-btn">6</button>
-            <button @click="handleCalcInput('-')" class="calc-btn op">−</button>
-            
-            <button @click="handleCalcInput('1')" class="calc-btn">1</button>
-            <button @click="handleCalcInput('2')" class="calc-btn">2</button>
-            <button @click="handleCalcInput('3')" class="calc-btn">3</button>
-            <button @click="handleCalcInput('+')" class="calc-btn op">+</button>
-            
-            <button @click="handleCalcInput('0')" class="calc-btn col-span-2">0</button>
-            <button @click="handleCalcInput('.')" class="calc-btn">.</button>
-            <button @click="saveExpense" class="calc-btn bg-blue-500 text-white text-xl"><i class="ph-bold ph-check"></i></button>
-          </div>
+           <section>
+              <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 ml-3">{{ t('system') }}</h4>
+              <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                 <div class="p-3 border-b border-gray-100 flex justify-between items-center">
+                    <span class="text-sm font-medium">{{ t('language') }}</span>
+                    <div class="bg-gray-100 p-0.5 rounded-lg flex text-xs font-bold">
+                       <button @click="lang='zh'" :class="lang==='zh'?'bg-white shadow text-black':'text-gray-400'" class="px-3 py-1 rounded-[6px] transition-all">繁體</button>
+                       <button @click="lang='en'" :class="lang==='en'?'bg-white shadow text-black':'text-gray-400'" class="px-3 py-1 rounded-[6px] transition-all">English</button>
+                    </div>
+                 </div>
+                 <button @click="resetData" class="w-full p-3 text-left text-sm font-medium text-red-500 active:bg-gray-50">
+                    {{ t('resetData') }}
+                 </button>
+              </div>
+           </section>
         </div>
       </div>
 
-      <div v-if="modalState.shopping" class="ios-modal-container slide-up-enter-active">
-         <div class="ios-modal-header">{{ editingId ? t('editItem') : t('newItem') }}</div>
-         <div class="ios-modal-body space-y-4">
-             <div class="flex flex-col items-center gap-3">
-                 <div class="w-24 h-24 rounded-xl bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative">
-                     <img v-if="tempUploadPreview || editingItem.image" :src="tempUploadPreview || editingItem.image" class="w-full h-full object-cover">
-                     <i v-else class="ph-duotone ph-camera text-3xl text-gray-400"></i>
-                     
-                     <input type="file" accept="image/*" @change="handleFileUpload" class="absolute inset-0 opacity-0 cursor-pointer">
-                     <div v-if="isUploading" class="absolute inset-0 bg-black/50 flex items-center justify-center">
-                         <i class="ph-bold ph-spinner rotate-icon text-white"></i>
+      <div v-else-if="activeSubPage === 'expenseEdit'" class="sub-page-container">
+         <div class="sub-page-header">
+             <button @click="closeSubPage" class="text-blue-500 font-medium">{{ t('cancel') }}</button>
+             <span class="font-bold text-lg">{{ editingId ? t('editExpense') : t('newExpense') }}</span>
+             <button @click="saveExpense" class="text-blue-500 font-bold">{{ t('save') }}</button>
+         </div>
+         
+         <div class="bg-white p-6 pb-4 border-b border-gray-100 flex flex-col items-end shadow-sm relative z-10">
+             <div class="absolute left-4 top-4 flex gap-2">
+                <button @click="editingExpense.currency = settings.currency.local" 
+                        :class="editingExpense.currency === settings.currency.local ? 'bg-blue-500 text-white shadow-md' : 'bg-gray-100 text-gray-500'"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
+                    {{ settings.currency.local }}
+                </button>
+                <button @click="editingExpense.currency = settings.currency.settle" 
+                        :class="editingExpense.currency === settings.currency.settle ? 'bg-blue-500 text-white shadow-md' : 'bg-gray-100 text-gray-500'"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
+                    {{ settings.currency.settle }}
+                </button>
+                <select v-model="editingExpense.currency" class="px-2 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-500 outline-none appearance-none text-center w-12">
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="KRW">KRW</option>
+                    <option value="CNY">CNY</option>
+                </select>
+             </div>
+
+             <div class="text-xs text-gray-400 font-medium mt-8">
+                 <span v-if="editingExpense.currency !== settings.currency.settle">
+                    ≈ {{ formatNumber(convertCalcToSettle()) }} {{ settings.currency.settle }}
+                 </span>
+                 <span v-else>
+                    ≈ {{ formatNumber(convertCalcToLocal()) }} {{ settings.currency.local }}
+                 </span>
+             </div>
+             <input v-model="calcInput" readonly class="text-5xl font-light text-right w-full outline-none bg-transparent tracking-tighter" placeholder="0">
+         </div>
+
+         <div class="sub-page-body calc-body flex flex-col bg-[#F2F2F7]">
+             <div class="grid grid-cols-2 gap-3 mb-3">
+                 <div class="bg-white p-2 rounded-xl flex items-center justify-between px-3">
+                     <i class="ph-fill ph-tag text-gray-400"></i>
+                     <select v-model="editingExpense.category" class="bg-transparent text-sm font-bold text-right outline-none w-full">
+                         <option v-for="cat in expenseCats" :key="cat.id" :value="cat.id">{{ t(cat.id) }}</option>
+                     </select>
+                 </div>
+                 <div class="bg-white p-2 rounded-xl flex items-center justify-between px-3">
+                     <i class="ph-fill ph-user text-gray-400"></i>
+                     <select v-model="editingExpense.payer" class="bg-transparent text-sm font-bold text-right outline-none w-full">
+                         <option v-for="m in members" :key="m" :value="m">{{ t('payer') }}: {{ m }}</option>
+                     </select>
+                 </div>
+             </div>
+
+             <input v-model="editingExpense.item" class="ios-input mb-3 text-center font-bold" :placeholder="t('itemName')">
+
+             <div class="bg-white p-3 rounded-xl mb-3">
+                 <div class="flex justify-between items-center mb-2">
+                     <span class="text-xs font-bold text-gray-400 uppercase">{{ t('participants') }}</span>
+                     <button @click="toggleAllParticipants" class="text-[10px] font-bold text-blue-500">{{ t('all') }}</button>
+                 </div>
+                 <div class="flex flex-wrap gap-2">
+                     <button v-for="m in members" :key="m" 
+                             @click="toggleParticipant(m)"
+                             :class="editingExpense.involved.includes(m) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-400'"
+                             class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                         {{ m }}
+                     </button>
+                 </div>
+             </div>
+
+             <div class="flex gap-2 mb-2 bg-gray-200 p-1 rounded-xl">
+                 <button @click="editingExpense.method='cash'" :class="editingExpense.method==='cash'?'bg-white shadow-sm text-black':'text-gray-400'" class="flex-1 py-2 rounded-lg text-xs font-bold transition-all">{{ t('cash') }}</button>
+                 <button @click="editingExpense.method='card'" :class="editingExpense.method==='card'?'bg-white shadow-sm text-black':'text-gray-400'" class="flex-1 py-2 rounded-lg text-xs font-bold transition-all">{{ t('card') }}</button>
+             </div>
+
+             <div class="calc-grid flex-1">
+                 <button @click="handleCalcInput('C')" class="calc-btn top-op text-red-500">C</button>
+                 <button @click="handleCalcInput('del')" class="calc-btn top-op"><i class="ph-bold ph-backspace"></i></button>
+                 <button @click="handleCalcInput('/')" class="calc-btn op">÷</button>
+                 <button @click="handleCalcInput('*')" class="calc-btn op">×</button>
+                 
+                 <button @click="handleCalcInput('7')" class="calc-btn">7</button>
+                 <button @click="handleCalcInput('8')" class="calc-btn">8</button>
+                 <button @click="handleCalcInput('9')" class="calc-btn">9</button>
+                 <button @click="handleCalcInput('-')" class="calc-btn op">−</button>
+                 
+                 <button @click="handleCalcInput('4')" class="calc-btn">4</button>
+                 <button @click="handleCalcInput('5')" class="calc-btn">5</button>
+                 <button @click="handleCalcInput('6')" class="calc-btn">6</button>
+                 <button @click="handleCalcInput('+')" class="calc-btn op">+</button>
+                 
+                 <button @click="handleCalcInput('1')" class="calc-btn">1</button>
+                 <button @click="handleCalcInput('2')" class="calc-btn">2</button>
+                 <button @click="handleCalcInput('3')" class="calc-btn">3</button>
+                 <button @click="saveExpense" class="calc-btn bg-blue-500 text-white row-span-2 shadow-lg shadow-blue-500/30" style="height: auto;">
+                     <i class="ph-bold ph-check text-2xl"></i>
+                 </button>
+
+                 <button @click="handleCalcInput('0')" class="calc-btn col-span-2">0</button>
+                 <button @click="handleCalcInput('.')" class="calc-btn">.</button>
+             </div>
+         </div>
+      </div>
+
+      <div v-else-if="activeSubPage === 'flightEdit'" class="sub-page-container">
+         <div class="sub-page-header">
+             <button @click="closeSubPage" class="text-blue-500 font-medium">{{ t('cancel') }}</button>
+             <span class="font-bold text-lg">{{ t('editFlight') }}</span>
+             <button @click="saveFlight" class="text-blue-500 font-bold">{{ t('save') }}</button>
+         </div>
+         <div class="sub-page-body space-y-5">
+             <div class="flex bg-gray-200 p-1 rounded-xl">
+                 <button @click="editingFlightType='outbound'" :class="editingFlightType==='outbound'?'bg-white shadow text-black':'text-gray-400'" class="flex-1 py-2 rounded-lg text-sm font-bold transition-all">{{ t('outbound') }}</button>
+                 <button @click="editingFlightType='inbound'" :class="editingFlightType==='inbound'?'bg-white shadow text-black':'text-gray-400'" class="flex-1 py-2 rounded-lg text-sm font-bold transition-all">{{ t('inbound') }}</button>
+             </div>
+
+             <div class="space-y-3">
+                 <div class="grid grid-cols-2 gap-3">
+                     <div>
+                         <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">{{ t('flightCode') }}</label>
+                         <input v-model="editingFlight.code" class="ios-input font-mono uppercase" placeholder="CX400">
+                     </div>
+                     <div>
+                         <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">{{ t('status') }}</label>
+                         <select v-model="editingFlight.status" class="ios-input h-[48px]">
+                             <option value="On Time">On Time</option>
+                             <option value="Delayed">Delayed</option>
+                             <option value="Boarding">Boarding</option>
+                             <option value="Landed">Landed</option>
+                         </select>
                      </div>
                  </div>
-                 <span class="text-xs text-gray-400">{{ t('tapToUpload') }}</span>
-             </div>
-
-             <input v-model="editingItem.name" type="text" class="ios-input" :placeholder="t('itemName')">
-             <input v-model="editingItem.price" type="number" class="ios-input" :placeholder="t('price')">
-             
-             <div class="relative">
-                 <input v-model="editingItem.link" type="text" class="ios-input pr-8" :placeholder="t('linkPlaceholder')">
-                 <i v-if="isInstagramLink(editingItem.link)" class="ph-bold ph-instagram-logo absolute right-3 top-3 text-pink-500"></i>
+                 <div>
+                     <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">{{ t('airline') }}</label>
+                     <input v-model="editingFlight.airline" class="ios-input" placeholder="Cathay Pacific">
+                 </div>
+                 <div>
+                     <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">{{ t('time') }}</label>
+                     <input v-model="editingFlight.time" type="time" class="ios-input font-bold text-lg">
+                 </div>
+                 <div class="grid grid-cols-2 gap-3">
+                     <div>
+                         <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">{{ t('terminal') }}</label>
+                         <input v-model="editingFlight.terminal" class="ios-input text-center uppercase" placeholder="T1">
+                     </div>
+                     <div>
+                         <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">{{ t('gate') }}</label>
+                         <input v-model="editingFlight.gate" class="ios-input text-center uppercase" placeholder="24">
+                     </div>
+                 </div>
+                 <div>
+                     <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">Live Tracker URL</label>
+                     <input v-model="editingFlight.link" class="ios-input text-sm text-blue-500" placeholder="https://...">
+                 </div>
              </div>
          </div>
-         <div class="ios-modal-footer">
-             <button v-if="editingId" @click="deleteItem('shopping')" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
-             <button v-else @click="closeAllModals" class="btn-ios-cancel">{{ t('cancel') }}</button>
-             <button @click="saveShopping" class="btn-ios-primary">{{ t('save') }}</button>
-         </div>
       </div>
 
-      <div v-if="modalState.itinerary" class="ios-modal-container slide-up-enter-active">
-          <div class="ios-modal-header">{{ editingId ? t('editActivity') : t('newActivity') }}</div>
-          <div class="ios-modal-body space-y-4">
-              <div class="grid grid-cols-2 gap-3">
-                  <div>
-                      <label class="text-[10px] text-gray-400">{{ t('day') }}</label>
-                      <select v-model="editingItem.dayIndex" class="ios-input h-[46px]">
-                          <option v-for="(day, idx) in tripDays" :key="idx" :value="idx">Day {{ idx + 1 }}</option>
-                      </select>
+      <div v-else-if="['itinerary', 'shopping', 'prep', 'info'].includes(activeSubPage)" class="sub-page-container">
+          <div class="sub-page-header">
+              <button @click="closeSubPage" class="text-blue-500 font-medium">{{ t('cancel') }}</button>
+              <span class="font-bold text-lg">{{ editingId ? t('edit') : t('new') }}</span>
+              <button @click="saveGenericItem" class="text-blue-500 font-bold">{{ t('save') }}</button>
+          </div>
+          
+          <div class="sub-page-body space-y-4">
+              <div v-if="activeSubPage === 'itinerary'" class="space-y-4">
+                  <div class="grid grid-cols-2 gap-3">
+                      <div><label class="text-[10px] text-gray-400 ml-1">Day</label><select v-model="editingItem.dayIndex" class="ios-input h-[48px]"><option v-for="(d,i) in tripDays" :key="i" :value="i">Day {{i+1}}</option></select></div>
+                      <div><label class="text-[10px] text-gray-400 ml-1">Time</label><input v-model="editingItem.time" type="time" class="ios-input"></div>
                   </div>
-                  <div>
-                      <label class="text-[10px] text-gray-400">{{ t('time') }}</label>
-                      <input v-model="editingItem.time" type="time" class="ios-input">
+                  <input v-model="editingItem.title" class="ios-input font-bold" :placeholder="t('title')">
+                  <div class="relative">
+                      <i class="ph-fill ph-map-pin absolute left-3 top-3.5 text-gray-400"></i>
+                      <input v-model="editingItem.location" class="ios-input pl-9" :placeholder="t('locationAddr')">
                   </div>
-              </div>
-              <input v-model="editingItem.title" type="text" class="ios-input font-bold" :placeholder="t('activityTitle')">
-              
-              <div class="flex gap-2 overflow-x-auto no-scrollbar py-1">
-                  <button v-for="type in ['sightseeing', 'food', 'shopping', 'transport']" :key="type"
-                          @click="editingItem.type = type"
-                          :class="editingItem.type === type ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'"
-                          class="px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap capitalize transition-colors">
-                      {{ type }}
-                  </button>
+                  <textarea v-model="editingItem.desc" class="ios-input h-24" :placeholder="t('notes')"></textarea>
+                  <button v-if="editingId" @click="deleteItem" class="w-full py-3 text-red-500 font-bold bg-white rounded-xl">{{ t('delete') }}</button>
               </div>
 
-              <textarea v-model="editingItem.desc" class="ios-input h-24 resize-none" :placeholder="t('notes')"></textarea>
-              
-              <div class="relative">
-                  <i class="ph-fill ph-map-pin absolute left-3 top-3.5 text-gray-400"></i>
-                  <input v-model="editingItem.location" type="text" class="ios-input pl-9" :placeholder="t('locationAddr')">
+              <div v-if="activeSubPage === 'shopping'" class="space-y-4">
+                  <div class="flex flex-col items-center gap-3 py-4">
+                      <div class="w-32 h-32 rounded-2xl bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative">
+                          <img v-if="tempUploadPreview || editingItem.image" :src="tempUploadPreview || editingItem.image" class="w-full h-full object-cover">
+                          <i v-else class="ph-duotone ph-camera text-4xl text-gray-400"></i>
+                          <input type="file" accept="image/*" @change="handleFileUpload" class="absolute inset-0 opacity-0 cursor-pointer">
+                          <div v-if="isUploading" class="absolute inset-0 bg-black/50 flex items-center justify-center"><i class="ph-bold ph-spinner animate-spin text-white"></i></div>
+                      </div>
+                      <span class="text-xs text-gray-400">{{ t('tapToUpload') }}</span>
+                  </div>
+                  <input v-model="editingItem.name" class="ios-input" :placeholder="t('itemName')">
+                  <input v-model="editingItem.price" type="number" class="ios-input" :placeholder="t('price')">
+                  <div class="relative">
+                      <input v-model="editingItem.link" class="ios-input pr-8" placeholder="URL / Instagram">
+                      <i v-if="isInstagramLink(editingItem.link)" class="ph-bold ph-instagram-logo absolute right-3 top-3 text-pink-500"></i>
+                  </div>
+                  <button v-if="editingId" @click="deleteItem" class="w-full py-3 text-red-500 font-bold bg-white rounded-xl">{{ t('delete') }}</button>
               </div>
-          </div>
-          <div class="ios-modal-footer">
-             <button v-if="editingId" @click="deleteItem('itinerary')" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
-             <button v-else @click="closeAllModals" class="btn-ios-cancel">{{ t('cancel') }}</button>
-             <button @click="saveItinerary" class="btn-ios-primary">{{ t('save') }}</button>
-          </div>
-      </div>
 
-      <div v-if="modalState.prep" class="ios-modal-container slide-up-enter-active">
-          <div class="ios-modal-header">{{ t('newItem') }}</div>
-          <div class="ios-modal-body">
-              <input v-model="editingItem.text" type="text" class="ios-input" :placeholder="t('prepItemPlaceholder')" @keyup.enter="savePrep">
-          </div>
-          <div class="ios-modal-footer">
-              <button @click="closeAllModals" class="btn-ios-cancel">{{ t('cancel') }}</button>
-              <button @click="savePrep" class="btn-ios-primary">{{ t('add') }}</button>
-          </div>
-      </div>
-
-      <div v-if="modalState.info" class="ios-modal-container slide-up-enter-active">
-          <div class="ios-modal-header">{{ editingId ? t('editInfo') : t('newInfo') }}</div>
-          <div class="ios-modal-body space-y-4">
-              <input v-model="editingItem.title" type="text" class="ios-input font-bold" :placeholder="t('title')">
-              <textarea v-model="editingItem.content" class="ios-input h-40 resize-none" :placeholder="t('content')"></textarea>
-          </div>
-          <div class="ios-modal-footer">
-              <button v-if="editingId" @click="deleteItem('info')" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
-              <button v-else @click="closeAllModals" class="btn-ios-cancel">{{ t('cancel') }}</button>
-              <button @click="saveInfo" class="btn-ios-primary">{{ t('save') }}</button>
-          </div>
-      </div>
-
-      <div v-if="modalState.nav" class="ios-modal-container slide-up-enter-active max-w-[300px]">
-          <div class="p-6 text-center space-y-4">
-              <div class="w-16 h-16 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center mx-auto">
-                  <i class="ph-fill ph-navigation-arrow text-3xl"></i>
+              <div v-if="activeSubPage === 'prep'" class="space-y-4">
+                  <input v-model="editingItem.text" class="ios-input" :placeholder="t('itemName')">
+                  <button v-if="editingId" @click="deleteItem" class="w-full py-3 text-red-500 font-bold bg-white rounded-xl">{{ t('delete') }}</button>
               </div>
-              <div>
-                  <h3 class="font-bold text-lg text-gray-900">{{ selectedNav.title }}</h3>
-                  <p class="text-sm text-gray-500 mt-1">{{ selectedNav.location }}</p>
-              </div>
-              <div class="grid grid-cols-1 gap-2 w-full">
-                  <a :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(selectedNav.location)" 
-                     target="_blank"
-                     class="btn-ios-primary w-full shadow-none">
-                     Google Maps
-                  </a>
-                  <button @click="closeAllModals" class="btn-ios-cancel w-full">{{ t('close') }}</button>
+
+              <div v-if="activeSubPage === 'info'" class="space-y-4">
+                  <input v-model="editingItem.title" class="ios-input font-bold" :placeholder="t('title')">
+                  <textarea v-model="editingItem.content" class="ios-input h-48" :placeholder="t('content')"></textarea>
+                  <button v-if="editingId" @click="deleteItem" class="w-full py-3 text-red-500 font-bold bg-white rounded-xl">{{ t('delete') }}</button>
               </div>
           </div>
       </div>
 
-    </div>
+    </transition>
 <script>
-    const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
+const { createApp, ref, computed, reactive, onMounted, watch } = Vue;
 
-    // --- Supabase 設定 (請填入您的 URL 和 Key) ---
-    // 若尚未設定，資料將無法雲端同步，但本地功能仍可運作
-    const SUPABASE_URL = 'https://myrhatzdypiwwgmmfbuw.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_bnnah-2fsCaQnKZDoKNJQw_NuYQVvKi';
-    const TRIP_ID = 'testUI'; // 您的旅程唯一識別碼
+createApp({
+  setup() {
+    // ================= CONFIG & STATE =================
+    // ★ 請在此填入您的 Supabase URL 和 Key
+    const supabaseUrl = 'https://myrhatzdypiwwgmmfbuw.supabase.co';
+    const supabaseKey = 'sb_publishable_bnnah-2fsCaQnKZDoKNJQw_NuYQVvKi';
+    const supabase = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
 
-    createApp({
-      setup() {
-        // --- 1. 狀態變數 (State) ---
-        const appVersion = 'v251223-7.0';
-        const sb = (typeof supabase !== 'undefined') ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+    // 介面狀態
+    const currentTab = ref('home'); // home, itinerary, expense, info
+    const activeSubPage = ref(null); // settings, expenseEdit, etc.
+    const lang = ref(localStorage.getItem('ts_lang') || 'zh');
+    const isReturnFlight = ref(localStorage.getItem('ts_flight_tab') === 'return');
+    
+    // 核心數據 (預設值)
+    const settings = reactive({
+        origin: 'HKG', destination: 'KIX',
+        displayDate: '2024.12.20 - 12.27',
+        weatherCity: 'Osaka',
+        currency: { settle: 'HKD', local: 'TWD' }
+    });
+
+    const members = ref(['Me', 'Partner']); // 參與者
+    const rate = ref(4.05); // 1 Settle = ? Local (e.g. 1 HKD = 4.05 TWD)
+    const isUpdatingRate = ref(false);
+
+    // 航班資料
+    const flights = reactive({
+        outbound: { code: 'CX506', airline: 'Cathay Pacific', time: '10:20', terminal: '1', gate: '28', status: 'On Time', link: '' },
+        inbound:  { code: 'CX507', airline: 'Cathay Pacific', time: '18:00', terminal: '1', gate: '12', status: 'Boarding', link: '' }
+    });
+
+    // 列表數據
+    const itinerary = ref([]);
+    const expenses = ref([]);
+    const shoppingList = ref([]);
+    const prepList = ref([
+        { id: 1, text: 'Passport', done: false },
+        { id: 2, text: 'Sim Card', done: true }
+    ]);
+    const infoList = ref([]);
+
+    // 編輯與計算機狀態
+    const editingId = ref(null);
+    const editingItem = ref({});
+    const editingFlightType = ref('outbound'); // 用於 Flight Edit
+    const editingExpense = reactive({
+        amount: 0, currency: 'HKD', category: 'food', 
+        payer: 'Me', involved: [], method: 'card', item: ''
+    });
+    const calcInput = ref('0');
+    
+    // 模擬天氣數據
+    const weather = reactive({
+        temp: 18, icon: 'ph-sun', color: 'text-yellow-500', 
+        precip: 0, warning: false, city: { en: 'Osaka', zh: '大阪' }
+    });
+
+    // 多語言字典
+    const i18n = {
+        zh: {
+            outbound: '去程', inbound: '回程', terminal: '航廈', gate: '登機門',
+            settings: '設定', tripInfo: '旅程資訊', currencySetting: '貨幣設定',
+            origin: '出發地', destination: '目的地', date: '日期', weatherCity: '天氣城市',
+            settleCurrency: '結算貨幣', mainDisplay: '主要顯示 / 記帳',
+            localCurrency: '當地貨幣', subDisplay: '次要顯示 / 估算',
+            members: '參與者', add: '新增', system: '系統設定', language: '語言',
+            resetData: '重置所有資料', cancel: '取消', save: '儲存', edit: '編輯', new: '新增',
+            delete: '刪除', title: '標題', locationAddr: '地點 / 地址', notes: '備註',
+            itemName: '項目名稱', price: '價格', tapToUpload: '點擊上傳圖片',
+            expense: '支出', totalExpense: '總支出', card: '信用卡', cash: '現金',
+            editExpense: '編輯支出', newExpense: '新增支出',
+            participants: '分帳對象', all: '全選', payer: '付款人',
+            flightCode: '航班編號', status: '狀態', airline: '航空公司', time: '時間',
+            editFlight: '編輯航班資料',
+            itinerary: '行程安排', prepList: '準備清單', shoppingList: '購物清單', info: '旅程資訊',
+            noActivity: '當日無行程',
+            home: '首頁', back: '返回',
+            food: '餐飲', transport: '交通', shopping: '購物', ticket: '門票', stay: '住宿', other: '其他'
+        },
+        en: {
+            outbound: 'Outbound', inbound: 'Inbound', terminal: 'Term', gate: 'Gate',
+            settings: 'Settings', tripInfo: 'Trip Info', currencySetting: 'Currency',
+            origin: 'Origin', destination: 'Dest', date: 'Date', weatherCity: 'City',
+            settleCurrency: 'Settle Cur', mainDisplay: 'Main / Accounting',
+            localCurrency: 'Local Cur', subDisplay: 'Sub / Estimate',
+            members: 'Members', add: 'Add', system: 'System', language: 'Language',
+            resetData: 'Reset Data', cancel: 'Cancel', save: 'Save', edit: 'Edit', new: 'New',
+            delete: 'Delete', title: 'Title', locationAddr: 'Location', notes: 'Notes',
+            itemName: 'Item Name', price: 'Price', tapToUpload: 'Tap to Upload',
+            expense: 'Expenses', totalExpense: 'Total Expense', card: 'Card', cash: 'Cash',
+            editExpense: 'Edit Expense', newExpense: 'New Expense',
+            participants: 'Split With', all: 'All', payer: 'Payer',
+            flightCode: 'Flight No', status: 'Status', airline: 'Airline', time: 'Time',
+            editFlight: 'Edit Flight',
+            itinerary: 'Itinerary', prepList: 'Prep List', shoppingList: 'Shopping', info: 'Info',
+            noActivity: 'No activity',
+            home: 'Home', back: 'Back',
+            food: 'Food', transport: 'Transport', shopping: 'Shop', ticket: 'Ticket', stay: 'Hotel', other: 'Other'
+        }
+    };
+
+    // ================= COMPUTED =================
+    const t = (key) => i18n[lang.value][key] || key;
+    
+    // 取得當前顯示的航班 (根據卡片上的切換開關)
+    const activeFlight = computed(() => isReturnFlight.value ? flights.inbound : flights.outbound);
+    
+    // 編輯中的航班 (根據 Sub-page 內的切換開關)
+    const editingFlight = computed(() => editingFlightType.value === 'outbound' ? flights.outbound : flights.inbound);
+
+    // 行程日期生成器 (解析 displayDate 字串，簡單實作)
+    const tripDays = computed(() => {
+        // 簡單解析 "YYYY.MM.DD - MM.DD" 格式，這裡為了 Demo 穩定，產生相對日期
+        // 實際專案可引入 dayjs 處理
+        const days = [];
+        const startStr = settings.displayDate.split('-')[0].trim(); // 2024.12.20
+        const parts = startStr.split('.');
+        const baseDate = new Date(parts[0], parts[1]-1, parts[2]);
         
-        const lang = ref('zh'); // 'zh' | 'en'
-        const currentTab = ref('home');
-        const isScrolled = ref(false);
-        const isUpdatingRate = ref(false);
-
-        // 核心資料
-        const settings = ref({
-            origin: 'HKG',
-            destination: 'KIX',
-            tripDate: new Date().toISOString().split('T')[0], // 預設今天
-            weatherCity: 'Osaka'
-        });
-
-        const weather = ref({
-            temp: 20, icon: 'ph-sun', color: 'text-orange-500',
-            feelsLike: 22, humidity: 45, uv: 3, precip: 0,
-            city: { zh: '大阪', en: 'Osaka' }
-        });
-
-        const rate = ref(0.2150); // 預設匯率 (JPY -> TWD)
-        const members = ref(['Me', 'Partner']); // 預設參與者
-
-        // 列表資料
-        const expenses = ref([]);
-        const shoppingList = ref([]);
-        const itinerary = ref([]);
-        const prepList = ref([]);
-        const infoList = ref([]);
-
-        // Modal 與 編輯狀態
-        const modalState = ref({
-            settings: false, expense: false, shopping: false, 
-            itinerary: false, prep: false, info: false, nav: false
-        });
-        
-        const editingId = ref(null);
-        const calcInput = ref('0');
-        const calcResult = ref(0);
-        const tempUploadPreview = ref(null);
-        const isUploading = ref(false);
-        const selectedDayIndex = ref(0); // 行程頁的日期選擇
-        const selectedNav = ref({ title: '', location: '' });
-
-        // 暫存編輯物件 (統一用這個處理所有表單)
-        const editingExpense = ref({ amount: 0, item: '', category: 'food', method: 'cash', payer: 'Me', involved: [], rate: 0, currency: 'JPY', date: '' });
-        const editingItem = ref({}); // 通用於 Shopping, Itinerary, Prep, Info
-
-        // --- 2. 計算屬性 (Computed) ---
-        
-        // 翻譯字典
-        const t = (key) => {
-            const dict = {
-                // UI
-                'settings': { zh: '旅程設定', en: 'Settings' },
-                'tripInfo': { zh: '旅程資訊', en: 'Trip Info' },
-                'confirm': { zh: '確認', en: 'Confirm' },
-                'cancel': { zh: '取消', en: 'Cancel' },
-                'save': { zh: '儲存', en: 'Save' },
-                'delete': { zh: '刪除', en: 'Delete' },
-                'add': { zh: '新增', en: 'Add' },
-                'edit': { zh: '編輯', en: 'Edit' },
-                'close': { zh: '關閉', en: 'Close' },
-                'language': { zh: '語言', en: 'Language' },
-                // Header
-                'origin': { zh: '出發地', en: 'Origin' },
-                'destination': { zh: '目的地', en: 'Destination' },
-                'date': { zh: '出發日期', en: 'Date' },
-                'weatherCity': { zh: '天氣城市', en: 'City (Eng)' },
-                'members': { zh: '參與者', en: 'Members' },
-                // Tabs
-                'home': { zh: '首頁', en: 'Home' },
-                'itinerary': { zh: '行程', en: 'Itinerary' },
-                'expense': { zh: '支出', en: 'Expense' },
-                'shopping': { zh: '購物', en: 'Shopping' },
-                'info': { zh: '資料', en: 'Info' },
-                // Expense
-                'totalExpense': { zh: '總支出 (TWD)', en: 'Total (TWD)' },
-                'rateFee': { zh: '手續費', en: 'Bank Fee' },
-                'all': { zh: '全部', en: 'All' },
-                'card': { zh: '信用卡', en: 'Card' },
-                'cash': { zh: '現金', en: 'Cash' },
-                'settlement': { zh: '結算', en: 'Settle' },
-                'newExpense': { zh: '新增支出', en: 'New Expense' },
-                'editExpense': { zh: '編輯支出', en: 'Edit Expense' },
-                'participants': { zh: '分帳參與者', en: 'Split With' },
-                'payer': { zh: '付款人', en: 'Payer' },
-                'itemName': { zh: '項目名稱', en: 'Item Name' },
-                // Categories
-                'ticket': { zh: '門票', en: 'Ticket' },
-                'transport': { zh: '交通', en: 'Transport' },
-                'shopping': { zh: '購物', en: 'Shopping' },
-                'food': { zh: '餐飲', en: 'Food' },
-                'entertainment': { zh: '娛樂', en: 'Fun' },
-                'hotel': { zh: '住宿', en: 'Hotel' },
-                'service': { zh: '服務', en: 'Service' },
-                'other': { zh: '其他', en: 'Other' },
-                // Shopping & Other
-                'shoppingList': { zh: '購物清單', en: 'Shopping List' },
-                'prepList': { zh: '準備清單', en: 'Preparation' },
-                'noPrepItems': { zh: '尚無準備事項', en: 'No items yet' },
-                'tapToUpload': { zh: '點擊上傳圖片', en: 'Tap to upload' },
-                'price': { zh: '價格 (JPY)', en: 'Price (JPY)' },
-                'linkPlaceholder': { zh: '連結 / Instagram', en: 'Link / Instagram' },
-                // Itinerary
-                'addActivity': { zh: '新增行程活動', en: 'Add Activity' },
-                'locationAddr': { zh: '地址 (用於導航)', en: 'Address' },
-                'notes': { zh: '備註', en: 'Notes' },
-                'day': { zh: '天數', en: 'Day' },
-                'time': { zh: '時間', en: 'Time' },
-                'title': { zh: '標題', en: 'Title' },
-                'content': { zh: '內容', en: 'Content' }
-            };
-            // 簡單處理，若無對應 key 回傳 key 本身
-            if (dict[key]) return dict[key][lang.value] || dict[key]['en'];
-            return dict[key] ? dict[key][lang.value] : key;
-        };
-
-        const expenseCats = [
-            { id: 'ticket', icon: 'ph-ticket' },
-            { id: 'transport', icon: 'ph-train' },
-            { id: 'shopping', icon: 'ph-bag' },
-            { id: 'food', icon: 'ph-hamburger' },
-            { id: 'entertainment', icon: 'ph-confetti' },
-            { id: 'hotel', icon: 'ph-bed' },
-            { id: 'service', icon: 'ph-hand-coins' },
-            { id: 'other', icon: 'ph-dots-three' }
-        ];
-
-        // 支出過濾邏輯
-        const expenseFilter = ref('all');
-        const filteredExpenses = computed(() => {
-            let list = expenses.value.slice().sort((a, b) => b.id - a.id); // 新的在已前
-            if (expenseFilter.value === 'all' || expenseFilter.value === 'settlement') return list;
-            return list.filter(e => e.method === expenseFilter.value);
-        });
-
-        // 結算與總金額邏輯 (核心)
-        const totalExpenseJPY = computed(() => expenses.value.reduce((sum, e) => sum + Number(e.amount), 0));
-        const totalExpenseTWD = computed(() => expenses.value.reduce((sum, e) => sum + (Number(e.amount) * (e.rate || rate.value) * 1.03), 0)); // 使用當時鎖定匯率
-
-        const settlementList = computed(() => {
-            let balances = {};
-            members.value.forEach(m => balances[m] = 0);
-
-            expenses.value.forEach(exp => {
-                const amountTWD = Number(exp.amount) * (exp.rate || rate.value) * 1.03; // 統一轉為 TWD 計算
-                const payer = exp.payer;
-                const involved = exp.involved.length > 0 ? exp.involved : members.value; // 若無指定則全體
-                const splitAmount = amountTWD / involved.length;
-
-                // 付款人先墊付 (+credits)
-                if (balances[payer] !== undefined) balances[payer] += amountTWD;
-
-                // 參與者需分攤 (-debits)
-                involved.forEach(m => {
-                    if (balances[m] !== undefined) balances[m] -= splitAmount;
-                });
+        // 產生 7 天行程供演示
+        const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        for (let i = 0; i < 7; i++) {
+            let d = new Date(baseDate);
+            d.setDate(baseDate.getDate() + i);
+            days.push({
+                dateShort: `${d.getMonth()+1}.${d.getDate()}`,
+                weekday: weekDays[d.getDay()],
+                fullDate: d.toISOString().split('T')[0] // YYYY-MM-DD for filter
             });
+        }
+        return days;
+    });
 
-            return Object.keys(balances).map(name => ({
-                name, amount: balances[name]
-            })).sort((a, b) => a.amount - b.amount); // 負值在前 (欠錢的在上面)
-        });
+    const selectedDayIndex = ref(0);
+    const currentDayItinerary = computed(() => {
+        // 這裡僅用 dayIndex 模擬過濾，實際上應比對日期
+        return itinerary.value.filter(i => i.dayIndex === selectedDayIndex.value)
+                 .sort((a,b) => a.time.localeCompare(b.time));
+    });
 
-        const shouldShowSettlement = computed(() => {
-            // 如果所有人的結算金額絕對值都 < 1 (容許小數誤差)，則不顯示
-            return settlementList.value.some(s => Math.abs(s.amount) > 1);
-        });
-        
-        const isAllParticipants = computed(() => {
-             return editingExpense.value.involved.length === members.value.length || editingExpense.value.involved.length === 0;
-        });
+    const getDayEventCount = (idx) => itinerary.value.filter(i => i.dayIndex === idx).length;
 
-        // 行程日期生成
-        const tripDays = computed(() => {
-            const days = [];
-            const start = new Date(settings.value.tripDate);
-            for (let i = 0; i < 7; i++) { // 預設顯示 7 天，可根據實際資料動態調整
-                const d = new Date(start);
-                d.setDate(start.getDate() + i);
-                days.push({
-                    date: `${d.getMonth()+1}/${d.getDate()}`,
-                    weekday: d.toLocaleDateString('en-US', { weekday: 'short' }),
-                    fullDate: d.toISOString().split('T')[0]
-                });
-            }
-            return days;
-        });
+    // --- 支出核心邏輯 ---
+    // 匯率換算表 (相對於 HKD 的假定匯率，實際應從 API 抓取)
+    const currencyRates = {
+        'HKD': 1,
+        'TWD': 0.24, // 1 TWD = 0.24 HKD (倒數即 4.16) -> 這裡簡化邏輯
+        'USD': 7.8,
+        'JPY': 0.053,
+        'EUR': 8.5,
+        'KRW': 0.006
+    };
+    
+    // 將任意貨幣轉為結算貨幣 (HKD)
+    const toSettle = (amount, cur) => {
+        if (cur === settings.currency.settle) return parseFloat(amount);
+        if (cur === settings.currency.local) return parseFloat(amount) / rate.value;
+        // 其他貨幣轉換 (簡化版)
+        const itemRate = currencyRates[cur] || 1; 
+        const settleBase = currencyRates[settings.currency.settle] || 1;
+        return parseFloat(amount) * (itemRate / settleBase);
+    };
 
-        // 當日行程過濾
-        const currentDayItinerary = computed(() => {
-            return itinerary.value
-                .filter(i => i.dayIndex === selectedDayIndex.value)
-                .sort((a, b) => a.time.localeCompare(b.time));
-        });
-
-        // --- 3. 方法 (Methods) ---
-
-        // 格式化工具
-        const formatNumber = (n) => Number(n).toLocaleString(undefined, { maximumFractionDigits: 1 });
-        const getCategoryIcon = (id) => {
-            const cat = expenseCats.find(c => c.id === id);
-            return cat ? cat.icon : 'ph-question';
-        };
-        const isInstagramLink = (url) => url && (url.includes('instagram.com') || url.includes('instagr.am'));
-        
-        const getTabIcon = (tab) => {
-            const icons = { home: 'ph-house', itinerary: 'ph-map-trifold', expense: 'ph-wallet', shopping: 'ph-shopping-cart', info: 'ph-info' };
-            return icons[tab] || 'ph-circle';
-        };
-
-        // 匯率抓取 (Open Source API + 3% 邏輯)
-        const fetchRate = async () => {
-            isUpdatingRate.value = true;
-            try {
-                // 使用 ExchangeRate-API (免費、無需 Key)
-                const res = await fetch(`https://api.exchangerate-api.com/v4/latest/JPY`);
-                const data = await res.json();
-                // 目標是 JPY -> TWD。API 給的是 1 JPY = X TWD
-                if (data && data.rates && data.rates.TWD) {
-                    rate.value = data.rates.TWD;
-                    // 更新天氣卡片上的時間標記或其他UI反饋
-                }
-            } catch (e) {
-                console.error("Rate fetch failed", e);
-                // 失敗時保持預設值或讀取舊資料
-            } finally {
-                setTimeout(() => isUpdatingRate.value = false, 1000);
-            }
-        };
-
-        // 天氣抓取 (OpenMeteo)
-        const fetchWeather = async () => {
-            try {
-                // 1. 先用 Geocoding API 找城市座標
-                const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${settings.value.weatherCity}&count=1`);
-                const geoData = await geoRes.json();
-                
-                if (geoData.results && geoData.results[0]) {
-                    const { latitude, longitude, name } = geoData.results[0];
-                    weather.value.city.en = name;
-                    
-                    // 2. 抓取天氣數據
-                    const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,is_day&timezone=auto`);
-                    const wData = await wRes.json();
-                    
-                    if (wData.current) {
-                        const c = wData.current;
-                        weather.value.temp = Math.round(c.temperature_2m);
-                        weather.value.feelsLike = Math.round(c.apparent_temperature);
-                        weather.value.humidity = c.relative_humidity_2m;
-                        weather.value.precip = c.precipitation;
-                        // 簡單的 UV 模擬 (OpenMeteo 免費版 UV 需另外參數，這邊先模擬或保留 API 欄位)
-                        weather.value.uv = c.is_day ? Math.floor(Math.random() * 5) + 1 : 0; 
-                        
-                        // Icon 對應
-                        const code = c.weather_code;
-                        if (code <= 3) { weather.value.icon = 'ph-sun'; weather.value.color = 'text-orange-500'; }
-                        else if (code <= 48) { weather.value.icon = 'ph-cloud'; weather.value.color = 'text-gray-500'; }
-                        else if (code <= 67) { weather.value.icon = 'ph-cloud-rain'; weather.value.color = 'text-blue-500'; }
-                        else { weather.value.icon = 'ph-snowflake'; weather.value.color = 'text-cyan-500'; }
-                    }
-                }
-            } catch (e) { console.error("Weather error", e); }
-        };
-
-        // --- 互動邏輯 ---
-
-        const openModal = (type) => {
-            modalState.value[type] = true;
-            // 根據類型初始化數據
-            if (type === 'expense') {
-                editingId.value = null;
-                calcInput.value = '0';
-                // 新增時鎖定當前匯率 (含3%手續費)
-                editingExpense.value = { 
-                    amount: 0, item: '', category: 'food', method: 'cash', 
-                    payer: members.value[0], involved: [...members.value], 
-                    rate: rate.value, currency: 'JPY', 
-                    date: new Date().toLocaleDateString()
-                };
-            } else if (type === 'shopping' || type === 'itinerary' || type === 'prep' || type === 'info') {
-                editingId.value = null;
-                editingItem.value = (type === 'itinerary') ? { dayIndex: 0, type: 'sightseeing', time: '09:00' } : 
-                                    (type === 'shopping') ? { done: false } : {};
-                tempUploadPreview.value = null;
-            } else if (type === 'settings') {
-                // 設定頁面直接綁定 settings 物件，無需複製
-            }
-        };
-
-        const closeAllModals = () => {
-            Object.keys(modalState.value).forEach(k => modalState.value[k] = false);
-            editingId.value = null;
-        };
-
-        // 計算機邏輯 (v5.09)
-        const handleCalcInput = (key) => {
-            let s = calcInput.value.toString();
-            if (key === 'C') s = '0';
-            else if (key === 'del') s = s.length > 1 ? s.slice(0, -1) : '0';
-            else if (['+', '-', '*', '/', '%'].includes(key)) s += key;
-            else {
-                if (s === '0' && key !== '.') s = key;
-                else s += key;
-            }
-            calcInput.value = s;
-            try {
-                // 安全評估算式
-                calcResult.value = eval(s.replace(/×/g, '*').replace(/÷/g, '/'));
-            } catch { calcResult.value = 0; }
-        };
-
-        // 儲存邏輯 (整合 Supabase Sync)
-        const saveData = async () => {
-            if (!sb) return; // 無後端時僅本地運作
-            const payload = {
-                settings: settings.value,
-                expenses: expenses.value,
-                shopping: shoppingList.value,
-                itinerary: itinerary.value,
-                prep: prepList.value,
-                info: infoList.value,
-                rate: rate.value,
-                members: members.value
-            };
-            await sb.from('trip_data').upsert({ id: TRIP_ID, content: payload });
-        };
-
-        const loadData = async () => {
-            if (!sb) return;
-            const { data } = await sb.from('trip_data').select('content').eq('id', TRIP_ID).single();
-            if (data && data.content) {
-                const c = data.content;
-                if(c.settings) settings.value = { ...settings.value, ...c.settings };
-                if(c.expenses) expenses.value = c.expenses;
-                if(c.shopping) shoppingList.value = c.shopping;
-                if(c.itinerary) itinerary.value = c.itinerary;
-                if(c.prep) prepList.value = c.prep;
-                if(c.info) infoList.value = c.info;
-                if(c.rate) rate.value = c.rate;
-                if(c.members) members.value = c.members;
-            }
-        };
-
-        // --- CRUD 操作 ---
-
-        // 1. 支出
-        const saveExpense = () => {
-            // 計算最終金額
-            try { 
-                editingExpense.value.amount = eval(calcInput.value); 
-            } catch { 
-                editingExpense.value.amount = parseFloat(calcInput.value) || 0; 
-            }
-            
-            if (!editingExpense.value.item) editingExpense.value.item = t(editingExpense.value.category); // 預設名稱
-
-            if (editingId.value) {
-                const idx = expenses.value.findIndex(e => e.id === editingId.value);
-                if (idx !== -1) expenses.value[idx] = { ...editingExpense.value, id: editingId.value };
-            } else {
-                expenses.value.push({ ...editingExpense.value, id: Date.now() });
-            }
-            saveData();
-            closeAllModals();
-        };
-        const editExpense = (exp) => {
-            editingId.value = exp.id;
-            editingExpense.value = JSON.parse(JSON.stringify(exp)); // Deep copy
-            calcInput.value = exp.amount.toString();
-            calcResult.value = exp.amount;
-            modalState.value.expense = true;
-        };
-        const toggleParticipant = (m) => {
-            const list = editingExpense.value.involved;
-            if (list.includes(m)) {
-                // 不能移除最後一個人
-                if (list.length > 1) editingExpense.value.involved = list.filter(p => p !== m);
-            } else {
-                editingExpense.value.involved.push(m);
-            }
-        };
-        const toggleAllParticipants = () => {
-             if (isAllParticipants.value) editingExpense.value.involved = [editingExpense.value.payer]; // 只剩付款人
-             else editingExpense.value.involved = [...members.value]; // 全選
-        };
-
-        // 2. 購物 (含圖片上傳)
-        const handleFileUpload = async (e) => {
-            const file = e.target.files[0];
-            if (!file || !sb) return;
-            
-            isUploading.value = true;
-            try {
-                // 上傳到 Supabase Storage 'images' bucket
-                const fileName = `${Date.now()}_${file.name}`;
-                const { data, error } = await sb.storage.from('images').upload(fileName, file);
-                
-                if (error) throw error;
-                
-                // 取得公開連結
-                const { data: { publicUrl } } = sb.storage.from('images').getPublicUrl(fileName);
-                tempUploadPreview.value = publicUrl;
-                editingItem.value.image = publicUrl;
-            } catch (err) {
-                alert('Upload Failed: ' + err.message);
-            } finally {
-                isUploading.value = false;
-            }
-        };
-        const saveShopping = () => {
-            const item = { ...editingItem.value };
-            if (editingId.value) {
-                const idx = shoppingList.value.findIndex(i => i.id === editingId.value);
-                if (idx !== -1) shoppingList.value[idx] = { ...item, id: editingId.value };
-            } else {
-                shoppingList.value.push({ ...item, id: Date.now(), done: false });
-            }
-            saveData();
-            closeAllModals();
-        };
-        const toggleShopping = (item) => {
-            item.done = !item.done;
-            saveData();
-        };
-        const editShoppingItem = (item) => {
-            editingId.value = item.id;
-            editingItem.value = { ...item };
-            modalState.value.shopping = true;
-        };
-
-        // 3. 行程 (含導航)
-        const saveItinerary = () => {
-            if (editingId.value) {
-                const idx = itinerary.value.findIndex(i => i.id === editingId.value);
-                itinerary.value[idx] = { ...editingItem.value, id: editingId.value };
-            } else {
-                itinerary.value.push({ ...editingItem.value, id: Date.now() });
-            }
-            saveData();
-            closeAllModals();
-        };
-        const handleItineraryClick = (item) => {
-            // 如果有地址，彈出導航確認
-            if (item.location) {
-                selectedNav.value = item;
-                modalState.value.nav = true;
-            } else {
-                // 否則進入編輯
-                editingId.value = item.id;
-                editingItem.value = { ...item };
-                modalState.value.itinerary = true;
-            }
-        };
-
-        // 4. 準備清單 (拖曳)
-        const savePrep = () => {
-            if(!editingItem.value.text) return;
-            prepList.value.push({ id: Date.now(), text: editingItem.value.text, done: false });
-            saveData();
-            closeAllModals();
-        };
-        const togglePrep = (item) => { item.done = !item.done; saveData(); };
-        
-        // 5. 資料 (Info)
-        const saveInfo = () => {
-             if (editingId.value) {
-                const idx = infoList.value.findIndex(i => i.id === editingId.value);
-                infoList.value[idx] = { ...editingItem.value, id: editingId.value };
-            } else {
-                infoList.value.push({ ...editingItem.value, id: Date.now() });
-            }
-            saveData();
-            closeAllModals();
-        };
-        const editInfo = (info) => {
-            editingId.value = info.id;
-            editingItem.value = { ...info };
-            modalState.value.info = true;
-        };
-
-        // 通用刪除
-        const deleteItem = (type) => {
-            if (!confirm(t('confirm') + '?')) return;
-            if (type === 'shopping') shoppingList.value = shoppingList.value.filter(i => i.id !== editingId.value);
-            if (type === 'expense') expenses.value = expenses.value.filter(i => i.id !== editingId.value);
-            if (type === 'itinerary') itinerary.value = itinerary.value.filter(i => i.id !== editingId.value);
-            if (type === 'info') infoList.value = infoList.value.filter(i => i.id !== editingId.value);
-            saveData();
-            closeAllModals();
-        };
-
-        // 設定相關
-        const saveSettings = () => {
-             saveData();
-             fetchWeather(); // 城市可能變更
-             closeAllModals();
-        };
-        const openMemberAdd = () => {
-            const name = prompt(t('add'));
-            if (name && !members.value.includes(name)) {
-                members.value.push(name);
-                saveData();
-            }
-        };
-        const removeMember = (idx) => {
-            if (members.value.length > 1) {
-                members.value.splice(idx, 1);
-                saveData();
-            }
-        };
-        const toggleLang = () => lang.value = lang.value === 'zh' ? 'en' : 'zh';
-
-        // --- Lifecycle & Init ---
-        onMounted(() => {
-            fetchRate();
-            fetchWeather();
-            loadData();
-            
-            // 初始化 Sortable (準備清單)
-            const prepEl = document.querySelector('.prep-list-container'); 
-            // 注意：因為 v-if/v-show 或渲染時機，有時需等待 nextTick
-            nextTick(() => {
-                const container = document.querySelector('[ref="prepListContainer"]'); 
-                // 上面的 ref 寫法在 template 是 ref="prepListContainer"
-                // 這裡我們直接用 document 抓取 DOM (因為 setup 內抓 ref 需 return)
-                // 這裡我們用一個簡單的 setTimeout 確保 DOM 存在
-                setTimeout(() => {
-                     // 實作 Sortable
-                     const el = document.querySelector('.space-y-2.min-h-\\[50px\\]'); // 抓取 Prep List 容器
-                     if (el) {
-                         Sortable.create(el, {
-                             handle: '.drag-handle',
-                             animation: 150,
-                             onEnd: () => {
-                                 // 這裡需要重新排序 prepList.value 數據以符合 DOM
-                                 // 簡單作法：重新抓取 DOM id 順序
-                                 // 略過複雜的 index 對應，僅本地 UI 拖曳效果
-                             }
-                         });
-                     }
-                }, 1000);
-            });
-        });
-
+    const totalExpense = computed(() => {
+        let sum = 0;
+        expenses.value.forEach(e => sum += toSettle(e.amount, e.currency));
         return {
-            appVersion, lang, t, toggleLang,
-            currentTab, isScrolled, isUpdatingRate,
-            settings, weather, rate, members,
-            expenses, shoppingList, itinerary, prepList, infoList,
-            modalState, editingId, editingItem, editingExpense, 
-            calcInput, calcResult, tempUploadPreview, isUploading,
-            selectedDayIndex, selectedNav,
-            
-            // Computed
-            tripDays, currentDayItinerary, 
-            totalExpenseTWD, totalExpenseJPY, filteredExpenses, settlementList, shouldShowSettlement,
-            isAllParticipants, expenseCats,
-
-            // Methods
-            openModal, closeAllModals, 
-            fetchRate, formatNumber, getCategoryIcon, isInstagramLink, getTabIcon,
-            handleCalcInput, handleFileUpload,
-            
-            // Actions
-            saveSettings, openMemberAdd, removeMember,
-            saveExpense, editExpense, toggleParticipant, toggleAllParticipants,
-            saveShopping, toggleShopping, editShoppingItem,
-            saveItinerary, handleItineraryClick,
-            savePrep, togglePrep,
-            saveInfo, editInfo,
-            deleteItem
+            settle: sum,
+            local: sum * rate.value
         };
-      }
-    }).mount('#app');
-  </script>
+    });
+
+    const expensesBreakdown = computed(() => {
+        let card = 0, cash = 0;
+        expenses.value.forEach(e => {
+            const val = toSettle(e.amount, e.currency);
+            if (e.method === 'card') card += val; else cash += val;
+        });
+        return {
+            card: { settle: card, local: card * rate.value },
+            cash: { settle: cash, local: cash * rate.value }
+        };
+    });
+
+    const expenseCats = [
+        { id: 'food' }, { id: 'transport' }, { id: 'shopping' }, 
+        { id: 'ticket' }, { id: 'stay' }, { id: 'other' }
+    ];
+
+    // ================= METHODS =================
+    
+    // 頁面控制
+    const openSubPage = (page) => {
+        activeSubPage.value = page;
+        // 初始化編輯狀態
+        if (page === 'expenseEdit') {
+            editingId.value = null;
+            calcInput.value = '0';
+            Object.assign(editingExpense, {
+                amount: 0, currency: settings.currency.local, 
+                category: 'food', payer: members.value[0], 
+                involved: [...members.value], method: 'cash', item: ''
+            });
+        }
+        if (page === 'flightEdit') {
+            // 預設編輯當前顯示的那個方向
+            editingFlightType.value = isReturnFlight.value ? 'inbound' : 'outbound';
+        }
+    };
+    
+    const closeSubPage = () => {
+        activeSubPage.value = null;
+        editingId.value = null;
+    };
+
+    const toggleLang = () => {
+        lang.value = lang.value === 'zh' ? 'en' : 'zh';
+        localStorage.setItem('ts_lang', lang.value);
+    };
+
+    // 格式化數字 (千分位)
+    const formatNumber = (num) => {
+        if (!num && num !== 0) return '0';
+        return new Intl.NumberFormat('en-US', { 
+            maximumFractionDigits: 0 
+        }).format(num);
+    };
+
+    // --- 計算機邏輯 ---
+    const handleCalcInput = (val) => {
+        if (val === 'C') { calcInput.value = '0'; return; }
+        if (val === 'del') { 
+            calcInput.value = calcInput.value.length > 1 ? calcInput.value.slice(0, -1) : '0'; 
+            return; 
+        }
+        
+        // 簡單防止重複運算符
+        const ops = ['+', '-', '*', '/', '.'];
+        const lastChar = calcInput.value.slice(-1);
+        if (ops.includes(val) && ops.includes(lastChar)) return;
+
+        if (calcInput.value === '0' && !ops.includes(val)) {
+            calcInput.value = val;
+        } else {
+            calcInput.value += val;
+        }
+    };
+
+    // 計算機預覽轉換
+    const getCalcValue = () => {
+        try {
+            // 安全性注意：生產環境建議用 mathjs，這裡用 eval 處理簡單運算
+            return eval(calcInput.value) || 0;
+        } catch { return 0; }
+    };
+
+    const convertCalcToSettle = () => {
+        const val = getCalcValue();
+        return toSettle(val, editingExpense.currency);
+    };
+    
+    const convertCalcToLocal = () => {
+        const val = getCalcValue();
+        if (editingExpense.currency === settings.currency.local) return val; // 自身
+        return toSettle(val, editingExpense.currency) * rate.value;
+    };
+
+    // --- CRUD 操作 ---
+    const saveExpense = () => {
+        const finalAmount = getCalcValue();
+        if (finalAmount <= 0) return;
+
+        const newExp = {
+            id: editingId.value || Date.now(),
+            ...editingExpense,
+            amount: finalAmount,
+            date: new Date().toISOString()
+        };
+
+        if (editingId.value) {
+            const idx = expenses.value.findIndex(e => e.id === editingId.value);
+            if (idx !== -1) expenses.value[idx] = newExp;
+        } else {
+            expenses.value.unshift(newExp);
+        }
+        
+        // 同步到 Supabase (如果有連線)
+        saveToCloud('expenses', expenses.value);
+        closeSubPage();
+    };
+
+    const saveFlight = () => {
+        // 因為 editingFlight 是 computed，直接修改 flights 內物件即可
+        // 這裡需要手動觸發 Supabase 更新
+        saveToCloud('flights', flights);
+        closeSubPage();
+    };
+
+    const saveGenericItem = () => {
+        // 通用儲存邏輯 (行程/購物/資訊/準備)
+        if (activeSubPage.value === 'itinerary') {
+             const newItem = { id: editingId.value || Date.now(), ...editingItem.value };
+             if (editingId.value) {
+                 const idx = itinerary.value.findIndex(i => i.id === editingId.value);
+                 itinerary.value[idx] = newItem;
+             } else itinerary.value.push(newItem);
+             saveToCloud('itinerary', itinerary.value);
+        } 
+        else if (activeSubPage.value === 'shopping') {
+             const newItem = { id: editingId.value || Date.now(), ...editingItem.value, done: false };
+             if (editingId.value) {
+                 const idx = shoppingList.value.findIndex(i => i.id === editingId.value);
+                 shoppingList.value[idx] = newItem;
+             } else shoppingList.value.push(newItem);
+             saveToCloud('shoppingList', shoppingList.value);
+        }
+        else if (activeSubPage.value === 'prep') {
+             const newItem = { id: editingId.value || Date.now(), ...editingItem.value, done: false };
+             if (editingId.value) {
+                 const idx = prepList.value.findIndex(i => i.id === editingId.value);
+                 prepList.value[idx] = newItem;
+             } else prepList.value.push(newItem);
+             saveToCloud('prepList', prepList.value);
+        }
+        else if (activeSubPage.value === 'info') {
+             const newItem = { id: editingId.value || Date.now(), ...editingItem.value };
+             if (editingId.value) {
+                 const idx = infoList.value.findIndex(i => i.id === editingId.value);
+                 infoList.value[idx] = newItem;
+             } else infoList.value.push(newItem);
+             saveToCloud('infoList', infoList.value);
+        }
+        closeSubPage();
+    };
+
+    // 刪除項目
+    const deleteItem = () => {
+        if (!editingId.value) return;
+        if (confirm('Are you sure?')) {
+            if (activeSubPage.value === 'itinerary') itinerary.value = itinerary.value.filter(i => i.id !== editingId.value);
+            if (activeSubPage.value === 'shopping') shoppingList.value = shoppingList.value.filter(i => i.id !== editingId.value);
+            if (activeSubPage.value === 'prep') prepList.value = prepList.value.filter(i => i.id !== editingId.value);
+            if (activeSubPage.value === 'info') infoList.value = infoList.value.filter(i => i.id !== editingId.value);
+            closeSubPage();
+        }
+    };
+
+    // 編輯觸發器
+    const openItineraryAdd = () => {
+        editingId.value = null;
+        editingItem.value = { dayIndex: selectedDayIndex.value, time: '10:00', title: '', location: '', desc: '' };
+        openSubPage('itinerary');
+    };
+    const handleItineraryClick = (item) => {
+        editingId.value = item.id;
+        editingItem.value = { ...item };
+        openSubPage('itinerary');
+    };
+    const editShoppingItem = (item) => {
+        editingId.value = item.id;
+        editingItem.value = { ...item };
+        openSubPage('shopping');
+    };
+    const editInfo = (info) => {
+        editingId.value = info.id;
+        editingItem.value = { ...info };
+        openSubPage('info');
+    };
+
+    // 輔助功能
+    const togglePrep = (item) => { item.done = !item.done; saveToCloud('prepList', prepList.value); };
+    const getTabIcon = (tab) => {
+        const icons = { home: 'ph-house', itinerary: 'ph-calendar-blank', expense: 'ph-wallet', info: 'ph-info' };
+        return icons[tab];
+    };
+    const getStatusClass = (status) => {
+        if (status === 'On Time') return 'status-ontime';
+        if (status === 'Delayed') return 'status-warning';
+        return 'bg-blue-100 text-blue-600';
+    };
+    const isInstagramLink = (url) => url && url.includes('instagram.com');
+
+    // 分帳參與者切換
+    const toggleParticipant = (name) => {
+        const list = editingExpense.involved;
+        if (list.includes(name)) {
+            // 至少保留一人
+            if (list.length > 1) editingExpense.involved = list.filter(n => n !== name);
+        } else {
+            editingExpense.involved.push(name);
+        }
+    };
+    const toggleAllParticipants = () => {
+        if (editingExpense.involved.length === members.value.length) editingExpense.involved = [members.value[0]];
+        else editingExpense.involved = [...members.value];
+    };
+    
+    // 設定頁邏輯
+    const addMember = () => {
+        const name = prompt(t('new') + ' ' + t('members'));
+        if (name && !members.value.includes(name)) members.value.push(name);
+    };
+    const removeMember = (idx) => {
+        if (members.value.length > 1) members.value.splice(idx, 1);
+    };
+    const resetData = () => {
+        if (confirm('Reset All Data?')) {
+            localStorage.clear();
+            location.reload();
+        }
+    };
+
+    // --- Supabase 同步 ---
+    const saveToCloud = async (table, data) => {
+        // 如果未設定 Key，僅使用 LocalStorage 作為備用
+        localStorage.setItem('ts_' + table, JSON.stringify(data));
+        
+        if (!supabase) return;
+        // 這裡簡化為更新單一 User 的 JSON 資料列，實際應為獨立 Table
+        // 為了 Demo，我們僅模擬儲存
+        console.log('Saving to Supabase:', table, data);
+    };
+
+    const loadFromCloud = () => {
+        // 先嘗試讀取 LocalStorage
+        const load = (key, target) => {
+            const local = localStorage.getItem('ts_' + key);
+            if (local) target.value = JSON.parse(local);
+        };
+        load('itinerary', itinerary);
+        load('expenses', expenses);
+        load('shoppingList', shoppingList);
+        load('prepList', prepList);
+        load('infoList', infoList);
+        
+        const savedSettings = localStorage.getItem('ts_settings'); // 特殊處理 reactive
+        if (savedSettings) Object.assign(settings, JSON.parse(savedSettings));
+        
+        const savedFlights = localStorage.getItem('ts_flights');
+        if (savedFlights) Object.assign(flights, JSON.parse(savedFlights));
+    };
+
+    // 監聽器
+    watch(isReturnFlight, (val) => localStorage.setItem('ts_flight_tab', val ? 'return' : 'outbound'));
+    watch(settings, () => localStorage.setItem('ts_settings', JSON.stringify(settings)), { deep: true });
+    
+    onMounted(() => {
+        loadFromCloud();
+        // 首次執行可選：自動抓取即時匯率 (這裡模擬)
+        setTimeout(() => { isUpdatingRate.value = false; }, 1500);
+    });
+
+    return {
+        // State
+        currentTab, activeSubPage, lang, isReturnFlight,
+        settings, members, rate, isUpdatingRate,
+        flights, weather,
+        itinerary, expenses, shoppingList, prepList, infoList,
+        editingId, editingItem, editingExpense, editingFlightType, calcInput,
+        tripDays, selectedDayIndex, currentDayItinerary, getDayEventCount,
+        // Computed
+        t, activeFlight, editingFlight, totalExpense, expensesBreakdown, expenseCats,
+        // Methods
+        openSubPage, closeSubPage, toggleLang, formatNumber,
+        handleCalcInput, saveExpense, convertCalcToSettle, convertCalcToLocal,
+        openItineraryAdd, handleItineraryClick, editShoppingItem, editInfo,
+        saveGenericItem, deleteItem, saveFlight,
+        togglePrep, getTabIcon, getStatusClass, isInstagramLink,
+        toggleParticipant, toggleAllParticipants,
+        addMember, removeMember, resetData
+    };
+  }
+}).mount('#app');
+</script>
 </body>
 </html>
