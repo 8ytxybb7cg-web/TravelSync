@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
-<title>Travel Sync v7.02</title>
+<title>Travel Sync v7.04</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/vue@3/dist/vue.global.js" crossorigin="anonymous"></script>
@@ -853,9 +853,13 @@ createApp({
     // 1. Config
     const supabaseUrl = 'https://myrhatzdypiwwgmmfbuw.supabase.co';
     const supabaseKey = 'sb_publishable_bnnah-2fsCaQnKZDoKNJQw_NuYQVvKi';
-    let supabase = null;
+        let supabase = null;
     if (typeof window.supabase !== 'undefined' && supabaseUrl.startsWith('http')) {
-        supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        try {
+            supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        } catch (error) {
+            console.error("Supabase Init Error:", error);
+        }
     }
 
     // 2. State
@@ -1090,10 +1094,9 @@ createApp({
     const getTabIcon = (t) => ({home:'ph-house', itinerary:'ph-calendar-blank', expense:'ph-wallet', info:'ph-info'}[t]);
     const getStatusClass = (s) => s==='On Time'?'text-green-400':(s==='Delayed'?'text-red-400':'text-blue-400');
     const isInstagramLink = (l) => l && l.includes('instagram.com');
-        const openLink = (l) => window.open(l, '_blank');
+            const openLink = (l) => window.open(l, '_blank');
     const getGoogleMapUrl = (loc) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`;
     const getGoogleNavUrl = (loc) => `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(loc)}`;
-
 
     // Init & Watch
     onMounted(() => {
