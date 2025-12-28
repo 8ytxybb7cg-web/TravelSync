@@ -507,20 +507,20 @@
 
     <nav class="fixed bottom-6 left-0 right-0 z-50 px-4 pointer-events-none">
       <div class="iphone-dock pointer-events-auto">
-        <button @click="currentTab='首頁'" class="group flex flex-col items-center justify-center flex-1 transition-all text-gray-400" :class="{'!text-[#007AFF]': currentTab==='首頁'}">
-            <i class="ph text-[28px] mb-1 transition-transform group-active:scale-90" :class="currentTab==='首頁' ? 'ph-house-fill' : 'ph-house'"></i>
+               <button @click="currentTab='首頁'" class="group flex flex-col items-center justify-center flex-1 transition-all text-gray-400" :class="{'!text-[#007AFF]': currentTab==='首頁'}">
+            <i class="text-[28px] mb-1 transition-transform group-active:scale-90" :class="currentTab==='首頁' ? 'ph-fill ph-house' : 'ph-bold ph-house'"></i>
             <span class="text-[10px] font-semibold">首頁</span>
         </button>
         <button @click="currentTab='行程'" class="group flex flex-col items-center justify-center flex-1 transition-all text-gray-400" :class="{'!text-[#007AFF]': currentTab==='行程'}">
-            <i class="ph text-[28px] mb-1 transition-transform group-active:scale-90" :class="currentTab==='行程' ? 'ph-map-trifold-fill' : 'ph-map-trifold'"></i>
+            <i class="text-[28px] mb-1 transition-transform group-active:scale-90" :class="currentTab==='行程' ? 'ph-fill ph-map-trifold' : 'ph-bold ph-map-trifold'"></i>
             <span class="text-[10px] font-semibold">行程</span>
         </button>
         <button @click="currentTab='記帳'" class="group flex flex-col items-center justify-center flex-1 transition-all text-gray-400" :class="{'!text-[#007AFF]': currentTab==='記帳'}">
-            <i class="ph text-[28px] mb-1 transition-transform group-active:scale-90" :class="currentTab==='記帳' ? 'ph-wallet-fill' : 'ph-wallet'"></i>
+            <i class="text-[28px] mb-1 transition-transform group-active:scale-90" :class="currentTab==='記帳' ? 'ph-fill ph-wallet' : 'ph-bold ph-wallet'"></i>
             <span class="text-[10px] font-semibold">記帳</span>
         </button>
         <button @click="currentTab='設定'" class="group flex flex-col items-center justify-center flex-1 transition-all text-gray-400" :class="{'!text-[#007AFF]': currentTab==='設定'}">
-            <i class="ph text-[28px] mb-1 transition-transform group-active:scale-90" :class="currentTab==='設定' ? 'ph-gear-fill' : 'ph-gear'"></i>
+            <i class="text-[28px] mb-1 transition-transform group-active:scale-90" :class="currentTab==='設定' ? 'ph-fill ph-gear' : 'ph-bold ph-gear'"></i>
             <span class="text-[10px] font-semibold">設定</span>
         </button>
       </div>
@@ -767,9 +767,20 @@
             return Object.keys(bal).map(k => ({name: k, amount: bal[k]})).filter(x => Math.abs(x.amount) > 1);
         });
 
-        // Weather
-        const weather = reactive({ temp: '--', min: '--', max: '--', code: 0 });
-        const weatherIconClass = computed(() => weather.code > 3 ? 'ph-cloud-rain' : 'ph-sun');
+               // Weather
+        const weather = reactive({ temp: '--', min: '--', max: '--', code: -1 });
+        const weatherIconClass = computed(() => {
+            const c = weather.code;
+            if (c === -1) return 'ph-bold ph-dots-three';
+            if (c === 0) return 'ph-fill ph-sun text-orange-500';
+            if (c >= 1 && c <= 3) return 'ph-fill ph-cloud-sun text-yellow-500';
+            if (c >= 45 && c <= 48) return 'ph-fill ph-cloud-fog text-gray-400';
+            if (c >= 51 && c <= 67) return 'ph-fill ph-cloud-rain text-blue-400';
+            if (c >= 71 && c <= 77) return 'ph-fill ph-snowflake text-cyan-300';
+            if (c >= 80 && c <= 82) return 'ph-fill ph-cloud-rain text-blue-500';
+            if (c >= 95) return 'ph-fill ph-cloud-lightning text-purple-500';
+            return 'ph-fill ph-cloud text-gray-400';
+        });
 
         // Functions
         const t = (k) => {
@@ -904,10 +915,33 @@
             } catch {}
         }
 
-        async function fetchWeather() {
-             // Mock fetch logic from v5.09, allows UI to update
-             weather.temp = 24; weather.max = 28; weather.min = 20; weather.code = 1;
-             // Real implementation would use fetch here based on settings.weatherLoc
+                async function fetchWeather() {
+             const loc = settings.weatherLoc || 'Taipei';
+             try {
+                 // 1. Geocoding: City Name -> Lat/Lon
+                 const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(loc)}&count=1&language=en&format=json`);
+                 const geoData = await geoRes.json();
+                 
+                 if (!geoData.results || geoData.results.length === 0) {
+                     console.warn('Weather location not found');
+                     return;
+                 }
+                 
+                 const { latitude, longitude } = geoData.results[0];
+
+                 // 2. Weather Fetch
+                 const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=temperature_2m_max,temperature_2m_min&timezone=auto`);
+                 const d = await res.json();
+                 
+                 if(d.current_weather) {
+                     weather.temp = Math.round(d.current_weather.temperature);
+                     weather.code = d.current_weather.weathercode;
+                 }
+                 if(d.daily) {
+                     weather.max = Math.round(d.daily.temperature_2m_max[0]);
+                     weather.min = Math.round(d.daily.temperature_2m_min[0]);
+                 }
+             } catch(e) { console.error("Weather Error", e); }
         }
 
         function initSortable(id, list) {
