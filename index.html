@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync Ultimate (v251224-7.0)</title>
+  <title>Travel Sync Ultimate (v251222-6.2)</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -13,83 +13,45 @@
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
   <style>
-    /* --- 1. 全域變數 (整合 v6.2 視覺與 v5.09 功能色) --- */
+    /* --- Base Variables (Mixed 6.1 & 5.09) --- */
     :root {
       --ios-bg: #F2F2F7;
-      --ios-card-bg: rgba(255, 255, 255, 0.75);
-      --ios-card-border: rgba(255, 255, 255, 0.5);
+      --ios-card-bg: rgba(255, 255, 255, 0.65);
+      --ios-card-border: rgba(255, 255, 255, 0.4);
       --glass-blur: 25px;
-      
       --ios-primary: #007AFF;
       --ios-danger: #FF3B30;
-      --ios-warning: #FFCC00;
       --ios-success: #34C759;
-      
-      --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
     }
 
-    html { height: 100%; overscroll-behavior-y: none; }
-    
     body {
       background-color: var(--ios-bg);
-      font-family: var(--font-stack);
-      color: #1c1c1e;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      color: #000;
       -webkit-font-smoothing: antialiased;
-      margin: 0;
-      /* 預留底部 Dock 空間與頂部安全區 */
-      padding-bottom: 100px; 
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: pan-y;
+      padding-bottom: 40px;
+      user-select: none; /* iOS Native Feel */
     }
 
-    /* --- 2. 實用工具與動畫 --- */
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 20px); }
-    .pt-safe { padding-top: calc(env(safe-area-inset-top) + 10px); }
-    
-    .rotate-icon { animation: spin 1s linear infinite; }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
-
-    /* Vue 過場動畫 (Sub-page 核心) */
-    .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
-    .fade-enter-from, .fade-leave-to { opacity: 0; }
-    
-    /* 全螢幕頁面從右側滑入 (類似 iOS 設定頁) */
-    .slide-left-enter-active, .slide-left-leave-active { 
-        transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s;
-        position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: 100;
-    }
-    .slide-left-enter-from { transform: translateX(100%); }
-    .slide-left-leave-to { transform: translateX(-30%); opacity: 0.8; }
-
-    /* Modal 從下方滑入 */
-    .slide-up-enter-active, .slide-up-leave-active { transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
-    .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); }
-
-    /* --- 3. 卡片系統 (Card System) --- */
-    
-    /* 標準 iOS 玻璃卡片 */
+    /* --- 6.1 Standard Card --- */
     .ios-card {
       background: var(--ios-card-bg);
       backdrop-filter: blur(var(--glass-blur));
       -webkit-backdrop-filter: blur(var(--glass-blur));
       border: 1px solid var(--ios-card-border);
       border-radius: 20px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
-      overflow: hidden;
-      position: relative;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      overflow: hidden; /* Ensure consistent container */
     }
 
-    /* 深色高級卡片 (用於 航班 / 支出總覽) */
+    /* --- 5.09 Premium Dark Glass Flight Card (Ported) --- */
     .ios-card-dark-glass {
-      background: rgba(28, 28, 30, 0.85);
-      backdrop-filter: blur(40px);
-      -webkit-backdrop-filter: blur(40px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 22px;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+      background: rgba(22, 22, 24, 0.85); [span_4](start_span)/*[span_4](end_span) */
+      backdrop-filter: blur(50px); [span_5](start_span)/*[span_5](end_span) */
+      -webkit-backdrop-filter: blur(50px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px; /* Match 6.1 radius */
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); [span_6](start_span)/*[span_6](end_span) */
       color: white;
       position: relative;
       overflow: hidden;
@@ -98,1159 +60,899 @@
     .dark-glass-gradient {
         position: absolute;
         top: -50%; left: -50%; width: 200%; height: 200%;
-        background: radial-gradient(circle at 80% 20%, rgba(10, 132, 255, 0.15), transparent 60%);
+        background: radial-gradient(circle at 80% 20%, rgba(10, 132, 255, 0.25), transparent 60%); [span_7](start_span)/*[span_7](end_span) */
         pointer-events: none; z-index: 0;
     }
 
-    /* 列表項目樣式 (購物/準備清單) */
-    .ios-list-item {
-      background: rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      border-radius: 16px;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      transition: all 0.2s;
-      margin-bottom: 8px;
+    /* --- High Contrast Toggle Button (New Request) --- */
+    .glass-btn-high-contrast {
+        background: rgba(0, 0, 0, 0.6); /* Darker background */
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
     }
-    .ios-list-item:active { transform: scale(0.98); background: rgba(255, 255, 255, 0.8); }
-    .task-done { text-decoration: line-through; color: #8E8E93; opacity: 0.6; }
-
-    /* --- 4. 拖曳排序樣式 (SortableJS) --- */
-    .sortable-ghost { opacity: 0.4; background: #E5E5EA; border: 1px dashed #AEAEB2; }
-    .sortable-drag { opacity: 1; background: #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.15); transform: scale(1.02); z-index: 50; }
-    .drag-handle { cursor: grab; padding: 10px; touch-action: none; color: #C7C7CC; }
     
-    /* --- 5. 全螢幕 Sub-page 容器 (替代 Modal) --- */
-    .sub-page-container {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: #F2F2F7;
-        z-index: 200;
-        display: flex; flex-direction: column;
-        overflow: hidden;
-    }
-    .sub-page-header {
-        padding: 16px 20px;
-        background: rgba(255,255,255,0.8);
-        backdrop-filter: blur(20px);
-        border-bottom: 0.5px solid rgba(0,0,0,0.1);
-        display: flex; justify-content: space-between; align-items: center;
-        flex-shrink: 0;
-        padding-top: calc(env(safe-area-inset-top) + 10px);
-    }
-    .sub-page-body {
-        flex: 1; overflow-y: auto; padding: 20px;
-        padding-bottom: calc(env(safe-area-inset-bottom) + 40px);
-    }
+    [cite_start]/* --- Sortable & Dragging Styles [cite: 21-23] --- */
+    .sortable-ghost { opacity: 0.4; background: #e5e7eb; border: 1px dashed #9ca3af; }
+    .sortable-drag { opacity: 1; background: #fff; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); transform: scale(1.02); z-index: 50; }
+    .drag-handle { cursor: grab; touch-action: none; }
 
-    /* iOS 風格按鈕與輸入框 */
-    .ios-input {
-      background: #FFFFFF;
-      border: 0.5px solid rgba(0,0,0,0.05);
-      border-radius: 10px;
-      padding: 12px 14px;
-      font-size: 17px;
-      color: #000;
-      width: 100%;
-      outline: none;
-      transition: border-color 0.2s;
+    [cite_start]/* --- 5.09 Modal System [cite: 37-43] --- */
+    .modal-backdrop { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(5px); z-index: 100; transition: opacity 0.3s; }
+    .ios-modal-container {
+      background: rgba(250, 250, 250, 0.9);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border-radius: 32px;
+      display: flex; flex-direction: column;
+      max-height: 90vh; width: 90%; max-width: 400px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.4);
     }
-    .ios-input:focus { border-color: var(--ios-primary); }
+    .ios-modal-header { padding: 16px; text-align: center; font-weight: 600; font-size: 17px; border-bottom: 0.5px solid rgba(0,0,0,0.1); }
+    .ios-modal-body { flex: 1; overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; }
+    .ios-modal-footer { padding: 16px 20px; border-top: 0.5px solid rgba(0,0,0,0.1); display: flex; gap: 12px; background: rgba(255,255,255,0.5); }
+    
+    .btn-ios-cancel { flex: 1; height: 44px; border-radius: 12px; background: rgba(118, 118, 128, 0.12); color: #000; font-weight: 600; }
+    .btn-ios-primary { flex: 1; height: 44px; border-radius: 12px; background: var(--ios-primary); color: white; font-weight: 600; box-shadow: 0 0 15px rgba(0, 122, 255, 0.4); }
 
-    .btn-ios-primary {
-      height: 48px; border-radius: 12px;
-      background: var(--ios-primary);
-      color: white; font-weight: 600; font-size: 17px;
-      display: flex; align-items: center; justify-content: center;
-      width: 100%;
-      box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
-    }
-    .btn-ios-primary:active { transform: scale(0.98); opacity: 0.9; }
-
-    /* --- 6. 計算機樣式 (v5.09 移植) --- */
-    .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
-    .calc-btn {
-        border-radius: 12px; background: #FFFFFF;
-        font-size: 24px; font-weight: 500; color: #333;
-        display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
-        height: 56px;
-    }
+    [cite_start]/* --- Calculator Styles [cite: 50-56] --- */
+    .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+    .calc-btn { border-radius: 10px; background: white; font-size: 20px; font-weight: 500; color: #333; height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
     .calc-btn:active { background: #E5E5EA; }
-    .calc-btn.op { background: #FF9500; color: white; border: none; }
+    .calc-btn.op { background: #FF9500; color: white; font-weight: 600; }
     .calc-btn.top-op { background: #D1D1D6; color: black; }
+    .calc-btn.done-btn { background: var(--ios-primary); color: white; font-weight: 600; }
+
+    /* Utilities */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .ios-input { background: rgba(118, 118, 128, 0.12); border: none; border-radius: 10px; padding: 10px 12px; width: 100%; font-size: 16px; outline: none; transition: background 0.2s; }
+    .ios-input:focus { background: rgba(118, 118, 128, 0.2); }
     
-    /* --- 7. 行程日期 Tab (Slider) --- */
-    .day-tab {
-      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-      background: rgba(255, 255, 255, 0.5);
-      border: 1px solid rgba(255,255,255,0.2);
-    }
-    .day-tab.active {
-      background: #FFFFFF;
-      border-color: rgba(0,0,0,0.05);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      transform: scale(1.02);
-    }
-
-    /* 浮水印與標籤 */
-    .watermark {
-        text-align: center; opacity: 0.3; pointer-events: none;
-        padding: 40px 0; font-size: 10px; font-weight: 600; 
-        text-transform: uppercase; letter-spacing: 2px;
-        color: #8E8E93;
-    }
-    .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
-    .status-ontime { color: #34C759; background: rgba(52, 199, 89, 0.15); }
-    .status-warning { color: #FF9500; background: rgba(255, 204, 0, 0.15); }
-
-    /* 語言切換按鈕 (柔和風格) */
-    .lang-btn {
-        background: rgba(0,0,0,0.05); color: #636366;
-        padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: 600;
-        transition: background 0.2s;
-    }
-    .lang-btn:active { background: rgba(0,0,0,0.1); }
+    .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+    .fade-enter-from, .fade-leave-to { opacity: 0; }
   </style>
 </head>
-<body>
-  <div id="app" class="h-full flex flex-col relative select-none" v-cloak>
+<body class="bg-[#F2F2F7] min-h-screen text-slate-800">
 
-    <main v-if="currentTab === 'home'" class="flex-1 overflow-y-auto overflow-x-hidden pb-32 no-scrollbar" ref="mainScroll">
-      
-      <header class="pt-safe px-5 pb-2 flex justify-between items-start z-10 sticky top-0 bg-[#F2F2F7]/90 backdrop-blur-md transition-all duration-300">
-        <div class="flex flex-col pt-1">
-           <span class="text-[11px] font-semibold text-gray-500 tracking-wide uppercase mb-0.5">
-             {{ displayDateRange }}
-           </span>
-           <div class="flex items-center gap-2">
-             <h1 class="text-3xl font-black text-black tracking-tight flex items-center gap-2">
-               {{ settings.origin }} 
-               <i class="ph-fill ph-airplane-tilt text-blue-500 text-2xl"></i>
-               {{ settings.destination }}
-             </h1>
-           </div>
+  <div id="app" class="max-w-md mx-auto relative pb-32">
+
+    <header 
+      class="sticky top-0 z-50 pt-12 pb-2 px-6 flex justify-between items-end bg-[#F2F2F7]/90 backdrop-blur-md transition-all duration-300"
+      :class="{ 'shadow-sm border-b border-gray-200/50': isScrolled }"
+    >
+      <div>
+        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5 font-mono">
+           {{ appVersion }} <span v-if="syncState === 'saving'" class="text-blue-500 animate-pulse ml-1">Saving...</span>
+        </div>
+        <h1 class="text-3xl font-bold text-black tracking-tight flex items-center gap-2">
+          HKG <i class="ph-bold ph-airplane-tilt text-blue-500"></i> KIX
+        </h1>
+      </div>
+
+      <div class="flex flex-col items-end gap-2">
+         <button @click="toggleLang" class="text-[10px] font-bold bg-gray-200/80 text-gray-600 px-2 py-0.5 rounded-md hover:bg-gray-300 transition-colors">
+            {{ lang === 'zh' ? 'EN' : '繁' }}
+         </button>
+         <button @click="modalState.member = true" class="relative group">
+            <div class="w-10 h-10 rounded-full bg-gray-200 border-2 border-white shadow-sm overflow-hidden flex items-center justify-center text-gray-500 hover:scale-105 transition-transform">
+               <i class="ph-fill ph-users text-xl"></i>
+            </div>
+            <span v-if="members.length > 0" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+               {{ members.length }}
+            </span>
+         </button>
+      </div>
+    </header>
+
+    <main class="px-5 space-y-5 mt-4">
+
+      <div class="relative transition-all duration-500">
+        
+        <div class="absolute top-4 left-4 z-30">
+          <button 
+            @click="toggleSkin" 
+            class="glass-btn-high-contrast px-3 py-1.5 rounded-full text-[10px] font-bold transition-all active:scale-95 flex items-center gap-1 cursor-pointer"
+          >
+            <span v-if="flightCardSkin === 'ios'">HKG <i class="ph ph-arrows-left-right ml-0.5 text-white/80"></i></span>
+            <span v-else>iOS <i class="ph ph-arrows-left-right ml-0.5 text-white/80"></i></span>
+          </button>
         </div>
 
-        <div class="flex flex-col items-end gap-2 pt-1">
-           <span class="text-[9px] font-bold text-gray-400 font-mono tracking-wider">v7.0</span>
-           <button @click="toggleLang" class="lang-btn">
-             {{ lang === 'zh' ? '繁體' : 'EN' }}
-           </button>
-           <button @click="openSubPage('settings')" class="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-600 active:scale-90 transition-transform mt-1">
-             <i class="ph-fill ph-gear text-lg"></i>
-           </button>
-        </div>
-      </header>
+        <div v-if="flightCardSkin === 'ios'" class="ios-card-dark-glass p-0 shadow-xl relative group min-h-[220px]">
+          <div class="dark-glass-gradient"></div> <div class="relative z-10 p-6 flex flex-col justify-between h-full">
+            
+            <div class="flex justify-between items-start mt-8">
+               <div>
+                  <div class="text-3xl font-bold tracking-tight text-white">{{ activeFlight.flight_iata }}</div>
+                  <div class="text-xs text-white/60 font-medium tracking-wide uppercase">{{ activeFlight.airline_name }}</div>
+               </div>
+               
+               <a v-if="activeFlight.liveLink" :href="activeFlight.liveLink" target="_blank" 
+                  class="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-1.5 rounded-full text-[11px] font-bold text-white transition-all active:scale-95 cursor-pointer backdrop-blur-md">
+                 <i class="ph ph-broadcast text-[#34C759] animate-pulse"></i>
+                 {{ t('activeFlightText') }}
+                 <i class="ph ph-arrow-square-out text-xs opacity-50"></i>
+               </a>
+            </div>
 
-      <div class="px-5 space-y-6 mt-2">
-
-        <div class="ios-card-dark-glass p-5 relative min-h-[180px]">
-           <div class="dark-glass-gradient"></div>
-           
-           <div class="relative z-10 flex justify-center mb-4">
-              <div class="bg-black/20 p-1 rounded-lg flex text-[10px] font-bold backdrop-blur-md border border-white/10">
-                 <button @click="isReturnFlight = false" :class="!isReturnFlight ? 'bg-white/20 text-white shadow-sm' : 'text-gray-400'" class="px-3 py-1 rounded-[6px] transition-all">{{ t('outbound') }}</button>
-                 <button @click="isReturnFlight = true" :class="isReturnFlight ? 'bg-white/20 text-white shadow-sm' : 'text-gray-400'" class="px-3 py-1 rounded-[6px] transition-all">{{ t('inbound') }}</button>
+            <div class="mt-6 flex justify-between items-end">
+              <div class="text-left">
+                <div class="text-5xl font-bold text-white tracking-tight">{{ activeFlight.origin_iata }}</div>
+                <div class="text-sm font-mono text-white/80 mt-1">{{ formatTime(activeFlight.dep_time) }}</div>
               </div>
-              <button @click="openSubPage('flightEdit')" class="absolute right-0 top-0 w-8 h-8 flex items-center justify-center text-white/50 hover:text-white transition-colors">
-                 <i class="ph-fill ph-pencil-simple"></i>
-              </button>
-           </div>
 
-           <div class="relative z-10 flex justify-between items-end">
-              <div>
-                 <div class="text-3xl font-bold text-white tracking-wider font-mono">{{ activeFlight.code }}</div>
-                 <div class="text-xs text-blue-300 font-medium mt-1">{{ activeFlight.airline }}</div>
+              <div class="flex flex-col items-center justify-center pb-2 opacity-60">
+                <i class="ph-fill ph-airplane text-2xl rotate-90 mb-1 text-blue-400"></i>
+                <span class="text-[10px] font-mono tracking-wide">{{ activeFlight.duration }}</span>
+              </div>
+
+              <div class="text-right flex flex-col items-end">
+                <div :class="getStatusClass(activeFlight.status)" class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide backdrop-blur-md mb-2 inline-block">
+                  {{ activeFlight.status }}
+                </div>
+                <div class="text-5xl font-bold text-white tracking-tight">{{ activeFlight.dest_iata }}</div>
+                <div class="text-sm font-mono text-white/80 mt-1">{{ formatTime(activeFlight.arr_time) }}</div>
+              </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-white/10 flex justify-between text-xs font-medium text-white/70">
+              <div class="flex gap-6">
+                <div>
+                  <span class="block text-white/30 text-[9px] uppercase tracking-widest">{{ t('terminal') }}</span>
+                  <span class="text-lg text-white">{{ activeFlight.origin_terminal }}</span>
+                </div>
+                <div>
+                  <span class="block text-white/30 text-[9px] uppercase tracking-widest">{{ t('gate') }}</span>
+                  <span class="text-lg text-[#FFCC00]">{{ activeFlight.origin_gate }}</span>
+                </div>
               </div>
               <div class="text-right">
-                 <div class="flex items-center gap-1 justify-end">
-                    <span :class="getStatusClass(activeFlight.status)" class="status-badge">{{ activeFlight.status }}</span>
-                 </div>
-                 <div class="text-4xl font-light text-white mt-1">{{ activeFlight.time }}</div>
-                 <div class="text-[10px] text-gray-400 mt-1 uppercase tracking-widest">{{ t('terminal') }} {{ activeFlight.terminal }} • {{ t('gate') }} {{ activeFlight.gate }}</div>
+                <span class="block text-white/30 text-[9px] uppercase tracking-widest">{{ t('arriveTerm') }}</span>
+                <span class="text-lg text-white">{{ activeFlight.dest_terminal }}</span>
               </div>
-           </div>
-           
-           <a v-if="activeFlight.link" :href="activeFlight.link" target="_blank" class="absolute bottom-3 left-1/2 -translate-x-1/2 text-[9px] text-white/30 flex items-center gap-1 hover:text-white/60 transition-colors z-10">
-              <i class="ph-bold ph-link"></i> Live Tracker
-           </a>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-           <div class="ios-card p-4 flex flex-col justify-between h-32">
-              <div class="flex justify-between items-start">
-                 <div class="flex flex-col">
-                    <span class="text-xs font-bold text-gray-400 uppercase">{{ weather.city[lang] || weather.city.en }}</span>
-                    <span class="text-3xl font-light mt-1">{{ weather.temp }}°</span>
-                 </div>
-                 <i :class="[weather.icon, weather.color]" class="ph-fill text-3xl"></i>
-              </div>
-              <div class="flex items-center gap-2 mt-2">
-                 <div class="bg-blue-50 text-blue-500 px-2 py-1 rounded-md text-[10px] font-bold flex items-center gap-1">
-                    <i class="ph-bold ph-drop"></i> {{ weather.precip }}%
-                 </div>
-                 <div v-if="weather.warning" class="bg-red-50 text-red-500 px-2 py-1 rounded-md text-[10px] font-bold">
-                    ⚠️ Warning
-                 </div>
-              </div>
-           </div>
-
-           <div class="ios-card p-4 flex flex-col justify-between h-32 relative overflow-hidden">
-              <div class="absolute right-[-10px] top-[-10px] w-16 h-16 bg-green-400/10 rounded-full blur-xl"></div>
-              <div>
-                 <div class="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
-                    {{ settings.currency.settle }} / {{ settings.currency.local }}
-                    <i v-if="isUpdatingRate" class="ph-bold ph-spinner animate-spin text-blue-500"></i>
-                 </div>
-                 <div class="text-2xl font-semibold mt-1 tracking-tight">
-                    {{ formatNumber(rate) }}
-                 </div>
-              </div>
-              <div class="text-[10px] text-gray-400">
-                 1 {{ settings.currency.settle }} ≈ {{ formatNumber(rate) }} {{ settings.currency.local }}
-              </div>
-           </div>
-        </div>
-
-        <div>
-           <div class="flex justify-between items-end mb-2 px-1">
-              <h3 class="text-lg font-bold text-gray-800">{{ t('itinerary') }}</h3>
-           </div>
-           <div class="flex gap-3 overflow-x-auto no-scrollbar pb-2 pl-1 snap-x">
-              <div v-for="(day, idx) in tripDays" :key="idx" 
-                   class="day-tab flex-shrink-0 w-24 h-28 rounded-2xl flex flex-col items-center justify-center snap-start relative overflow-hidden"
-                   :class="selectedDayIndex === idx ? 'active border-blue-500/30' : ''"
-                   @click="selectedDayIndex = idx">
-                 <span class="text-[10px] font-bold uppercase text-gray-400 mb-1">{{ day.weekday }}</span>
-                 <span class="text-2xl font-bold text-gray-800">{{ day.dateShort }}</span>
-                 <div class="flex gap-0.5 mt-2">
-                    <div v-for="n in Math.min(getDayEventCount(idx), 3)" :key="n" class="w-1 h-1 rounded-full bg-blue-500"></div>
-                 </div>
-              </div>
-              
-              <div @click="openItineraryAdd" class="flex-shrink-0 w-24 h-28 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 active:bg-gray-50 transition-colors snap-start">
-                 <i class="ph-bold ph-plus text-2xl mb-1"></i>
-                 <span class="text-[10px] font-bold">{{ t('add') }}</span>
-              </div>
-           </div>
-           
-           <div class="mt-2 space-y-2">
-              <div v-for="item in currentDayItinerary" :key="item.id" 
-                   @click="handleItineraryClick(item)"
-                   class="ios-list-item justify-between group active:scale-[0.99] transition-transform">
-                 <div class="flex items-center gap-3">
-                    <div class="text-xs font-bold text-gray-500 w-10 text-center">{{ item.time }}</div>
-                    <div class="w-[2px] h-8 bg-blue-500/20 rounded-full"></div>
-                    <div>
-                       <div class="font-bold text-sm text-gray-800">{{ item.title }}</div>
-                       <div class="text-[10px] text-gray-400">{{ item.location }}</div>
-                    </div>
-                 </div>
-                 <i class="ph-bold ph-caret-right text-gray-300"></i>
-              </div>
-              <div v-if="currentDayItinerary.length === 0" class="text-center py-4 text-xs text-gray-400">
-                 {{ t('noActivity') }}
-              </div>
-           </div>
-        </div>
-
-        <div>
-           <div class="flex justify-between items-center mb-2 px-1">
-              <h3 class="text-lg font-bold text-gray-800">{{ t('prepList') }}</h3>
-              <button @click="openSubPage('prep')" class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
-                 <i class="ph-bold ph-plus text-xs"></i>
-              </button>
-           </div>
-           <div class="space-y-2">
-              <div v-for="item in prepList.slice(0, 3)" :key="item.id" @click="togglePrep(item)" class="ios-list-item gap-3">
-                 <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors"
-                      :class="item.done ? 'bg-green-500 border-green-500' : 'border-gray-300'">
-                    <i v-if="item.done" class="ph-bold ph-check text-white text-[10px]"></i>
-                 </div>
-                 <span :class="item.done ? 'line-through text-gray-400' : 'text-gray-800'" class="text-sm font-medium">{{ item.text }}</span>
-              </div>
-           </div>
-        </div>
-
-        <div>
-           <div class="flex justify-between items-center mb-2 px-1">
-              <h3 class="text-lg font-bold text-gray-800">{{ t('shoppingList') }}</h3>
-              <button @click="openSubPage('shopping')" class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
-                 <i class="ph-bold ph-plus text-xs"></i>
-              </button>
-           </div>
-           <div class="grid grid-cols-2 gap-3">
-              <div v-for="item in shoppingList.slice(0, 4)" :key="item.id" 
-                   class="ios-card p-3 flex flex-col gap-2 relative"
-                   @click="editShoppingItem(item)">
-                 <div class="h-20 bg-gray-100 rounded-lg overflow-hidden relative">
-                    <img v-if="item.image" :src="item.image" class="w-full h-full object-cover">
-                    <div v-else class="w-full h-full flex items-center justify-center text-gray-300"><i class="ph-duotone ph-image text-2xl"></i></div>
-                    <div v-if="item.done" class="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <i class="ph-fill ph-check-circle text-white text-2xl"></i>
-                    </div>
-                 </div>
-                 <div class="flex justify-between items-start">
-                    <span class="text-xs font-bold truncate">{{ item.name }}</span>
-                    <span class="text-[10px] text-gray-500">{{ formatNumber(item.price) }}</span>
-                 </div>
-              </div>
-           </div>
-        </div>
-
-        <div>
-           <div class="flex justify-between items-center mb-2 px-1">
-              <h3 class="text-lg font-bold text-gray-800">{{ t('expense') }}</h3>
-              <button @click="openSubPage('expenseEdit')" class="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-md active:scale-90 transition-transform">
-                 <i class="ph-bold ph-plus text-xs"></i>
-              </button>
-           </div>
-           
-           <div class="ios-card-dark-glass p-0 overflow-hidden">
-              <div class="dark-glass-gradient"></div>
-              
-              <div class="relative z-10 p-5 text-center border-b border-white/10">
-                 <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ t('totalExpense') }} ({{ settings.currency.settle }})</div>
-                 <div class="text-3xl font-bold text-white mt-1">{{ formatNumber(totalExpense.settle) }}</div>
-                 <div class="text-xs text-blue-300 mt-1 font-medium">≈ {{ formatNumber(totalExpense.local) }} {{ settings.currency.local }}</div>
-              </div>
-
-              <div class="relative z-10 grid grid-cols-2 divide-x divide-white/10">
-                 <div class="p-4 flex flex-col items-center">
-                    <i class="ph-duotone ph-credit-card text-blue-400 text-xl mb-1"></i>
-                    <div class="text-[10px] text-gray-400 uppercase">{{ t('card') }}</div>
-                    <div class="text-lg font-bold text-white">{{ formatNumber(expensesBreakdown.card.settle) }}</div>
-                    <div class="text-[9px] text-gray-500">≈ {{ formatNumber(expensesBreakdown.card.local) }} {{ settings.currency.local }}</div>
-                 </div>
-                 <div class="p-4 flex flex-col items-center">
-                    <i class="ph-duotone ph-coins text-yellow-400 text-xl mb-1"></i>
-                    <div class="text-[10px] text-gray-400 uppercase">{{ t('cash') }}</div>
-                    <div class="text-lg font-bold text-white">{{ formatNumber(expensesBreakdown.cash.settle) }}</div>
-                    <div class="text-[9px] text-gray-500">≈ {{ formatNumber(expensesBreakdown.cash.local) }} {{ settings.currency.local }}</div>
-                 </div>
-              </div>
-           </div>
-        </div>
-
-        <div>
-            <div class="flex justify-between items-center mb-2 px-1">
-               <h3 class="text-lg font-bold text-gray-800">{{ t('info') }}</h3>
-               <button @click="openSubPage('info')" class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
-                  <i class="ph-bold ph-plus text-xs"></i>
-               </button>
             </div>
-            <div class="space-y-2">
-               <div v-for="info in infoList.slice(0, 3)" :key="info.id" @click="editInfo(info)" class="ios-card p-3 flex items-center justify-between">
-                   <div class="flex items-center gap-3">
-                       <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center">
-                           <i class="ph-bold ph-info"></i>
-                       </div>
-                       <span class="font-bold text-sm">{{ info.title }}</span>
-                   </div>
-                   <i class="ph-bold ph-caret-right text-gray-300"></i>
-               </div>
+          </div>
+        </div>
+
+        <div v-else-if="flightCardSkin === 'hkg'" class="rounded-[20px] overflow-hidden shadow-lg bg-white font-sans relative border border-gray-100 flex flex-col min-h-[220px]">
+          
+          <div class="bg-[#353E53] text-[#E9EB4F] px-5 py-3 flex justify-center items-center relative min-h-[60px]">
+            <div class="flex flex-col items-center">
+              <span class="text-[10px] opacity-80 uppercase tracking-widest font-semibold">{{ t('gate') }}</span>
+              <span class="text-4xl font-bold leading-none mt-1">{{ activeFlight.origin_gate || '--' }}</span>
             </div>
-        </div>
+            
+            <div class="flex flex-col items-end gap-1 absolute right-3 top-3">
+               <a v-if="activeFlight.liveLink" :href="activeFlight.liveLink" target="_blank" class="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 border border-white/20 px-3 py-1.5 rounded-full text-[11px] font-bold text-white transition-all active:scale-95 cursor-pointer">
+                  <i class="ph ph-broadcast text-[#34C759] animate-pulse"></i>
+                  <span>{{ t('activeFlightText') }}</span>
+               </a>
+            </div>
+          </div>
 
-        <div class="watermark">
-           <div>TRAVEL SYNC SYSTEM</div>
-           <div class="mt-1 text-[8px]">v7.0 (v251224)</div>
-        </div>
+          <div class="px-5 py-6 bg-white relative flex-grow">
+            <div class="absolute top-0 left-0 w-full h-[6px] bg-[#275CC0]"></div>
+            
+            <div class="flex justify-between items-end mt-2">
+              <div class="flex flex-col items-center w-1/3">
+                <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 text-center">{{ t('estimatedDeparture') }}</span>
+                <span class="text-3xl font-bold text-slate-800">{{ formatTime(activeFlight.dep_time) }}</span>
+                <span class="text-sm font-semibold text-gray-500 mt-0.5">{{ activeFlight.origin_iata }}</span>
+              </div>
 
+              <div class="flex flex-col items-center justify-center w-1/3 pb-2">
+                <div class="flex flex-col items-center">
+                  <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-0.5 text-center">{{ t('flight') }}</span>
+                  <span class="text-lg font-bold text-slate-800">{{ activeFlight.flight_iata }}</span>
+                </div>
+                <div class="w-full h-[1px] bg-gray-200 my-2 relative">
+                  <i class="ph-fill ph-airplane absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-1 text-gray-400 text-sm rotate-90"></i>
+                </div>
+                <span class="text-[10px] text-gray-400">{{ activeFlight.duration || '--' }}</span>
+              </div>
+
+              <div class="flex flex-col items-center w-1/3">
+                <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 text-center">{{ t('estimatedArrival') }}</span>
+                <span class="text-3xl font-bold text-slate-800">{{ formatTime(activeFlight.arr_time) }}</span>
+                <span class="text-sm font-semibold text-gray-500 mt-0.5">{{ activeFlight.dest_iata }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-[#BF443B] text-white px-5 py-4 flex justify-between items-center">
+             <div class="flex flex-col">
+                <span class="text-[10px] text-white/70 font-bold uppercase tracking-widest">{{ t('cabin') }}</span>
+                <span class="text-sm font-bold">ECONOMY</span>
+             </div>
+             <div class="text-right">
+                <div class="text-xs font-bold uppercase tracking-wide">
+                   {{ activeFlight.origin_iata }} T{{ activeFlight.origin_terminal }} <span class="mx-0.5 text-white/70 font-normal normal-case">{{ t('to') }}</span> {{ activeFlight.dest_iata }}
+                </div>
+                <div class="text-[10px] text-white/80 mt-0.5">{{ displayDate(activeFlight.dep_time) }}</div>
+             </div>
+          </div>
+        </div>
       </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="ios-card p-4 relative overflow-hidden group">
+          <div class="flex justify-between items-start mb-2">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-lg">
+                <i class="ph-bold ph-currency-yen"></i>
+              </div>
+              <span class="text-xs font-bold text-gray-500 uppercase">{{ t('rate') }}</span>
+            </div>
+          </div>
+          <div class="flex flex-col">
+            <div class="text-3xl font-bold text-slate-800 tracking-tight">
+              {{ currentLiveRate ? currentLiveRate.toFixed(3) : rate }}
+            </div>
+            <div class="text-[10px] text-gray-400 mt-1">{{ lastRateUpdateLabel }}</div>
+          </div>
+        </div>
+
+        <div class="ios-card p-4 flex flex-col justify-between group cursor-pointer hover:bg-white/80 transition-colors">
+          <div class="flex justify-between items-start">
+            <div class="w-8 h-8 rounded-full bg-orange-100 text-orange-500 flex items-center justify-center text-lg">
+              <i class="ph-fill ph-sun"></i>
+            </div>
+            <span class="text-xs font-bold text-gray-400">OSAKA</span>
+          </div>
+          <div class="mt-2">
+            <div class="text-3xl font-bold text-slate-800">18°C</div>
+            <div class="text-xs text-gray-500 font-medium">Sunny</div>
+          </div>
+        </div>
+      </div>
+
+      <section>
+        <div class="flex items-center justify-between mb-3 px-1">
+          <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <i class="ph-fill ph-calendar-check text-blue-500"></i> {{ t('itinerary') }}
+          </h2>
+          <button @click="openModal('itinerary')" class="text-blue-500 text-sm font-medium hover:bg-blue-50 px-2 py-1 rounded-lg transition-colors">
+            + {{ t('addEvent') }}
+          </button>
+        </div>
+
+        <div class="flex overflow-x-auto gap-3 pb-4 no-scrollbar -mx-5 px-5 snap-x">
+          <div v-for="(dayItems, date) in itinerary" :key="date" class="snap-center shrink-0 w-[280px] ios-card p-4 flex flex-col gap-3 h-full">
+            <div class="flex justify-between items-center border-b border-gray-200/50 pb-2">
+              <span class="font-bold text-slate-700">{{ displayDate(date) }}</span>
+              <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">{{ dayItems.length }} {{ t('items') }}</span>
+            </div>
+
+            <div class="flex flex-col gap-2 max-h-[200px] overflow-y-auto pr-1 custom-scroll">
+              <div v-for="item in dayItems" :key="item.id" @click="openModal('itinerary', item)" class="bg-white/50 p-2.5 rounded-xl border border-white/40 shadow-sm flex gap-3 items-center active:scale-98 transition-transform cursor-pointer">
+                <div class="flex flex-col items-center justify-center min-w-[40px] text-center border-r border-gray-200 pr-2">
+                  <span class="text-sm font-bold text-slate-800">{{ item.time }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-semibold text-slate-800 truncate text-sm">{{ item.title }}</div>
+                  <div class="text-[11px] text-gray-500 truncate">{{ item.location }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="ios-card p-5">
+         <div class="flex items-center justify-between mb-4">
+           <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+             <i class="ph-fill ph-check-square text-green-500"></i> {{ t('prepList') }}
+           </h2>
+           <button @click="openModal('prep')" class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center hover:bg-green-200 transition-colors">
+             <i class="ph-bold ph-plus"></i>
+           </button>
+         </div>
+         <ul class="space-y-2">
+           <li v-for="item in prepList" :key="item.id" class="flex items-center justify-between p-3 bg-white/60 rounded-xl border border-white/50 shadow-sm">
+             <div class="flex items-center gap-3 overflow-hidden w-full">
+               <button @click="item.done = !item.done; saveAll()" class="text-gray-400 hover:text-green-500 transition-colors shrink-0">
+                 <i :class="item.done ? 'ph-fill ph-check-circle text-green-500' : 'ph-bold ph-circle'"></i>
+               </button>
+               <span @click="openModal('prep', item)" :class="{'line-through text-gray-400': item.done}" class="font-medium text-slate-800 truncate flex-1 cursor-pointer">{{ item.name }}</span>
+             </div>
+           </li>
+         </ul>
+      </div>
+
+      <div class="ios-card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <i class="ph-fill ph-shopping-bag text-pink-500"></i> {{ t('shopping') }}
+          </h2>
+          <button @click="openModal('shopping')" class="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center hover:bg-pink-200 transition-colors">
+            <i class="ph-bold ph-plus"></i>
+          </button>
+        </div>
+        <ul class="space-y-2 shopping-list-container">
+          <li v-for="item in shoppingList" :key="item.id" class="flex items-center justify-between p-3 bg-white/60 rounded-xl border border-white/50 shadow-sm group drag-handle touch-manipulation">
+            <div class="flex items-center gap-3 overflow-hidden w-full">
+              <button @click.stop="item.done = !item.done; saveAll()" class="text-gray-400 hover:text-green-500 transition-colors shrink-0">
+                <i :class="item.done ? 'ph-fill ph-check-circle text-green-500' : 'ph-bold ph-circle'"></i>
+              </button>
+              <div @click="openModal('shopping', item)" class="flex flex-col min-w-0 flex-1 cursor-pointer">
+                <span :class="{'line-through text-gray-400': item.done}" class="font-medium text-slate-800 truncate">{{ item.name }}</span>
+                <span v-if="item.price" class="text-xs text-gray-500">¥{{ item.price }}</span>
+              </div>
+              <i class="ph-bold ph-dots-six-vertical text-gray-300"></i>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <section class="ios-card p-5 bg-gradient-to-br from-slate-800 to-slate-900 text-white border-none">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-bold flex items-center gap-2">
+            <i class="ph-fill ph-receipt text-yellow-400"></i> {{ t('expenses') }}
+          </h2>
+          <div class="flex gap-2">
+              <button @click="modalState.settlement = true" class="bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full text-xs font-bold transition-colors">
+                {{ t('settlement') }}
+              </button>
+              <button @click="openModal('expense')" class="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded-full text-xs font-bold transition-colors shadow-lg shadow-blue-500/30">
+                + Add
+              </button>
+          </div>
+        </div>
+        
+        <div class="flex items-end gap-2 mb-6">
+          <span class="text-4xl font-bold tracking-tight">HKD {{ formatNumber(totalExpense.toFixed(0)) }}</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div class="bg-white/10 rounded-lg p-2 text-center">
+            <div class="text-[10px] text-gray-400 uppercase tracking-wider">{{ t('food') }}</div>
+            <div class="font-bold text-sm mt-0.5">{{ formatNumber(expensesBreakdown.food.toFixed(0)) }}</div>
+          </div>
+          <div class="bg-white/10 rounded-lg p-2 text-center">
+            <div class="text-[10px] text-gray-400 uppercase tracking-wider">{{ t('transport') }}</div>
+            <div class="font-bold text-sm mt-0.5">{{ formatNumber(expensesBreakdown.transport.toFixed(0)) }}</div>
+          </div>
+          <div class="bg-white/10 rounded-lg p-2 text-center">
+            <div class="text-[10px] text-gray-400 uppercase tracking-wider">{{ t('shop') }}</div>
+            <div class="font-bold text-sm mt-0.5">{{ formatNumber(expensesBreakdown.shopping.toFixed(0)) }}</div>
+          </div>
+        </div>
+        
+        <div class="mt-4 space-y-2 max-h-[200px] overflow-y-auto custom-scroll pr-1">
+             <div v-for="exp in expenses" :key="exp.id" @click="openModal('expense', exp)" class="flex justify-between items-center p-2 rounded bg-white/5 border border-white/10 text-sm active:bg-white/10">
+                 <div class="flex items-center gap-2">
+                     <span class="w-1 h-8 bg-yellow-400 rounded-full"></span>
+                     <div>
+                         <div class="font-bold">{{ exp.name }}</div>
+                         <div class="text-[10px] text-gray-400">{{ exp.payer }} paid</div>
+                     </div>
+                 </div>
+                 <div class="text-right">
+                     <div class="font-mono">¥{{ formatNumber(exp.amount) }}</div>
+                     <div class="text-[10px] text-gray-400">{{ exp.date }}</div>
+                 </div>
+             </div>
+        </div>
+      </section>
+
+      <section class="ios-card p-5 bg-blue-50/50 border-blue-100 mb-6">
+         <h2 class="text-sm font-bold text-blue-800 mb-2 flex items-center gap-2">
+            <i class="ph-fill ph-info"></i> {{ t('info') }}
+         </h2>
+         <p class="text-xs text-blue-900/70 leading-relaxed whitespace-pre-line">{{ infoText }}</p>
+      </section>
+
     </main>
 
-    <nav class="fixed bottom-0 w-full bg-white/80 backdrop-blur-xl border-t border-gray-200 pb-safe pt-2 flex justify-around items-center z-50">
-      <button v-for="tab in ['home', 'itinerary', 'expense', 'info']" 
-              :key="tab"
-              @click="currentTab = tab"
-              class="flex flex-col items-center gap-1 w-16 transition-all duration-200"
-              :class="currentTab === tab ? 'text-blue-500 scale-105' : 'text-gray-400'">
-         <i :class="[currentTab === tab ? 'ph-fill' : 'ph-bold', getTabIcon(tab)]" class="text-2xl"></i>
-         <span class="text-[10px] font-medium capitalize">{{ t(tab) }}</span>
+    <nav class="fixed bottom-0 w-full max-w-md bg-white/80 backdrop-blur-xl border-t border-gray-200/50 pb-safe pt-2 px-6 flex justify-between items-center z-40 text-gray-400">
+      <button class="flex flex-col items-center gap-0 text-blue-600">
+        <i class="ph-fill ph-house text-2xl mb-0.5"></i>
+        <span class="text-[10px] font-medium leading-none">{{ t('home') }}</span>
+      </button>
+      <button class="flex flex-col items-center gap-0 hover:text-blue-500 transition-colors">
+        <i class="ph-bold ph-map-trifold text-2xl mb-0.5"></i>
+        <span class="text-[10px] font-medium leading-none">{{ t('map') }}</span>
+      </button>
+      <button class="flex flex-col items-center gap-0 hover:text-blue-500 transition-colors">
+        <i class="ph-bold ph-wallet text-2xl mb-0.5"></i>
+        <span class="text-[10px] font-medium leading-none">{{ t('wallet') }}</span>
+      </button>
+      <button class="flex flex-col items-center gap-0 hover:text-blue-500 transition-colors">
+        <i class="ph-bold ph-gear text-2xl mb-0.5"></i>
+        <span class="text-[10px] font-medium leading-none">{{ t('settings') }}</span>
       </button>
     </nav>
-<transition name="slide-left">
-      
-      <div v-if="activeSubPage === 'settings'" class="sub-page-container">
-        <div class="sub-page-header">
-           <button @click="closeSubPage" class="text-blue-500 font-medium flex items-center gap-1">
-             <i class="ph-bold ph-caret-left"></i> {{ t('back') }}
-           </button>
-           <span class="font-bold text-lg">{{ t('settings') }}</span>
-           <div class="w-16"></div> </div>
-        
-        <div class="sub-page-body space-y-6">
-           <section>
-              <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 ml-3">{{ t('tripInfo') }}</h4>
-              <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
-                 <div class="flex border-b border-gray-100">
-                    <div class="flex-1 p-3 border-r border-gray-100">
-                       <label class="text-[10px] text-gray-400 font-bold uppercase">{{ t('origin') }}</label>
-                       <input v-model="settings.origin" class="w-full font-bold text-lg outline-none uppercase text-center" placeholder="HKG">
-                    </div>
-                    <div class="flex-1 p-3">
-                       <label class="text-[10px] text-gray-400 font-bold uppercase">{{ t('destination') }}</label>
-                       <input v-model="settings.destination" class="w-full font-bold text-lg outline-none uppercase text-center" placeholder="KIX">
-                    </div>
-                 </div>
-                 <div class="p-3 border-b border-gray-100 flex justify-between items-center">
-                    <label class="text-sm font-medium">{{ t('date') }}</label>
-                    <input v-model="settings.displayDate" class="text-sm text-gray-600 text-right outline-none bg-transparent" placeholder="YYYY.MM.DD - MM.DD">
-                 </div>
-                 <div class="p-3 flex justify-between items-center">
-                    <label class="text-sm font-medium">{{ t('weatherCity') }}</label>
-                    <input v-model="settings.weatherCity" class="text-sm text-gray-600 text-right outline-none bg-transparent" placeholder="Osaka">
-                 </div>
-              </div>
-           </section>
 
-           <section>
-              <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 ml-3">{{ t('currencySetting') }}</h4>
-              <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
-                 <div class="p-3 border-b border-gray-100 flex justify-between items-center">
-                    <div>
-                       <div class="text-sm font-medium">{{ t('settleCurrency') }}</div>
-                       <div class="text-[10px] text-gray-400">{{ t('mainDisplay') }}</div>
-                    </div>
-                    <input v-model="settings.currency.settle" class="w-20 text-center font-bold bg-gray-100 rounded p-1 text-sm outline-none uppercase">
-                 </div>
-                 <div class="p-3 flex justify-between items-center">
-                    <div>
-                       <div class="text-sm font-medium">{{ t('localCurrency') }}</div>
-                       <div class="text-[10px] text-gray-400">{{ t('subDisplay') }}</div>
-                    </div>
-                    <input v-model="settings.currency.local" class="w-20 text-center font-bold bg-gray-100 rounded p-1 text-sm outline-none uppercase">
-                 </div>
-              </div>
-           </section>
-
-           <section>
-              <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 ml-3">{{ t('members') }}</h4>
-              <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                 <div class="flex flex-wrap gap-2">
-                    <div v-for="(m, idx) in members" :key="idx" class="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full text-sm font-bold flex items-center gap-2">
-                       {{ m }}
-                       <button @click="removeMember(idx)" class="w-4 h-4 rounded-full bg-blue-200 flex items-center justify-center text-blue-700"><i class="ph-bold ph-x text-[10px]"></i></button>
-                    </div>
-                    <button @click="addMember" class="px-3 py-1.5 rounded-full border border-dashed border-gray-300 text-gray-400 text-sm font-bold flex items-center gap-1 active:bg-gray-50">
-                       <i class="ph-bold ph-plus"></i> {{ t('add') }}
+    <div v-if="modalState.expense" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4">
+        <div class="ios-modal-container animate-fade-in-up">
+            <div class="ios-modal-header">{{ newExpense.id ? t('editItem') : t('newItem') }}</div>
+            <div class="ios-modal-body space-y-4">
+                <div class="bg-gray-100 p-4 rounded-xl text-right">
+                    <div class="text-xs text-gray-500 uppercase font-bold mb-1">Amount (JPY)</div>
+                    <input readonly :value="newExpense.amount" class="w-full bg-transparent text-4xl font-bold text-right outline-none tracking-tight text-slate-800" placeholder="0">
+                </div>
+                
+                <div class="calc-grid">
+                    <button v-for="btn in ['7','8','9','/','4','5','6','*','1','2','3','-','C','0','.','+']" 
+                        :key="btn" @click="handleCalcInput(btn)" 
+                        class="calc-btn" :class="{'op': ['/','*','-','+'].includes(btn), 'text-red-500': btn==='C'}">
+                        {{ btn }}
                     </button>
-                 </div>
-              </div>
-           </section>
+                    <button @click="handleCalcInput('DEL')" class="calc-btn col-span-4 bg-gray-200"><i class="ph-bold ph-backspace"></i></button>
+                </div>
 
-           <section>
-              <h4 class="text-xs font-bold text-gray-500 uppercase mb-2 ml-3">{{ t('system') }}</h4>
-              <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
-                 <div class="p-3 border-b border-gray-100 flex justify-between items-center">
-                    <span class="text-sm font-medium">{{ t('language') }}</span>
-                    <div class="bg-gray-100 p-0.5 rounded-lg flex text-xs font-bold">
-                       <button @click="lang='zh'" :class="lang==='zh'?'bg-white shadow text-black':'text-gray-400'" class="px-3 py-1 rounded-[6px] transition-all">繁體</button>
-                       <button @click="lang='en'" :class="lang==='en'?'bg-white shadow text-black':'text-gray-400'" class="px-3 py-1 rounded-[6px] transition-all">English</button>
+                <input v-model="newExpense.name" class="ios-input" placeholder="Item Name (e.g. Dinner)">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs text-gray-500 font-bold ml-1">{{ t('payer') }}</label>
+                        <select v-model="newExpense.payer" class="ios-input mt-1">
+                            <option v-for="m in members" :value="m">{{ m }}</option>
+                        </select>
                     </div>
-                 </div>
-                 <button @click="resetData" class="w-full p-3 text-left text-sm font-medium text-red-500 active:bg-gray-50">
-                    {{ t('resetData') }}
-                 </button>
-              </div>
-           </section>
+                    <div>
+                        <label class="text-xs text-gray-500 font-bold ml-1">{{ t('food') }}/{{ t('shop') }}</label>
+                        <select v-model="newExpense.category" class="ios-input mt-1">
+                            <option value="餐飲">{{ t('food') }}</option>
+                            <option value="交通">{{ t('transport') }}</option>
+                            <option value="購物">{{ t('shop') }}</option>
+                            <option value="其他">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 p-3 rounded-xl">
+                    <div class="text-xs text-gray-500 font-bold mb-2">{{ t('involved') }}</div>
+                    <div class="flex flex-wrap gap-2">
+                        <button v-for="m in members" :key="m" 
+                           @click="newExpense.involved.includes(m) ? newExpense.involved = newExpense.involved.filter(x=>x!==m) : newExpense.involved.push(m)"
+                           class="px-3 py-1.5 rounded-full text-xs font-bold border transition-all"
+                           :class="newExpense.involved.includes(m) ? 'bg-blue-500 text-white border-blue-600' : 'bg-white text-gray-500 border-gray-200'">
+                           {{ m }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="ios-modal-footer">
+                <button v-if="newExpense.id" @click="deleteItem('expense', newExpense.id); modalState.expense=false" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
+                <button @click="modalState.expense = false" class="btn-ios-cancel">{{ t('cancel') }}</button>
+                <button @click="saveItem('expense')" class="btn-ios-primary">{{ t('save') }}</button>
+            </div>
         </div>
-      </div>
+    </div>
 
-      <div v-else-if="activeSubPage === 'expenseEdit'" class="sub-page-container">
-         <div class="sub-page-header">
-             <button @click="closeSubPage" class="text-blue-500 font-medium">{{ t('cancel') }}</button>
-             <span class="font-bold text-lg">{{ editingId ? t('editExpense') : t('newExpense') }}</span>
-             <button @click="saveExpense" class="text-blue-500 font-bold">{{ t('save') }}</button>
-         </div>
-         
-         <div class="bg-white p-6 pb-4 border-b border-gray-100 flex flex-col items-end shadow-sm relative z-10">
-             <div class="absolute left-4 top-4 flex gap-2">
-                <button @click="editingExpense.currency = settings.currency.local" 
-                        :class="editingExpense.currency === settings.currency.local ? 'bg-blue-500 text-white shadow-md' : 'bg-gray-100 text-gray-500'"
-                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
-                    {{ settings.currency.local }}
-                </button>
-                <button @click="editingExpense.currency = settings.currency.settle" 
-                        :class="editingExpense.currency === settings.currency.settle ? 'bg-blue-500 text-white shadow-md' : 'bg-gray-100 text-gray-500'"
-                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
-                    {{ settings.currency.settle }}
-                </button>
-                <select v-model="editingExpense.currency" class="px-2 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-500 outline-none appearance-none text-center w-12">
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="KRW">KRW</option>
-                    <option value="CNY">CNY</option>
-                </select>
-             </div>
-
-             <div class="text-xs text-gray-400 font-medium mt-8">
-                 <span v-if="editingExpense.currency !== settings.currency.settle">
-                    ≈ {{ formatNumber(convertCalcToSettle()) }} {{ settings.currency.settle }}
-                 </span>
-                 <span v-else>
-                    ≈ {{ formatNumber(convertCalcToLocal()) }} {{ settings.currency.local }}
-                 </span>
-             </div>
-             <input v-model="calcInput" readonly class="text-5xl font-light text-right w-full outline-none bg-transparent tracking-tighter" placeholder="0">
-         </div>
-
-         <div class="sub-page-body calc-body flex flex-col bg-[#F2F2F7]">
-             <div class="grid grid-cols-2 gap-3 mb-3">
-                 <div class="bg-white p-2 rounded-xl flex items-center justify-between px-3">
-                     <i class="ph-fill ph-tag text-gray-400"></i>
-                     <select v-model="editingExpense.category" class="bg-transparent text-sm font-bold text-right outline-none w-full">
-                         <option v-for="cat in expenseCats" :key="cat.id" :value="cat.id">{{ t(cat.id) }}</option>
-                     </select>
+    <div v-if="modalState.settlement" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4">
+        <div class="ios-modal-container">
+            <div class="ios-modal-header">{{ t('settlement') }}</div>
+            <div class="ios-modal-body space-y-3">
+                 <div v-if="settlementList.length === 0" class="text-center text-gray-500 py-10">
+                     All settled up!
                  </div>
-                 <div class="bg-white p-2 rounded-xl flex items-center justify-between px-3">
-                     <i class="ph-fill ph-user text-gray-400"></i>
-                     <select v-model="editingExpense.payer" class="bg-transparent text-sm font-bold text-right outline-none w-full">
-                         <option v-for="m in members" :key="m" :value="m">{{ t('payer') }}: {{ m }}</option>
-                     </select>
-                 </div>
-             </div>
-
-             <input v-model="editingExpense.item" class="ios-input mb-3 text-center font-bold" :placeholder="t('itemName')">
-
-             <div class="bg-white p-3 rounded-xl mb-3">
-                 <div class="flex justify-between items-center mb-2">
-                     <span class="text-xs font-bold text-gray-400 uppercase">{{ t('participants') }}</span>
-                     <button @click="toggleAllParticipants" class="text-[10px] font-bold text-blue-500">{{ t('all') }}</button>
-                 </div>
-                 <div class="flex flex-wrap gap-2">
-                     <button v-for="m in members" :key="m" 
-                             @click="toggleParticipant(m)"
-                             :class="editingExpense.involved.includes(m) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-400'"
-                             class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
-                         {{ m }}
-                     </button>
-                 </div>
-             </div>
-
-             <div class="flex gap-2 mb-2 bg-gray-200 p-1 rounded-xl">
-                 <button @click="editingExpense.method='cash'" :class="editingExpense.method==='cash'?'bg-white shadow-sm text-black':'text-gray-400'" class="flex-1 py-2 rounded-lg text-xs font-bold transition-all">{{ t('cash') }}</button>
-                 <button @click="editingExpense.method='card'" :class="editingExpense.method==='card'?'bg-white shadow-sm text-black':'text-gray-400'" class="flex-1 py-2 rounded-lg text-xs font-bold transition-all">{{ t('card') }}</button>
-             </div>
-
-             <div class="calc-grid flex-1">
-                 <button @click="handleCalcInput('C')" class="calc-btn top-op text-red-500">C</button>
-                 <button @click="handleCalcInput('del')" class="calc-btn top-op"><i class="ph-bold ph-backspace"></i></button>
-                 <button @click="handleCalcInput('/')" class="calc-btn op">÷</button>
-                 <button @click="handleCalcInput('*')" class="calc-btn op">×</button>
-                 
-                 <button @click="handleCalcInput('7')" class="calc-btn">7</button>
-                 <button @click="handleCalcInput('8')" class="calc-btn">8</button>
-                 <button @click="handleCalcInput('9')" class="calc-btn">9</button>
-                 <button @click="handleCalcInput('-')" class="calc-btn op">−</button>
-                 
-                 <button @click="handleCalcInput('4')" class="calc-btn">4</button>
-                 <button @click="handleCalcInput('5')" class="calc-btn">5</button>
-                 <button @click="handleCalcInput('6')" class="calc-btn">6</button>
-                 <button @click="handleCalcInput('+')" class="calc-btn op">+</button>
-                 
-                 <button @click="handleCalcInput('1')" class="calc-btn">1</button>
-                 <button @click="handleCalcInput('2')" class="calc-btn">2</button>
-                 <button @click="handleCalcInput('3')" class="calc-btn">3</button>
-                 <button @click="saveExpense" class="calc-btn bg-blue-500 text-white row-span-2 shadow-lg shadow-blue-500/30" style="height: auto;">
-                     <i class="ph-bold ph-check text-2xl"></i>
-                 </button>
-
-                 <button @click="handleCalcInput('0')" class="calc-btn col-span-2">0</button>
-                 <button @click="handleCalcInput('.')" class="calc-btn">.</button>
-             </div>
-         </div>
-      </div>
-
-      <div v-else-if="activeSubPage === 'flightEdit'" class="sub-page-container">
-         <div class="sub-page-header">
-             <button @click="closeSubPage" class="text-blue-500 font-medium">{{ t('cancel') }}</button>
-             <span class="font-bold text-lg">{{ t('editFlight') }}</span>
-             <button @click="saveFlight" class="text-blue-500 font-bold">{{ t('save') }}</button>
-         </div>
-         <div class="sub-page-body space-y-5">
-             <div class="flex bg-gray-200 p-1 rounded-xl">
-                 <button @click="editingFlightType='outbound'" :class="editingFlightType==='outbound'?'bg-white shadow text-black':'text-gray-400'" class="flex-1 py-2 rounded-lg text-sm font-bold transition-all">{{ t('outbound') }}</button>
-                 <button @click="editingFlightType='inbound'" :class="editingFlightType==='inbound'?'bg-white shadow text-black':'text-gray-400'" class="flex-1 py-2 rounded-lg text-sm font-bold transition-all">{{ t('inbound') }}</button>
-             </div>
-
-             <div class="space-y-3">
-                 <div class="grid grid-cols-2 gap-3">
-                     <div>
-                         <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">{{ t('flightCode') }}</label>
-                         <input v-model="editingFlight.code" class="ios-input font-mono uppercase" placeholder="CX400">
-                     </div>
-                     <div>
-                         <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">{{ t('status') }}</label>
-                         <select v-model="editingFlight.status" class="ios-input h-[48px]">
-                             <option value="On Time">On Time</option>
-                             <option value="Delayed">Delayed</option>
-                             <option value="Boarding">Boarding</option>
-                             <option value="Landed">Landed</option>
-                         </select>
+                 <div v-for="item in settlementList" :key="item.name" class="flex justify-between items-center p-4 bg-white rounded-xl shadow-sm border border-gray-100">
+                     <span class="font-bold text-lg">{{ item.name }}</span>
+                     <div class="text-right">
+                         <div class="text-xs text-gray-400 uppercase font-bold">
+                             {{ item.amount > 0 ? t('shouldReceive') : t('shouldPay') }}
+                         </div>
+                         <div class="text-xl font-bold font-mono" :class="item.amount > 0 ? 'text-green-500' : 'text-red-500'">
+                             {{ item.amount > 0 ? '+' : '' }}{{ formatNumber(item.amount.toFixed(0)) }}
+                         </div>
                      </div>
                  </div>
-                 <div>
-                     <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">{{ t('airline') }}</label>
-                     <input v-model="editingFlight.airline" class="ios-input" placeholder="Cathay Pacific">
-                 </div>
-                 <div>
-                     <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">{{ t('time') }}</label>
-                     <input v-model="editingFlight.time" type="time" class="ios-input font-bold text-lg">
-                 </div>
-                 <div class="grid grid-cols-2 gap-3">
-                     <div>
-                         <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">{{ t('terminal') }}</label>
-                         <input v-model="editingFlight.terminal" class="ios-input text-center uppercase" placeholder="T1">
-                     </div>
-                     <div>
-                         <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">{{ t('gate') }}</label>
-                         <input v-model="editingFlight.gate" class="ios-input text-center uppercase" placeholder="24">
-                     </div>
-                 </div>
-                 <div>
-                     <label class="text-[10px] text-gray-400 font-bold uppercase ml-1">Live Tracker URL</label>
-                     <input v-model="editingFlight.link" class="ios-input text-sm text-blue-500" placeholder="https://...">
-                 </div>
-             </div>
-         </div>
-      </div>
+            </div>
+            <div class="ios-modal-footer">
+                <button @click="modalState.settlement = false" class="btn-ios-cancel w-full">Close</button>
+            </div>
+        </div>
+    </div>
 
-      <div v-else-if="['itinerary', 'shopping', 'prep', 'info'].includes(activeSubPage)" class="sub-page-container">
-          <div class="sub-page-header">
-              <button @click="closeSubPage" class="text-blue-500 font-medium">{{ t('cancel') }}</button>
-              <span class="font-bold text-lg">{{ editingId ? t('edit') : t('new') }}</span>
-              <button @click="saveGenericItem" class="text-blue-500 font-bold">{{ t('save') }}</button>
-          </div>
-          
-          <div class="sub-page-body space-y-4">
-              <div v-if="activeSubPage === 'itinerary'" class="space-y-4">
-                  <div class="grid grid-cols-2 gap-3">
-                      <div><label class="text-[10px] text-gray-400 ml-1">Day</label><select v-model="editingItem.dayIndex" class="ios-input h-[48px]"><option v-for="(d,i) in tripDays" :key="i" :value="i">Day {{i+1}}</option></select></div>
-                      <div><label class="text-[10px] text-gray-400 ml-1">Time</label><input v-model="editingItem.time" type="time" class="ios-input"></div>
-                  </div>
-                  <input v-model="editingItem.title" class="ios-input font-bold" :placeholder="t('title')">
-                  <div class="relative">
-                      <i class="ph-fill ph-map-pin absolute left-3 top-3.5 text-gray-400"></i>
-                      <input v-model="editingItem.location" class="ios-input pl-9" :placeholder="t('locationAddr')">
-                  </div>
-                  <textarea v-model="editingItem.desc" class="ios-input h-24" :placeholder="t('notes')"></textarea>
-                  <button v-if="editingId" @click="deleteItem" class="w-full py-3 text-red-500 font-bold bg-white rounded-xl">{{ t('delete') }}</button>
-              </div>
+    <div v-if="modalState.shopping" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4">
+        <div class="ios-modal-container">
+            <div class="ios-modal-header">{{ newShoppingItem.id ? t('editItem') : t('newItem') }}</div>
+            <div class="ios-modal-body space-y-4">
+                <input v-model="newShoppingItem.name" class="ios-input" placeholder="Item Name">
+                <input v-model="newShoppingItem.price" type="number" class="ios-input" placeholder="Est. Price (¥)">
+            </div>
+            <div class="ios-modal-footer">
+                <button v-if="newShoppingItem.id" @click="deleteItem('shopping', newShoppingItem.id); modalState.shopping=false" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
+                <button @click="modalState.shopping = false" class="btn-ios-cancel">{{ t('cancel') }}</button>
+                <button @click="saveItem('shopping')" class="btn-ios-primary">{{ t('save') }}</button>
+            </div>
+        </div>
+    </div>
 
-              <div v-if="activeSubPage === 'shopping'" class="space-y-4">
-                  <div class="flex flex-col items-center gap-3 py-4">
-                      <div class="w-32 h-32 rounded-2xl bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative">
-                          <img v-if="tempUploadPreview || editingItem.image" :src="tempUploadPreview || editingItem.image" class="w-full h-full object-cover">
-                          <i v-else class="ph-duotone ph-camera text-4xl text-gray-400"></i>
-                          <input type="file" accept="image/*" @change="handleFileUpload" class="absolute inset-0 opacity-0 cursor-pointer">
-                          <div v-if="isUploading" class="absolute inset-0 bg-black/50 flex items-center justify-center"><i class="ph-bold ph-spinner animate-spin text-white"></i></div>
-                      </div>
-                      <span class="text-xs text-gray-400">{{ t('tapToUpload') }}</span>
-                  </div>
-                  <input v-model="editingItem.name" class="ios-input" :placeholder="t('itemName')">
-                  <input v-model="editingItem.price" type="number" class="ios-input" :placeholder="t('price')">
-                  <div class="relative">
-                      <input v-model="editingItem.link" class="ios-input pr-8" placeholder="URL / Instagram">
-                      <i v-if="isInstagramLink(editingItem.link)" class="ph-bold ph-instagram-logo absolute right-3 top-3 text-pink-500"></i>
-                  </div>
-                  <button v-if="editingId" @click="deleteItem" class="w-full py-3 text-red-500 font-bold bg-white rounded-xl">{{ t('delete') }}</button>
-              </div>
+    <div v-if="modalState.itinerary" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4">
+        <div class="ios-modal-container">
+            <div class="ios-modal-header">{{ t('itinerary') }}</div>
+            <div class="ios-modal-body space-y-4">
+                <input type="time" v-model="newItineraryItem.time" class="ios-input">
+                <input v-model="newItineraryItem.title" class="ios-input" placeholder="Event Title">
+                <input v-model="newItineraryItem.location" class="ios-input" placeholder="Location">
+            </div>
+            <div class="ios-modal-footer">
+                <button v-if="newItineraryItem.id" @click="deleteItem('itinerary', newItineraryItem.id); modalState.itinerary=false" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
+                <button @click="modalState.itinerary = false" class="btn-ios-cancel">{{ t('cancel') }}</button>
+                <button @click="saveItem('itinerary')" class="btn-ios-primary">{{ t('save') }}</button>
+            </div>
+        </div>
+    </div>
 
-              <div v-if="activeSubPage === 'prep'" class="space-y-4">
-                  <input v-model="editingItem.text" class="ios-input" :placeholder="t('itemName')">
-                  <button v-if="editingId" @click="deleteItem" class="w-full py-3 text-red-500 font-bold bg-white rounded-xl">{{ t('delete') }}</button>
-              </div>
+    <div v-if="modalState.prep" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4">
+        <div class="ios-modal-container">
+            <div class="ios-modal-header">{{ t('prepList') }}</div>
+            <div class="ios-modal-body space-y-4">
+                <input v-model="newPreNote.name" class="ios-input" placeholder="Task Name">
+            </div>
+            <div class="ios-modal-footer">
+                <button @click="modalState.prep = false" class="btn-ios-cancel">{{ t('cancel') }}</button>
+                <button @click="prepList.push({ id: Date.now(), name: newPreNote.name, done: false }); modalState.prep = false; saveAll()" class="btn-ios-primary">{{ t('save') }}</button>
+            </div>
+        </div>
+    </div>
 
-              <div v-if="activeSubPage === 'info'" class="space-y-4">
-                  <input v-model="editingItem.title" class="ios-input font-bold" :placeholder="t('title')">
-                  <textarea v-model="editingItem.content" class="ios-input h-48" :placeholder="t('content')"></textarea>
-                  <button v-if="editingId" @click="deleteItem" class="w-full py-3 text-red-500 font-bold bg-white rounded-xl">{{ t('delete') }}</button>
-              </div>
-          </div>
-      </div>
+    <div v-if="modalState.member" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4">
+        <div class="ios-modal-container">
+            <div class="ios-modal-header">Members</div>
+            <div class="ios-modal-body space-y-2">
+                <div v-for="m in members" :key="m" class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <span>{{ m }}</span>
+                    <button @click="members = members.filter(x => x !== m); saveAll()" class="text-red-500 font-bold">-</button>
+                </div>
+                <div class="flex gap-2 mt-4">
+                    <input id="newMemberInput" class="ios-input" placeholder="New Member Name">
+                    <button @click="members.push(document.getElementById('newMemberInput').value); saveAll()" class="bg-blue-500 text-white rounded-lg px-4 font-bold">+</button>
+                </div>
+            </div>
+            <div class="ios-modal-footer">
+                <button @click="modalState.member = false" class="btn-ios-cancel w-full">Done</button>
+            </div>
+        </div>
+    </div>
+  </div> 
 
-    </transition>
-<script>
-const { createApp, ref, computed, reactive, onMounted, watch } = Vue;
+  <script>
+    const { createApp, ref, reactive, computed, onMounted, nextTick, watch } = Vue;
+    const { createClient } = supabase;
 
-createApp({
-  setup() {
-    // ================= CONFIG & STATE =================
-    // ★ 請在此填入您的 Supabase URL 和 Key
-    const supabaseUrl = 'https://myrhatzdypiwwgmmfbuw.supabase.co';
-const supabaseKey = 'sb_publishable_bnnah-2fsCaQnKZDoKNJQw_NuYQVvKi';
-    const supabase = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
+    // --- Supabase Config ---
+    const SUPABASE_URL = 'https://myrhatzdypiwwgmmfbuw.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_bnnah-2fsCaQnKZDoKNJQw_NuYQVvKi';
+    const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+    const TRIP_ID = 'testUI';
 
-    // 介面狀態
-    const currentTab = ref('home'); // home, itinerary, expense, info
-    const activeSubPage = ref(null); // settings, expenseEdit, etc.
-    const lang = ref(localStorage.getItem('ts_lang') || 'zh');
-    const isReturnFlight = ref(localStorage.getItem('ts_flight_tab') === 'return');
-    
-    // 核心數據 (預設值)
-    const settings = reactive({
-        origin: 'HKG', destination: 'KIX',
-        displayDate: '2024.12.20 - 12.27',
-        weatherCity: 'Osaka',
-        currency: { settle: 'HKD', local: 'TWD' }
-    });
+    createApp({
+      setup() {
+        // --- Global State ---
+        const appVersion = ref('v251222-6.2');
+        const lang = ref('zh'); 
+        const flightCardSkin = ref('ios');
+        const isScrolled = ref(false);
+        const members = ref([1, 2]);
+        const syncState = ref('synced');
 
-    const members = ref(['Me', 'Partner']); // 參與者
-    const rate = ref(4.05); // 1 Settle = ? Local (e.g. 1 HKD = 4.05 TWD)
-    const isUpdatingRate = ref(false);
-
-    // 航班資料
-    const flights = reactive({
-        outbound: { code: 'CX506', airline: 'Cathay Pacific', time: '10:20', terminal: '1', gate: '28', status: 'On Time', link: '' },
-        inbound:  { code: 'CX507', airline: 'Cathay Pacific', time: '18:00', terminal: '1', gate: '12', status: 'Boarding', link: '' }
-    });
-
-    // 列表數據
-    const itinerary = ref([]);
-    const expenses = ref([]);
-    const shoppingList = ref([]);
-    const prepList = ref([
-        { id: 1, text: 'Passport', done: false },
-        { id: 2, text: 'Sim Card', done: true }
-    ]);
-    const infoList = ref([]);
-
-    // 編輯與計算機狀態
-    const editingId = ref(null);
-    const editingItem = ref({});
-    const editingFlightType = ref('outbound'); // 用於 Flight Edit
-    const editingExpense = reactive({
-        amount: 0, currency: 'HKD', category: 'food', 
-        payer: 'Me', involved: [], method: 'card', item: ''
-    });
-    const calcInput = ref('0');
-    
-    // 模擬天氣數據
-    const weather = reactive({
-        temp: 18, icon: 'ph-sun', color: 'text-yellow-500', 
-        precip: 0, warning: false, city: { en: 'Osaka', zh: '大阪' }
-    });
-
-    // 多語言字典
-    const i18n = {
-        zh: {
-            outbound: '去程', inbound: '回程', terminal: '航廈', gate: '登機門',
-            settings: '設定', tripInfo: '旅程資訊', currencySetting: '貨幣設定',
-            origin: '出發地', destination: '目的地', date: '日期', weatherCity: '天氣城市',
-            settleCurrency: '結算貨幣', mainDisplay: '主要顯示 / 記帳',
-            localCurrency: '當地貨幣', subDisplay: '次要顯示 / 估算',
-            members: '參與者', add: '新增', system: '系統設定', language: '語言',
-            resetData: '重置所有資料', cancel: '取消', save: '儲存', edit: '編輯', new: '新增',
-            delete: '刪除', title: '標題', locationAddr: '地點 / 地址', notes: '備註',
-            itemName: '項目名稱', price: '價格', tapToUpload: '點擊上傳圖片',
-            expense: '支出', totalExpense: '總支出', card: '信用卡', cash: '現金',
-            editExpense: '編輯支出', newExpense: '新增支出',
-            participants: '分帳對象', all: '全選', payer: '付款人',
-            flightCode: '航班編號', status: '狀態', airline: '航空公司', time: '時間',
-            editFlight: '編輯航班資料',
-            itinerary: '行程安排', prepList: '準備清單', shoppingList: '購物清單', info: '旅程資訊',
-            noActivity: '當日無行程',
-            home: '首頁', back: '返回',
-            food: '餐飲', transport: '交通', shopping: '購物', ticket: '門票', stay: '住宿', other: '其他'
-        },
-        en: {
-            outbound: 'Outbound', inbound: 'Inbound', terminal: 'Term', gate: 'Gate',
-            settings: 'Settings', tripInfo: 'Trip Info', currencySetting: 'Currency',
-            origin: 'Origin', destination: 'Dest', date: 'Date', weatherCity: 'City',
-            settleCurrency: 'Settle Cur', mainDisplay: 'Main / Accounting',
-            localCurrency: 'Local Cur', subDisplay: 'Sub / Estimate',
-            members: 'Members', add: 'Add', system: 'System', language: 'Language',
-            resetData: 'Reset Data', cancel: 'Cancel', save: 'Save', edit: 'Edit', new: 'New',
-            delete: 'Delete', title: 'Title', locationAddr: 'Location', notes: 'Notes',
-            itemName: 'Item Name', price: 'Price', tapToUpload: 'Tap to Upload',
-            expense: 'Expenses', totalExpense: 'Total Expense', card: 'Card', cash: 'Cash',
-            editExpense: 'Edit Expense', newExpense: 'New Expense',
-            participants: 'Split With', all: 'All', payer: 'Payer',
-            flightCode: 'Flight No', status: 'Status', airline: 'Airline', time: 'Time',
-            editFlight: 'Edit Flight',
-            itinerary: 'Itinerary', prepList: 'Prep List', shoppingList: 'Shopping', info: 'Info',
-            noActivity: 'No activity',
-            home: 'Home', back: 'Back',
-            food: 'Food', transport: 'Transport', shopping: 'Shop', ticket: 'Ticket', stay: 'Hotel', other: 'Other'
-        }
-    };
-
-    // ================= COMPUTED =================
-    const t = (key) => i18n[lang.value][key] || key;
-    
-    // 取得當前顯示的航班 (根據卡片上的切換開關)
-    const activeFlight = computed(() => isReturnFlight.value ? flights.inbound : flights.outbound);
-    
-    // 編輯中的航班 (根據 Sub-page 內的切換開關)
-    const editingFlight = computed(() => editingFlightType.value === 'outbound' ? flights.outbound : flights.inbound);
-
-    // 行程日期生成器 (解析 displayDate 字串，簡單實作)
-    const tripDays = computed(() => {
-        // 簡單解析 "YYYY.MM.DD - MM.DD" 格式，這裡為了 Demo 穩定，產生相對日期
-        // 實際專案可引入 dayjs 處理
-        const days = [];
-        const startStr = settings.displayDate.split('-')[0].trim(); // 2024.12.20
-        const parts = startStr.split('.');
-        const baseDate = new Date(parts[0], parts[1]-1, parts[2]);
+        // --- Data Refs ---
+        const prepList = ref([
+           { id: 101, name: 'Passport & Visa', done: true },
+           { id: 102, name: 'Power Bank', done: false }
+        ]);
+        const newPreNote = reactive({ name: '', isDone: false });
         
-        // 產生 7 天行程供演示
-        const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        for (let i = 0; i < 7; i++) {
-            let d = new Date(baseDate);
-            d.setDate(baseDate.getDate() + i);
-            days.push({
-                dateShort: `${d.getMonth()+1}.${d.getDate()}`,
-                weekday: weekDays[d.getDay()],
-                fullDate: d.toISOString().split('T')[0] // YYYY-MM-DD for filter
-            });
-        }
-        return days;
-    });
-
-    const selectedDayIndex = ref(0);
-    const currentDayItinerary = computed(() => {
-        // 這裡僅用 dayIndex 模擬過濾，實際上應比對日期
-        return itinerary.value.filter(i => i.dayIndex === selectedDayIndex.value)
-                 .sort((a,b) => a.time.localeCompare(b.time));
-    });
-
-    const getDayEventCount = (idx) => itinerary.value.filter(i => i.dayIndex === idx).length;
-
-    // --- 支出核心邏輯 ---
-    // 匯率換算表 (相對於 HKD 的假定匯率，實際應從 API 抓取)
-    const currencyRates = {
-        'HKD': 1,
-        'TWD': 0.24, // 1 TWD = 0.24 HKD (倒數即 4.16) -> 這裡簡化邏輯
-        'USD': 7.8,
-        'JPY': 0.053,
-        'EUR': 8.5,
-        'KRW': 0.006
-    };
-    
-    // 將任意貨幣轉為結算貨幣 (HKD)
-    const toSettle = (amount, cur) => {
-        if (cur === settings.currency.settle) return parseFloat(amount);
-        if (cur === settings.currency.local) return parseFloat(amount) / rate.value;
-        // 其他貨幣轉換 (簡化版)
-        const itemRate = currencyRates[cur] || 1; 
-        const settleBase = currencyRates[settings.currency.settle] || 1;
-        return parseFloat(amount) * (itemRate / settleBase);
-    };
-
-    const totalExpense = computed(() => {
-        let sum = 0;
-        expenses.value.forEach(e => sum += toSettle(e.amount, e.currency));
-        return {
-            settle: sum,
-            local: sum * rate.value
-        };
-    });
-
-    const expensesBreakdown = computed(() => {
-        let card = 0, cash = 0;
-        expenses.value.forEach(e => {
-            const val = toSettle(e.amount, e.currency);
-            if (e.method === 'card') card += val; else cash += val;
+        const itinerary = ref({
+          '2025-12-21': [
+             { id: 1, title: 'Arrival at KIX', time: '14:40', location: 'Kansai Airport', category: 'travel', note: 'Pick up JR Pass' }
+          ]
         });
-        return {
-            card: { settle: card, local: card * rate.value },
-            cash: { settle: cash, local: cash * rate.value }
+        const newItineraryItem = reactive({ id: null, title: '', time: '', location: '', category: 'travel', note: '', dateKey: '' });
+
+        const shoppingList = ref([
+           { id: 201, name: 'Matcha KitKat', price: 300, done: false }
+        ]);
+        const newShoppingItem = reactive({ id: null, name: '', price: '', done: false });
+
+        const expenses = ref([
+            { id: 301, name: 'Dinner', amount: 12000, currency: 'JPY', category: '餐飲', payer: 1, involved: [1,2], paymentMethod: 'cash', date: '2025-12-21' }
+        ]);
+        const newExpense = reactive({ 
+            id: null, name: '', amount: '', currency: 'JPY', category: '餐飲', 
+            payer: '', involved: [], paymentMethod: 'cash', date: '' 
+        });
+        const expenseFilter = ref('all');
+        const isDraggingExpense = ref(false);
+
+        const activeFlight = ref({
+          airline_iata: 'CX', airline_name: 'Cathay Pacific', flight_iata: 'CX506',
+          origin_iata: 'HKG', origin_terminal: '1', origin_gate: '24',
+          dest_iata: 'KIX', dest_terminal: '1',
+          dep_time: '2025-12-21T10:00:00', arr_time: '2025-12-21T14:40:00',
+          duration: '3h 40m', status: 'On Time', liveLink: 'https://flighty.com',
+          note: 'Economy'
+        });
+
+        const infoText = ref("Remember to fill out the Visit Japan Web form.");
+        const rate = ref(0.052);
+        const currentLiveRate = ref(0.0518);
+        const lastRateUpdateLabel = ref('Updated 10m ago');
+        const calcInput = ref('');
+        const calcResult = ref(0);
+
+        // --- Modals Control ---
+        const modalState = reactive({
+            flight: false, member: false, rate: false,
+            itinerary: false, shopping: false, prep: false,
+            expense: false, settlement: false
+        });
+
+        // --- i18n Dictionary ---
+        const i18n = {
+           en: {
+              activeFlightText: 'Active Flight', tapToAdd: 'Tap to add flight details',
+              estimatedDeparture: 'Estimated Departure', estimatedArrival: 'Estimated Arrival',
+              terminal: 'Terminal', gate: 'Gate', arriveTerm: 'Arrive Term', flight: 'Flight', cabin: 'Cabin', to: 'to',
+              rate: 'JPY Rate', itinerary: 'Itinerary', addEvent: 'Add Event', items: 'items',
+              prepList: 'Preparation', noPrepItems: 'All set! No items to display.',
+              shopping: 'Shopping', expenses: 'Expenses', totalSpent: 'Total Spent',
+              food: 'Food', transport: 'Transport', shop: 'Shop', info: 'Travel Info',
+              home: 'Home', map: 'Map', wallet: 'Wallet', settings: 'Settings',
+              edit: 'Edit', delete: 'Delete', save: 'Save', cancel: 'Cancel',
+              newItem: 'New Item', editItem: 'Edit Item',
+              payer: 'Payer', involved: 'Involved', selectAll: 'Select All',
+              method: 'Method', cash: 'Cash', credit: 'Card',
+              settlement: 'Settlement', shouldPay: 'Should Pay', shouldReceive: 'Should Receive',
+              confirmDelete: 'Are you sure?', calcDone: 'Done'
+           },
+           zh: {
+              activeFlightText: '航班實況', tapToAdd: '點擊新增航班資訊',
+              estimatedDeparture: '預計起飛', estimatedArrival: '預計抵達',
+              terminal: '客運大樓', gate: '登機閘口', arriveTerm: '抵達大樓', flight: '航班', cabin: '艙等', to: '前往',
+              rate: '日圓匯率', itinerary: '行程安排', addEvent: '新增', items: '項目',
+              prepList: '準備清單', noPrepItems: '準備就緒！暫無項目。',
+              shopping: '購物清單', expenses: '支出', totalSpent: '總支出',
+              food: '飲食', transport: '交通', shop: '購物', info: '旅程資訊',
+              home: '首頁', map: '地圖', wallet: '錢包', settings: '設定',
+              edit: '編輯', delete: '刪除', save: '儲存', cancel: '取消',
+              newItem: '新增項目', editItem: '編輯項目',
+              payer: '支付者', involved: '分帳人', selectAll: '全選',
+              method: '支付', cash: '現金', credit: '信用卡',
+              settlement: '結算', shouldPay: '需支付', shouldReceive: '需收取',
+              confirmDelete: '確定刪除？', calcDone: '完成'
+           }
         };
-    });
+        const t = (key) => i18n[lang.value][key] || key;
+        const toggleLang = () => { lang.value = lang.value === 'zh' ? 'en' : 'zh'; };
+        const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
 
-    const expenseCats = [
-        { id: 'food' }, { id: 'transport' }, { id: 'shopping' }, 
-        { id: 'ticket' }, { id: 'stay' }, { id: 'other' }
-    ];
+        // --- Methods ---
+        const toggleSkin = () => { flightCardSkin.value = flightCardSkin.value === 'ios' ? 'hkg' : 'ios'; };
+        
+        const formatTime = (isoString) => {
+          if (!isoString) return '--:--';
+          if(isoString.length === 5 && isoString.includes(':')) return isoString;
+          const date = new Date(isoString);
+          return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        };
+        
+        const displayDate = (isoString) => {
+          if (!isoString) return '';
+          const date = new Date(isoString);
+          return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase();
+        };
 
-    // ================= METHODS =================
-    
-    // 頁面控制
-    const openSubPage = (page) => {
-        activeSubPage.value = page;
-        // 初始化編輯狀態
-        if (page === 'expenseEdit') {
-            editingId.value = null;
-            calcInput.value = '0';
-            Object.assign(editingExpense, {
-                amount: 0, currency: settings.currency.local, 
-                category: 'food', payer: members.value[0], 
-                involved: [...members.value], method: 'cash', item: ''
+        const getStatusClass = (status) => {
+           switch(status?.toLowerCase()) {
+              case 'on time': return 'text-[#34C759] bg-[#34C759]/15 border border-[#34C759]/20';
+              case 'delayed': return 'text-[#FF3B30] bg-[#FF3B30]/15 border border-[#FF3B30]/20';
+              case 'boarding': return 'text-[#FFCC00] bg-[#FFCC00]/15 border border-[#FFCC00]/20';
+              case 'landed': return 'text-[#007AFF] bg-[#007AFF]/15 border border-[#007AFF]/20';
+              default: return 'bg-white/10 text-white border-white/20';
+           }
+        };
+
+        const handleCalcInput = (key) => {
+             let val = String(newExpense.amount || '');
+             if (val === '0' && key !== '.' && !['+','-','*','/'].includes(key)) val = '';
+             if (key === 'C') {
+                 newExpense.amount = '';
+             } else if (key === 'DEL') {
+                 newExpense.amount = val.slice(0, -1);
+             } else if (key === '=') {
+                 try {
+                     if(!val) return;
+                     const safeVal = val.replace(/[^0-9+\-*/.]/g, '');
+                     newExpense.amount = eval(safeVal); 
+                 } catch (e) {}
+             } else {
+                 const lastChar = val.slice(-1);
+                 const isOp = ['+','-','*','/'].includes(key);
+                 const lastIsOp = ['+','-','*','/'].includes(lastChar);
+                 if (isOp && lastIsOp) {
+                     newExpense.amount = val.slice(0, -1) + key;
+                 } else {
+                     newExpense.amount = val + key;
+                 }
+             }
+        };
+
+        const openModal = (type, item = null) => {
+            if(type === 'expense') {
+                const def = { 
+                    id: null, name:'', amount:'', currency:'JPY', category:'餐飲', 
+                    paymentMethod:'cash', date: new Date().toISOString().split('T')[0],
+                    payer: members.value[0], involved: [...members.value], 
+                    exchangeRate: null 
+                };
+                Object.assign(newExpense, item ? JSON.parse(JSON.stringify(item)) : def);
+                modalState.expense = true;
+            } else if (type === 'shopping') {
+                Object.assign(newShoppingItem, item ? JSON.parse(JSON.stringify(item)) : { id: null, name: '', price: '', done: false });
+                modalState.shopping = true;
+            } else if (type === 'itinerary') {
+                Object.assign(newItineraryItem, item ? JSON.parse(JSON.stringify(item)) : { id: null, title: '', time: '', location: '', category: 'travel', note: '' });
+                modalState.itinerary = true;
+            } else if (type === 'prep') {
+                Object.assign(newPreNote, item ? JSON.parse(JSON.stringify(item)) : { id: null, name: '', isDone: false });
+                modalState.prep = true;
+            }
+        };
+
+        const saveItem = (type) => {
+             if(type === 'expense') {
+                 if(!newExpense.amount) return;
+                 const saveObj = { ...newExpense, id: newExpense.id || generateId() };
+                 if(!saveObj.id) saveObj.order_index = expenses.value.length;
+                 const idx = expenses.value.findIndex(e => e.id === saveObj.id);
+                 if(idx !== -1) expenses.value.splice(idx, 1, saveObj);
+                 else expenses.value.push(saveObj);
+                 modalState.expense = false;
+             }
+             else if(type === 'shopping') {
+                 const saveObj = { ...newShoppingItem, id: newShoppingItem.id || generateId() };
+                 const idx = shoppingList.value.findIndex(e => e.id === saveObj.id);
+                 if(idx !== -1) shoppingList.value.splice(idx, 1, saveObj);
+                 else shoppingList.value.push(saveObj);
+                 modalState.shopping = false;
+             }
+             else if(type === 'itinerary') {
+                 const saveObj = { ...newItineraryItem, id: newItineraryItem.id || generateId() };
+                 const targetDate = '2025-12-21'; 
+                 if(!itinerary.value[targetDate]) itinerary.value[targetDate] = [];
+                 const idx = itinerary.value[targetDate].findIndex(e => e.id === saveObj.id);
+                 if(idx !== -1) itinerary.value[targetDate].splice(idx, 1, saveObj);
+                 else itinerary.value[targetDate].push(saveObj);
+                 
+                 itinerary.value[targetDate].sort((a,b) => (a.time || '23:59').localeCompare(b.time || '23:59'));
+                 modalState.itinerary = false;
+             }
+             saveAll();
+        };
+
+        const deleteItem = (type, id) => {
+             if(!confirm(t('confirmDelete'))) return;
+             if(type === 'expense') expenses.value = expenses.value.filter(e => e.id !== id);
+             if(type === 'shopping') shoppingList.value = shoppingList.value.filter(e => e.id !== id);
+             Object.keys(itinerary.value).forEach(date => {
+                 itinerary.value[date] = itinerary.value[date].filter(e => e.id !== id);
+             });
+             saveAll();
+        };
+
+        const initSortable = (elClass, listRef) => {
+            const els = document.querySelectorAll(elClass);
+            els.forEach(el => {
+                Sortable.create(el, {
+                    handle: '.drag-handle',
+                    animation: 150, delay: 150, delayOnTouchOnly: true,
+                    onEnd: (evt) => {
+                        const item = listRef.value.splice(evt.oldIndex, 1)[0];
+                        listRef.value.splice(evt.newIndex, 0, item);
+                        saveAll();
+                    }
+                });
             });
-        }
-        if (page === 'flightEdit') {
-            // 預設編輯當前顯示的那個方向
-            editingFlightType.value = isReturnFlight.value ? 'inbound' : 'outbound';
-        }
-    };
-    
-    const closeSubPage = () => {
-        activeSubPage.value = null;
-        editingId.value = null;
-    };
-
-    const toggleLang = () => {
-        lang.value = lang.value === 'zh' ? 'en' : 'zh';
-        localStorage.setItem('ts_lang', lang.value);
-    };
-
-    // 格式化數字 (千分位)
-    const formatNumber = (num) => {
-        if (!num && num !== 0) return '0';
-        return new Intl.NumberFormat('en-US', { 
-            maximumFractionDigits: 0 
-        }).format(num);
-    };
-
-    // --- 計算機邏輯 ---
-    const handleCalcInput = (val) => {
-        if (val === 'C') { calcInput.value = '0'; return; }
-        if (val === 'del') { 
-            calcInput.value = calcInput.value.length > 1 ? calcInput.value.slice(0, -1) : '0'; 
-            return; 
-        }
-        
-        // 簡單防止重複運算符
-        const ops = ['+', '-', '*', '/', '.'];
-        const lastChar = calcInput.value.slice(-1);
-        if (ops.includes(val) && ops.includes(lastChar)) return;
-
-        if (calcInput.value === '0' && !ops.includes(val)) {
-            calcInput.value = val;
-        } else {
-            calcInput.value += val;
-        }
-    };
-
-    // 計算機預覽轉換
-    const getCalcValue = () => {
-        try {
-            // 安全性注意：生產環境建議用 mathjs，這裡用 eval 處理簡單運算
-            return eval(calcInput.value) || 0;
-        } catch { return 0; }
-    };
-
-    const convertCalcToSettle = () => {
-        const val = getCalcValue();
-        return toSettle(val, editingExpense.currency);
-    };
-    
-    const convertCalcToLocal = () => {
-        const val = getCalcValue();
-        if (editingExpense.currency === settings.currency.local) return val; // 自身
-        return toSettle(val, editingExpense.currency) * rate.value;
-    };
-
-    // --- CRUD 操作 ---
-    const saveExpense = () => {
-        const finalAmount = getCalcValue();
-        if (finalAmount <= 0) return;
-
-        const newExp = {
-            id: editingId.value || Date.now(),
-            ...editingExpense,
-            amount: finalAmount,
-            date: new Date().toISOString()
         };
 
-        if (editingId.value) {
-            const idx = expenses.value.findIndex(e => e.id === editingId.value);
-            if (idx !== -1) expenses.value[idx] = newExp;
-        } else {
-            expenses.value.unshift(newExp);
-        }
-        
-        // 同步到 Supabase (如果有連線)
-        saveToCloud('expenses', expenses.value);
-        closeSubPage();
-    };
+        // --- Computed ---
+        const totalExpense = computed(() => {
+             let totalHKD = 0;
+             expenses.value.forEach(e => {
+                 let amt = Number(e.amount) || 0;
+                 let hkdAmt = 0;
+                 if(e.currency === 'JPY') hkdAmt = amt * 0.052; 
+                 else if(e.currency === 'HKD') hkdAmt = amt;
+                 totalHKD += hkdAmt;
+             });
+             return totalHKD;
+        });
 
-    const saveFlight = () => {
-        // 因為 editingFlight 是 computed，直接修改 flights 內物件即可
-        // 這裡需要手動觸發 Supabase 更新
-        saveToCloud('flights', flights);
-        closeSubPage();
-    };
+        const expensesBreakdown = computed(() => {
+             const cats = { food: 0, transport: 0, shopping: 0 };
+             expenses.value.forEach(e => {
+                 let amt = Number(e.amount) || 0;
+                 if(e.category === '餐飲') cats.food += amt;
+                 if(e.category === '交通') cats.transport += amt;
+                 if(e.category === '購物') cats.shopping += amt;
+             });
+             return cats;
+        });
 
-    const saveGenericItem = () => {
-        // 通用儲存邏輯 (行程/購物/資訊/準備)
-        if (activeSubPage.value === 'itinerary') {
-             const newItem = { id: editingId.value || Date.now(), ...editingItem.value };
-             if (editingId.value) {
-                 const idx = itinerary.value.findIndex(i => i.id === editingId.value);
-                 itinerary.value[idx] = newItem;
-             } else itinerary.value.push(newItem);
-             saveToCloud('itinerary', itinerary.value);
-        } 
-        else if (activeSubPage.value === 'shopping') {
-             const newItem = { id: editingId.value || Date.now(), ...editingItem.value, done: false };
-             if (editingId.value) {
-                 const idx = shoppingList.value.findIndex(i => i.id === editingId.value);
-                 shoppingList.value[idx] = newItem;
-             } else shoppingList.value.push(newItem);
-             saveToCloud('shoppingList', shoppingList.value);
-        }
-        else if (activeSubPage.value === 'prep') {
-             const newItem = { id: editingId.value || Date.now(), ...editingItem.value, done: false };
-             if (editingId.value) {
-                 const idx = prepList.value.findIndex(i => i.id === editingId.value);
-                 prepList.value[idx] = newItem;
-             } else prepList.value.push(newItem);
-             saveToCloud('prepList', prepList.value);
-        }
-        else if (activeSubPage.value === 'info') {
-             const newItem = { id: editingId.value || Date.now(), ...editingItem.value };
-             if (editingId.value) {
-                 const idx = infoList.value.findIndex(i => i.id === editingId.value);
-                 infoList.value[idx] = newItem;
-             } else infoList.value.push(newItem);
-             saveToCloud('infoList', infoList.value);
-        }
-        closeSubPage();
-    };
+        const settlementList = computed(() => {
+             const balances = {};
+             members.value.forEach(m => balances[m] = 0);
+             expenses.value.forEach(e => {
+                 let amount = Number(e.amount) || 0;
+                 let hkdAmt = (e.currency === 'JPY' ? amount * 0.052 : amount);
+                 const payer = e.payer || members.value[0];
+                 const involved = e.involved && e.involved.length > 0 ? e.involved : members.value;
+                 
+                 if(balances[payer] === undefined) balances[payer] = 0;
+                 balances[payer] += hkdAmt;
+                 const splitAmt = hkdAmt / involved.length;
+                 involved.forEach(p => {
+                     if(balances[p] === undefined) balances[p] = 0;
+                     balances[p] -= splitAmt;
+                 });
+             });
+             return Object.keys(balances).map(k => ({ name: k, amount: balances[k] })).filter(x => Math.abs(x.amount) > 1);
+        });
 
-    // 刪除項目
-    const deleteItem = () => {
-        if (!editingId.value) return;
-        if (confirm('Are you sure?')) {
-            if (activeSubPage.value === 'itinerary') itinerary.value = itinerary.value.filter(i => i.id !== editingId.value);
-            if (activeSubPage.value === 'shopping') shoppingList.value = shoppingList.value.filter(i => i.id !== editingId.value);
-            if (activeSubPage.value === 'prep') prepList.value = prepList.value.filter(i => i.id !== editingId.value);
-            if (activeSubPage.value === 'info') infoList.value = infoList.value.filter(i => i.id !== editingId.value);
-            closeSubPage();
-        }
-    };
-
-    // 編輯觸發器
-    const openItineraryAdd = () => {
-        editingId.value = null;
-        editingItem.value = { dayIndex: selectedDayIndex.value, time: '10:00', title: '', location: '', desc: '' };
-        openSubPage('itinerary');
-    };
-    const handleItineraryClick = (item) => {
-        editingId.value = item.id;
-        editingItem.value = { ...item };
-        openSubPage('itinerary');
-    };
-    const editShoppingItem = (item) => {
-        editingId.value = item.id;
-        editingItem.value = { ...item };
-        openSubPage('shopping');
-    };
-    const editInfo = (info) => {
-        editingId.value = info.id;
-        editingItem.value = { ...info };
-        openSubPage('info');
-    };
-
-    // 輔助功能
-    const togglePrep = (item) => { item.done = !item.done; saveToCloud('prepList', prepList.value); };
-    const getTabIcon = (tab) => {
-        const icons = { home: 'ph-house', itinerary: 'ph-calendar-blank', expense: 'ph-wallet', info: 'ph-info' };
-        return icons[tab];
-    };
-    const getStatusClass = (status) => {
-        if (status === 'On Time') return 'status-ontime';
-        if (status === 'Delayed') return 'status-warning';
-        return 'bg-blue-100 text-blue-600';
-    };
-    const isInstagramLink = (url) => url && url.includes('instagram.com');
-
-    // 分帳參與者切換
-    const toggleParticipant = (name) => {
-        const list = editingExpense.involved;
-        if (list.includes(name)) {
-            // 至少保留一人
-            if (list.length > 1) editingExpense.involved = list.filter(n => n !== name);
-        } else {
-            editingExpense.involved.push(name);
-        }
-    };
-    const toggleAllParticipants = () => {
-        if (editingExpense.involved.length === members.value.length) editingExpense.involved = [members.value[0]];
-        else editingExpense.involved = [...members.value];
-    };
-    
-    // 設定頁邏輯
-    const addMember = () => {
-        const name = prompt(t('new') + ' ' + t('members'));
-        if (name && !members.value.includes(name)) members.value.push(name);
-    };
-    const removeMember = (idx) => {
-        if (members.value.length > 1) members.value.splice(idx, 1);
-    };
-    const resetData = () => {
-        if (confirm('Reset All Data?')) {
-            localStorage.clear();
-            location.reload();
-        }
-    };
-
-    // --- Supabase 同步 ---
-    const saveToCloud = async (table, data) => {
-        // 如果未設定 Key，僅使用 LocalStorage 作為備用
-        localStorage.setItem('ts_' + table, JSON.stringify(data));
-        
-        if (!supabase) return;
-        // 這裡簡化為更新單一 User 的 JSON 資料列，實際應為獨立 Table
-        // 為了 Demo，我們僅模擬儲存
-        console.log('Saving to Supabase:', table, data);
-    };
-
-    const loadFromCloud = () => {
-        // 先嘗試讀取 LocalStorage
-        const load = (key, target) => {
-            const local = localStorage.getItem('ts_' + key);
-            if (local) target.value = JSON.parse(local);
+        // --- Sync ---
+        const fetchTripData = async () => {
+           try {
+              syncState.value = 'loading';
+              const { data, error } = await sb.from('trip_data').select('*').eq('id', TRIP_ID).single();
+              if (data?.content) {
+                 const c = data.content;
+                 if(c.itinerary) itinerary.value = c.itinerary;
+                 if(c.expenses) expenses.value = c.expenses;
+                 if(c.shoppingList) shoppingList.value = c.shoppingList;
+                 if(c.members) members.value = c.members;
+                 if(c.prepList) prepList.value = c.prepList;
+              }
+              syncState.value = 'synced';
+           } catch (err) { console.error(err); syncState.value = 'error'; }
         };
-        load('itinerary', itinerary);
-        load('expenses', expenses);
-        load('shoppingList', shoppingList);
-        load('prepList', prepList);
-        load('infoList', infoList);
-        
-        const savedSettings = localStorage.getItem('ts_settings'); // 特殊處理 reactive
-        if (savedSettings) Object.assign(settings, JSON.parse(savedSettings));
-        
-        const savedFlights = localStorage.getItem('ts_flights');
-        if (savedFlights) Object.assign(flights, JSON.parse(savedFlights));
-    };
 
-    // 監聽器
-    watch(isReturnFlight, (val) => localStorage.setItem('ts_flight_tab', val ? 'return' : 'outbound'));
-    watch(settings, () => localStorage.setItem('ts_settings', JSON.stringify(settings)), { deep: true });
-    
-    onMounted(() => {
-        loadFromCloud();
-        // 首次執行可選：自動抓取即時匯率 (這裡模擬)
-        setTimeout(() => { isUpdatingRate.value = false; }, 1500);
-    });
+        const saveAll = async () => {
+            syncState.value = 'saving';
+            const payload = {
+                itinerary: itinerary.value, expenses: expenses.value,
+                shoppingList: shoppingList.value, members: members.value,
+                prepList: prepList.value, updated_at: Date.now()
+            };
+            await sb.from('trip_data').upsert({ id: TRIP_ID, content: payload });
+            setTimeout(() => syncState.value = 'synced', 500);
+        };
 
-    return {
-        // State
-        currentTab, activeSubPage, lang, isReturnFlight,
-        settings, members, rate, isUpdatingRate,
-        flights, weather,
-        itinerary, expenses, shoppingList, prepList, infoList,
-        editingId, editingItem, editingExpense, editingFlightType, calcInput,
-        tripDays, selectedDayIndex, currentDayItinerary, getDayEventCount,
-        // Computed
-        t, activeFlight, editingFlight, totalExpense, expensesBreakdown, expenseCats,
-        // Methods
-        openSubPage, closeSubPage, toggleLang, formatNumber,
-        handleCalcInput, saveExpense, convertCalcToSettle, convertCalcToLocal,
-        openItineraryAdd, handleItineraryClick, editShoppingItem, editInfo,
-        saveGenericItem, deleteItem, saveFlight,
-        togglePrep, getTabIcon, getStatusClass, isInstagramLink,
-        toggleParticipant, toggleAllParticipants,
-        addMember, removeMember, resetData
-    };
-  }
-}).mount('#app');
-</script>
+        // --- Lifecycle ---
+        onMounted(() => {
+          window.addEventListener('scroll', () => { isScrolled.value = window.scrollY > 10; });
+          fetchTripData();
+        });
+
+                watch(() => shoppingList.value.length, () => nextTick(() => initSortable('.shopping-list-container', shoppingList)));
+
+        // 新增：監聽 Modal 狀態以鎖定背景滾動
+        watch(() => Object.values(modalState).some(v => v), (isOpen) => {
+            if (isOpen) document.body.classList.add('no-scroll');
+            else document.body.classList.remove('no-scroll');
+        });
+
+        return {
+          appVersion, lang, t, toggleLang, flightCardSkin, toggleSkin,
+          activeFlight, formatTime, displayDate, getStatusClass,
+          rate, currentLiveRate, lastRateUpdateLabel, handleCalcInput, calcResult, calcInput,
+          itinerary, newItineraryItem, shoppingList, newShoppingItem, expenses, newExpense, expenseFilter,
+          prepList, newPreNote, members, infoText,
+          modalState, openModal, saveItem, deleteItem,
+          totalExpense, expensesBreakdown, settlementList,
+          isScrolled, syncState, isDraggingExpense, formatNumber: (n) => Number(n).toLocaleString()
+        };
+      }
+    }).mount('#app');
+  </script>
 </body>
 </html>
