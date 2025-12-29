@@ -1,12 +1,12 @@
+改
+
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
   <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#1c1c1e" media="(prefers-color-scheme: dark)">
-  <title>Travel Sync Ultimate (v251229-7.03)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <title>Travel Sync Ultimate</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -15,963 +15,989 @@
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
   <style>
-    /* --- 1. Variables & Base --- */
     :root {
-      --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
       --ios-bg: #F2F2F7;
-      --hkg-red: #C8102E;
-      --glass-dark: rgba(30, 30, 30, 0.6);
+      --ios-card-bg: rgba(255, 255, 255, 0.65);
+      --ios-card-border: rgba(255, 255, 255, 0.4);
+      --ios-primary: #007AFF;
+      --ios-danger: #FF3B30;
+      --ios-warning: #FFCC00;
+      --ios-success: #34C759;
+      --glass-blur: blur(25px);
+      --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
+
     body {
-      font-family: var(--font-stack);
       background-color: var(--ios-bg);
-      margin: 0; padding-bottom: 100px;
-      user-select: none; -webkit-user-select: none;
-      touch-action: pan-y;
-      color: #1c1c1e;
-      overflow-x: hidden;
+      font-family: var(--font-stack);
+      -webkit-font-smoothing: antialiased;
+      margin: 0; color: #000; overflow: hidden; user-select: none;
     }
-    
-    /* Background Layer */
-    .bg-layer { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+
+    #app { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+
+    main {
+        flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+        padding-bottom: 120px; /* Space for Dock */
+    }
 
     /* Utilities */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 20px); }
-    .pt-safe { padding-top: calc(env(safe-area-inset-top) + 10px); }
-    [v-cloak] { display: none; }
-
-    /* --- 2. 7.02/6.02 Card Systems --- */
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+    
+    /* Cards */
     .ios-card {
-      background: rgba(255, 255, 255, 0.65);
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      border-radius: 20px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-      overflow: hidden;
+      background: var(--ios-card-bg);
+      backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--ios-card-border); border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03); overflow: hidden;
     }
 
-    /* 5.09 Dark Glass Style (For Expense) */
     .ios-card-dark-glass {
-        background: rgba(28, 28, 30, 0.85);
-        backdrop-filter: blur(35px); -webkit-backdrop-filter: blur(35px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 24px;
-        position: relative; overflow: hidden;
-        box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-        color: white;
+      background: rgba(22, 22, 24, 0.85);
+      backdrop-filter: blur(50px); -webkit-backdrop-filter: blur(50px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+      color: white; position: relative; overflow: hidden;
     }
+    
     .dark-glass-gradient {
-        position: absolute; top: 0; left: 0; right: 0; height: 150px;
-        background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
-        pointer-events: none;
+        position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+        background: radial-gradient(circle at 80% 20%, rgba(10, 132, 255, 0.25), transparent 60%);
+        pointer-events: none; z-index: 0;
     }
 
-    /* Flight Card Skins */
-    .flight-card-base {
-        border-radius: 20px; min-height: 220px;
-        position: relative; overflow: hidden;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        display: flex; flex-direction: column;
-        transition: all 0.3s ease;
+    /* List Items */
+    .ios-list-item {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(15px); border-radius: 18px;
+      margin-bottom: 8px; padding: 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      transition: background 0.2s, transform 0.2s;
+      border: 1px solid rgba(255,255,255,0.5); touch-action: manipulation;
     }
-    .skin-ios {
-        background: rgba(20, 20, 25, 0.85);
-        border: 1px solid rgba(255,255,255,0.1); color: white;
-        backdrop-filter: blur(30px);
+    .ios-list-item:active { background: rgba(255, 255, 255, 0.95); transform: scale(0.98); }
+
+    /* Drag & Drop */
+    .sortable-ghost { opacity: 0.4; background: #e5e7eb; border: 1px dashed #9ca3af; }
+    .sortable-drag { opacity: 1; background: #fff; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); transform: scale(1.02); z-index: 50; }
+    .drag-handle { cursor: grab; padding: 10px; margin: -10px; display: flex; align-items: center; justify-content: center; touch-action: none; }
+
+    /* Buttons & Inputs */
+    .action-btn-group { display: flex; align-items: center; gap: 4px; opacity: 0.6; transition: opacity 0.2s; }
+    .ios-list-item:hover .action-btn-group, .action-btn-group:active { opacity: 1; }
+    .icon-btn { padding: 6px; color: #8E8E93; border-radius: 50%; }
+    
+    .ios-input {
+      background: rgba(118, 118, 128, 0.12); border: none; border-radius: 10px;
+      padding: 10px 12px; font-size: 16px; color: #000; width: 100%; box-sizing: border-box;
     }
-    .skin-ios .status-badge {
-        background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 8px;
-        font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    .ios-input:focus { background: rgba(118, 118, 128, 0.2); outline: none; }
+
+    /* Modals */
+    .modal-backdrop { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(5px); z-index: 100; position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .ios-modal-container {
+      background: rgba(250, 250, 250, 0.95); backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px); border-radius: 32px;
+      display: flex; flex-direction: column; max-height: 90vh; width: 100%; max-width: 400px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.4);
     }
-    .skin-hkg {
-        background: #FFFFFF; border: 1px solid rgba(0,0,0,0.05); color: black;
+    .ios-modal-header { padding: 16px; text-align: center; font-weight: 600; font-size: 17px; border-bottom: 0.5px solid rgba(0,0,0,0.1); }
+    .ios-modal-body { flex: 1; overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; }
+    .ios-modal-footer { padding: 16px 20px; border-top: 0.5px solid rgba(0,0,0,0.1); display: flex; gap: 12px; background: rgba(255,255,255,0.5); }
+    
+    .btn-ios-cancel { flex: 1; height: 44px; border-radius: 12px; background: rgba(118, 118, 128, 0.12); color: #000; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+    .btn-ios-primary { flex: 1; height: 44px; border-radius: 12px; background: var(--ios-primary); color: white; font-weight: 600; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(0, 122, 255, 0.4); }
+    
+    /* Calculator */
+    .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+    .calc-btn { border-radius: 10px; background: white; font-size: 20px; font-weight: 500; color: #333; height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    .calc-btn:active { background: #E5E5EA; }
+    .calc-btn.op { background: #FF9500; color: white; font-weight: 600; }
+    .calc-btn.top-op { background: #D1D1D6; color: black; }
+    .calc-btn.done-btn { background: var(--ios-primary); color: white; font-weight: 600; }
+
+    /* Dock */
+    .iphone-dock {
+      background: rgba(245, 245, 245, 0.85); backdrop-filter: blur(50px); -webkit-backdrop-filter: blur(50px);
+      border-radius: 38px; padding: 12px 24px; border: 1px solid rgba(255, 255, 255, 0.5);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      display: flex; justify-content: space-between; align-items: flex-end;
+      width: 100%; max-width: 360px; margin: 0 auto;
     }
-    .hkg-footer {
-        background: #C8102E; color: white; padding: 14px 20px; margin-top: auto;
-        display: flex; justify-content: space-between; align-items: center;
+    
+    /* Skins and Toggles */
+    .glass-btn-high-contrast {
+        background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.3); color: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
 
-    /* --- 3. Lists & Itinerary (6.02 Style) --- */
-    .cal-stripe-item {
-        background: white; border-radius: 16px;
-        padding: 12px 16px; margin-bottom: 12px;
-        display: flex; align-items: center; gap: 16px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-        border: 1px solid rgba(0,0,0,0.03);
-        position: relative; overflow: hidden;
-    }
-    .item-time-box {
-        min-width: 55px; text-align: center;
-        border-right: 1px solid #F2F2F7; padding-right: 12px;
-        display: flex; flex-direction: column; justify-content: center;
-    }
-    .item-time-main {
-        font-size: 17px; font-weight: 800; color: #1c1c1e;
-        line-height: 1; font-variant-numeric: tabular-nums;
-    }
-    .item-time-sub {
-        font-size: 10px; font-weight: 700; color: #8E8E93;
-        text-transform: uppercase; margin-top: 3px;
-    }
-    
-    /* Prep List */
-    .prep-item {
-        background: rgba(255,255,255,0.8);
-        border-bottom: 1px solid rgba(0,0,0,0.05);
-        padding: 14px 16px; display: flex; align-items: center; gap: 12px;
-    }
-    .prep-item.done span { text-decoration: line-through; color: #999; }
-    
-    /* 5.09 Calculator & Modal Styles */
-    .calc-btn {
-        height: 60px; border-radius: 16px; font-size: 22px; font-weight: 600;
-        display: flex; align-items: center; justify-content: center;
-        transition: all 0.1s;
-    }
-    .calc-btn:active { transform: scale(0.95); }
-    .calc-num { background: rgba(255,255,255,0.05); color: white; }
-    .calc-op { background: #FF9F0A; color: white; }
-    .calc-action { background: rgba(255,255,255,0.15); color: black; }
-    
-    .modal-overlay {
-        position: fixed; inset: 0; z-index: 100;
-        background: rgba(0,0,0,0.4); backdrop-filter: blur(5px);
-        display: flex; flex-col; justify-content: flex-end;
-    }
-    .modal-content {
-        background: #1C1C1E; border-top-left-radius: 24px; border-top-right-radius: 24px;
-        padding: 20px; color: white; width: 100%; padding-bottom: env(safe-area-inset-bottom);
-        box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
-    }
-    
-    /* 5.09 Address Popup */
-    .address-popup {
-        position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
-        background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
-        padding: 60px 20px 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        transform: translateY(-100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .address-popup.active { transform: translateY(0); }
-    
-    /* Transitions */
-    .slide-up-enter-active, .slide-up-leave-active { transition: transform 0.3s ease; }
-    .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); }
-    .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
+    .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
     .fade-enter-from, .fade-leave-to { opacity: 0; }
   </style>
-  
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const { createApp, ref, computed, reactive, onMounted, watch, nextTick } = Vue;
-
-      createApp({
-        setup() {
-          // --- 1. System & Config ---
-          const supabaseUrl = 'YOUR_SUPABASE_URL';
-          const supabaseKey = 'YOUR_SUPABASE_KEY';
-          let supabase = null;
-          if (typeof window.supabase !== 'undefined' && supabaseUrl.startsWith('http')) {
-              supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-          }
-
-          // --- 2. State (Merged) ---
-          const currentTab = ref('home');
-          const activeSubPage = ref(null);
-          const lang = ref(localStorage.getItem('ts_lang') || 'zh');
-          const flightSkin = ref(localStorage.getItem('ts_skin') || 'ios');
-          
-          // Settings
-          const settings = reactive({
-              origin: 'HKG', destination: 'KIX',
-              dateRange: { start: '2026-03-22', end: '2026-03-27' },
-              weatherCity: 'Osaka',
-              currency: { settle: 'HKD', local: 'JPY' }
-          });
-          const baseRate = ref(19.2); // Settle to Local rate
-          const rateDisplayMode = ref('S_to_L');
-          
-          // Data Containers
-          const members = ref(['Me', 'Partner']);
-          const expenses = ref([]);
-          const itinerary = ref([]);
-          const shoppingList = ref([]);
-          const prepList = ref([{id:1, text:'Passport', done:false}]);
-          const infoList = ref([]);
-          const flights = reactive({
-              outbound: { code: 'CX506', airline: 'Cathay Pacific', time: '10:20', terminal: '1', gate: '28', status: 'On Time' },
-              inbound:  { code: 'CX507', airline: 'Cathay Pacific', time: '18:00', terminal: '1', gate: '12', status: 'Boarding' }
-          });
-          const weather = reactive({ temp: 18, icon: 'ph-sun', color: 'text-yellow-500', feelsLike: 20, humidity: 45, uv: 3, wind: 12, precip: 0 });
-
-          // UI State
-          const isReturnFlight = ref(false);
-          const selectedDayIndex = ref(0);
-          const showAddressCard = ref(false);
-          const addressCardData = ref({ title:'', location:'' });
-          const showExpenseModal = ref(false);
-          const showMemberModal = ref(false);
-          const expenseFilter = ref('all'); // all, credit, cash, settlement
-
-          // Editing State
-          const editingId = ref(null);
-          const editingItem = ref({});
-          const editingFlightType = ref('outbound');
-          
-          // 5.09 Calculator State
-          const calcDisplay = ref('0');
-          const tempAmount = ref(0);
-          const editingExpense = reactive({
-              id: null, date: '', category: 'food', name: '',
-              amount: 0, currency: 'HKD', exchangeRate: 1,
-              paymentMethod: 'credit_card', payer: 'Me', involved: []
-          });
-
-          // Upload
-          const isUploading = ref(false);
-          const tempUploadPreview = ref(null);
-          const fileInput = ref(null);
-          
-          // Refs for Sortable
-          const itineraryListRef = ref(null);
-          const homePrepListRef = ref(null);
-
-          // i18n
-          const cities = { 'Seoul': '首爾', 'Osaka': '大阪', 'Tokyo': '東京', 'Taipei': '台北', 'London': '倫敦' };
-          const i18n = {
-              zh: {
-                  home:'首頁', itinerary:'行程', expense:'記帳', info:'資訊', settings:'設定', noActivity:'無行程',
-                  outbound:'去程', inbound:'回程', terminal:'航廈', gate:'登機閘口', departure:'出發',
-                  food:'餐飲', transport:'交通', shopping:'購物', ticket:'門票', stay:'住宿', other:'其他',
-                  tapToUpload:'點擊上傳', itemName:'項目名稱', price:'價格', save:'儲存', delete:'刪除'
-              },
-              en: {
-                  home:'Home', itinerary:'Itinerary', expense:'Accounting', info:'Info', settings:'Settings', noActivity:'No Activity',
-                  outbound:'Outbound', inbound:'Inbound', terminal:'Term', gate:'Gate', departure:'Dep',
-                  food:'Food', transport:'Transport', shopping:'Shop', ticket:'Ticket', stay:'Hotel', other:'Other',
-                  tapToUpload:'Tap to Upload', itemName:'Item Name', price:'Price', save:'Save', delete:'Delete'
-              }
-          };
-
-          // --- 3. Computed Logic ---
-          const t = (key) => i18n[lang.value][key] || key;
-          const displayCity = computed(() => lang.value==='zh' ? (cities[settings.weatherCity] || settings.weatherCity) : settings.weatherCity);
-          const activeFlight = computed(() => isReturnFlight.value ? flights.inbound : flights.outbound);
-          
-          // Date & Trip Days
-          const tripDays = computed(() => {
-              if (!settings.dateRange.start) return [];
-              const start = new Date(settings.dateRange.start);
-              const end = new Date(settings.dateRange.end);
-              const diff = Math.ceil(Math.abs(end - start) / (86400000)) + 1;
-              return Array.from({length: diff}, (_, i) => {
-                  let d = new Date(start); d.setDate(start.getDate() + i);
-                  return { 
-                      weekday: d.toLocaleString('en', {weekday:'short'}), 
-                      dateStr: `${d.getDate()} ${d.toLocaleString('en', {month:'short'})}`, 
-                      fullDate: d.toISOString().split('T')[0] 
-                  };
-              });
-          });
-
-          const currentDayItinerary = computed(() => {
-              const day = tripDays.value[selectedDayIndex.value];
-              if(!day) return [];
-              return itinerary.value.filter(i => i.date === day.fullDate || i.dayIndex === selectedDayIndex.value)
-                                    .sort((a,b) => a.time.localeCompare(b.time));
-          });
-
-          // --- 5.09 Expense Logic (Ported) ---
-          const totalExpense = computed(() => {
-              // Convert everything to Settle Currency (e.g., HKD)
-              const sum = (filterFn) => expenses.value.filter(filterFn).reduce((acc, e) => {
-                  const amt = e.currency === settings.currency.settle ? e.amount : (e.amount / e.exchangeRate);
-                  return acc + amt;
-              }, 0);
-
-              const all = sum(() => true);
-              const credit = sum(e => e.paymentMethod === 'credit_card');
-              const cash = sum(e => e.paymentMethod === 'cash');
-
-              return {
-                  hkd: all, // Main Settle Currency
-                  twd: all * baseRate.value, // Est. Local Currency
-                  creditHkd: credit, creditTwd: credit * baseRate.value,
-                  cashHkd: cash, cashTwd: cash * baseRate.value
-              };
-          });
-
-          const filteredExpenses = computed(() => {
-              let list = [...expenses.value];
-              if (expenseFilter.value === 'credit') list = list.filter(e => e.paymentMethod === 'credit_card');
-              if (expenseFilter.value === 'cash') list = list.filter(e => e.paymentMethod === 'cash');
-              return list.sort((a,b) => new Date(b.date) - new Date(a.date));
-          });
-
-          const settlementList = computed(() => {
-              let balances = {};
-              members.value.forEach(m => balances[m] = 0);
-              expenses.value.forEach(e => {
-                  const amt = e.currency === settings.currency.settle ? e.amount : (e.amount / e.exchangeRate);
-                  // Payer pays positive
-                  balances[e.payer] = (balances[e.payer] || 0) + amt;
-                  // Involved subtracts
-                  const involvedList = (e.involved && e.involved.length > 0) ? e.involved : members.value;
-                  const splitAmt = amt / involvedList.length;
-                  involvedList.forEach(m => {
-                      balances[m] = (balances[m] || 0) - splitAmt;
-                  });
-              });
-              return Object.keys(balances).map(name => ({ name, amount: balances[name] })).sort((a,b) => b.amount - a.amount);
-          });
-          
-          const settlementStatus = computed(() => ({ hasData: expenses.value.length > 0 }));
-
-          // --- 4. Methods ---
-          // General
-          const saveToCloud = (key, data) => { localStorage.setItem('ts_'+key, JSON.stringify(data)); };
-          const toggleLang = () => { lang.value = lang.value==='zh'?'en':'zh'; localStorage.setItem('ts_lang', lang.value); };
-          const formatNumber = (n, d=0) => new Intl.NumberFormat('en-US', {minimumFractionDigits:d, maximumFractionDigits:d}).format(n||0);
-          const getRateDisplayValue = () => rateDisplayMode.value==='S_to_L' ? (baseRate.value).toFixed(4) : (1/baseRate.value).toFixed(4);
-          
-          // Expense Modal Logic (5.09)
-          const openExpenseModal = (existing) => {
-              if (existing) {
-                  Object.assign(editingExpense, JSON.parse(JSON.stringify(existing)));
-                  calcDisplay.value = existing.amount.toString();
-              } else {
-                  Object.assign(editingExpense, {
-                      id: null, date: new Date().toISOString().split('T')[0],
-                      category: 'food', name: '', amount: 0,
-                      currency: settings.currency.local, exchangeRate: baseRate.value,
-                      paymentMethod: 'credit_card', payer: members.value[0], involved: []
-                  });
-                  calcDisplay.value = '0';
-              }
-              showExpenseModal.value = true;
-          };
-          
-          const handleCalcInput = (v) => {
-              if (v === 'C') { calcDisplay.value = '0'; return; }
-              if (v === 'back') { calcDisplay.value = calcDisplay.value.length > 1 ? calcDisplay.value.slice(0,-1) : '0'; return; }
-              const ops = ['+','-','*','/'];
-              if (ops.includes(v)) { calcDisplay.value += v; return; }
-              if (calcDisplay.value === '0' && v !== '.') calcDisplay.value = v;
-              else calcDisplay.value += v;
-          };
-
-          const saveExpenseResult = () => {
-              try {
-                  const res = eval(calcDisplay.value) || 0;
-                  editingExpense.amount = parseFloat(res.toFixed(2));
-                  const newRecord = { ...editingExpense, id: editingExpense.id || Date.now() };
-                  
-                  if (editingExpense.id) {
-                      const idx = expenses.value.findIndex(e => e.id === editingExpense.id);
-                      if(idx !== -1) expenses.value[idx] = newRecord;
-                  } else {
-                      expenses.value.unshift(newRecord);
-                  }
-                  saveToCloud('expenses', expenses.value);
-                  showExpenseModal.value = false;
-              } catch (e) { alert('Calculator Error'); }
-          };
-          
-          const removeExpense = (id) => {
-              if(confirm('Delete?')) {
-                  expenses.value = expenses.value.filter(e => e.id !== id);
-                  saveToCloud('expenses', expenses.value);
-                  showExpenseModal.value = false;
-              }
-          };
-
-          // Members Logic
-          const openMemberModal = () => { showMemberModal.value = true; };
-          const addMember = () => { const n = prompt('Name:'); if(n && !members.value.includes(n)) members.value.push(n); saveToCloud('settings', settings); }; // Simplified save
-          const removeMember = (m) => { if(confirm('Remove?')) members.value = members.value.filter(x => x !== m); saveToCloud('settings', settings); };
-          const toggleInvolved = (m) => {
-              const idx = editingExpense.involved.indexOf(m);
-              if (idx > -1) editingExpense.involved.splice(idx, 1);
-              else editingExpense.involved.push(m);
-          };
-
-          // Generic Tab / SubPage
-          const openSubPage = (p) => { activeSubPage.value = p; editingId.value = null; };
-          const closeSubPage = () => { activeSubPage.value = null; editingId.value = null; };
-          const getCategoryIcon = (c) => ({food:'ph-hamburger', transport:'ph-train', shopping:'ph-shopping-bag', ticket:'ph-ticket', stay:'ph-bed', other:'ph-dots-three'}[c] || 'ph-star');
-          const isInstagramLink = (l) => l && l.includes('instagram.com');
-          const openLink = (l) => window.open(l, '_blank');
-          
-          // Itinerary Actions
-          const openItineraryAdd = () => { editingId.value=null; editingItem.value={dayIndex:selectedDayIndex.value, time:'10:00', title:''}; openSubPage('itinerary'); };
-          const handleItineraryClick = (item) => { 
-             if(item.location) { addressCardData.value = {title:item.title, location:item.location}; showAddressCard.value=true; }
-             else { editingId.value=item.id; editingItem.value={...item}; openSubPage('itinerary'); }
-          };
-          
-          // Generic Save/Delete (Shopping/Itinerary/Prep)
-          const saveGenericItem = () => {
-             const listMap = { itinerary: itinerary, shopping: shoppingList, prep: prepList, info: infoList };
-             const list = listMap[activeSubPage.value];
-             const item = { id: editingId.value || Date.now(), ...editingItem.value };
-             if(activeSubPage.value==='itinerary' && !item.date) item.date = tripDays.value[item.dayIndex||selectedDayIndex.value].fullDate;
-             if(editingId.value) { const idx=list.value.findIndex(i=>i.id===editingId.value); list.value[idx]=item; }
-             else list.value.push(item);
-             saveToCloud(activeSubPage.value+'List', list.value); closeSubPage();
-          };
-          const deleteItem = () => { if(confirm('Del?')) { 
-             const listMap = { itinerary: itinerary, shopping: shoppingList, prep: prepList, info: infoList };
-             const list = listMap[activeSubPage.value];
-             list.value = list.value.filter(i=>i.id!==editingId.value);
-             saveToCloud(activeSubPage.value+'List', list.value); closeSubPage();
-          }};
-
-          // Init
-          onMounted(() => {
-             const load = (k,r) => { const d=localStorage.getItem('ts_'+k); if(d) r.value=JSON.parse(d); };
-             load('itinerary', itinerary); load('expenses', expenses); load('shoppingList', shoppingList); load('prepList', prepList); load('infoList', infoList);
-             load('settings', settings); load('flights', flights);
-             
-             // Setup Sortable
-             nextTick(() => {
-                 if(itineraryListRef.value) Sortable.create(itineraryListRef.value, { animation: 150, handle: '.cal-stripe-item' });
-                 if(homePrepListRef.value) Sortable.create(homePrepListRef.value, { animation: 150 });
-             });
-          });
-
-          return {
-             // State
-             currentTab, activeSubPage, lang, flightSkin, settings, members, baseRate, rateDisplayMode,
-             flights, weather, itinerary, expenses, shoppingList, prepList, infoList,
-             editingId, editingItem, editingFlightType, isReturnFlight,
-             // Expense Specific
-             totalExpense, filteredExpenses, settlementList, settlementStatus, expenseFilter,
-             showExpenseModal, showMemberModal, editingExpense, calcDisplay,
-             // UI
-             tripDays, selectedDayIndex, currentDayItinerary, showAddressCard, addressCardData, itineraryListRef, homePrepListRef,
-             isUploading, tempUploadPreview, fileInput,
-             // Methods
-             t, displayCity, activeFlight, formatNumber, getCategoryIcon, isInstagramLink, openLink,
-             toggleLang, openSubPage, closeSubPage, saveToCloud,
-             openItineraryAdd, handleItineraryClick, saveGenericItem, deleteItem,
-             // Expense Methods
-             openExpenseModal, handleCalcInput, saveExpenseResult, removeExpense, 
-             openMemberModal, addMember, removeMember, toggleInvolved
-          };
-        }
-      }).mount('#app'); // Note: Part 2 will provide the HTML #app content
-    });
-  </script>
 </head>
 <body>
-  
-  <div class="bg-layer">
-      <img src="./IMG_7005.jpeg" 
-           class="w-full h-full object-cover blur-[4px] scale-105" 
-           alt="Background">
-      <div class="absolute inset-0 bg-white/70 backdrop-blur-[2px]"></div>
-  </div>
+  <div id="app">
+    <header class="sticky top-0 z-40 pt-12 pb-2 px-6 flex justify-between items-end bg-[#F2F2F7]/90 backdrop-blur-md transition-all duration-300">
+      <div>
+        <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5 font-mono">
+           TRAVEL SYNC {{ appVersion }}                 <div class="flex items-center gap-1.5 ml-0.5">
+                    <div class="w-2 h-2 rounded-full transition-all duration-300"
+                         :class="{
+                            'bg-[#34C759] shadow-[0_0_5px_rgba(52,199,89,0.4)]': syncState === 'synced',
+                            'bg-[#FFCC00] animate-pulse': syncState === 'syncing',
+                            'bg-[#FF3B30]': syncState === 'error',
+                            'bg-gray-400': syncState === 'offline'
+                         }">
+                    </div>
+                    <p class="text-xs font-medium text-gray-400 transition-colors duration-300">
+                        {{ syncStatusText }}
+                    </p>
+                </div>
+        </div>
+        <h1 class="text-3xl font-bold text-black tracking-tight flex items-center gap-2">
+          {{ settings.route || 'HKG ✈️ TPE' }}
+        </h1>
+      </div>
+      <div class="flex flex-col items-end gap-2">
+         <button @click="toggleLang" class="text-[10px] font-bold bg-gray-200/80 text-gray-600 px-2 py-0.5 rounded-md hover:bg-gray-300 transition-colors">
+            {{ lang === 'zh' ? 'EN' : '繁' }}
+         </button>
+      </div>
+    </header>
 
-  <div id="app" class="h-full flex flex-col relative" v-cloak>
-    
-    <div class="address-popup" :class="{ 'active': showAddressCard }">
-       <div class="flex justify-between items-start mb-2">
-          <h3 class="font-bold text-lg text-gray-800">{{ addressCardData.title }}</h3>
-          <button @click="showAddressCard = false" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-             <i class="ph-bold ph-x text-gray-500"></i>
-          </button>
-       </div>
-       <div class="text-sm text-gray-500 mb-4 flex items-center gap-1">
-          <i class="ph-fill ph-map-pin text-red-500"></i>
-          {{ addressCardData.location }}
-       </div>
-       <div class="grid grid-cols-2 gap-3">
-          <a :href="`https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(addressCardData.location)}`" target="_blank" class="py-3 bg-gray-100 rounded-xl font-bold text-gray-700 flex items-center justify-center gap-2">
-             <i class="ph-bold ph-map-trifold"></i> Map
-          </a>
-          <a :href="`https://www.google.com/maps/dir/?api=1&destination=$${encodeURIComponent(addressCardData.location)}`" target="_blank" class="py-3 bg-blue-500 rounded-xl font-bold text-white flex items-center justify-center gap-2">
-             <i class="ph-bold ph-navigation-arrow"></i> GO
-          </a>
-       </div>
-    </div>
-
-    <main v-if="currentTab === 'home'" class="flex-1 overflow-y-auto overflow-x-hidden pb-32 no-scrollbar">
+    <main class="px-5 space-y-5 mt-4 relative">
       
-      <header class="pt-safe px-5 pb-2 flex justify-between items-start z-10 sticky top-0 bg-white/50 backdrop-blur-md transition-all">
-        <div class="flex flex-col pt-1">
-           <span class="text-[11px] font-semibold text-gray-500 tracking-wide uppercase mb-0.5">
-             {{ tripDays.length > 0 ? `${tripDays[0].dateStr} - ${tripDays[tripDays.length-1].dateStr}` : 'No Date' }}
-           </span>
-           <div class="flex items-center gap-2">
-             <h1 class="text-3xl font-black tracking-tight flex items-center gap-2 text-black">
-               {{ settings.origin.toUpperCase() }} 
-               <span class="text-blue-500 text-2xl">✈️</span>
-               {{ settings.destination.toUpperCase() }}
-             </h1>
-           </div>
-        </div>
-        <div class="flex flex-col items-end pt-1">
-           <button @click="toggleLang" class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center active:scale-90 transition-transform border border-gray-100">
-             <span class="text-xs font-bold text-gray-600">{{ lang === 'zh' ? 'EN' : '中' }}</span>
-           </button>
-           <button @click="openSubPage('settings')" class="w-10 h-10 mt-2 rounded-full bg-white shadow-sm flex items-center justify-center active:scale-90 transition-transform border border-gray-100">
-             <i class="ph-fill ph-gear text-lg text-gray-600"></i>
-           </button>
-        </div>
-      </header>
-
-      <div class="px-5 space-y-6 mt-2">
-
-        <div class="relative group">
-           <button @click="openSubPage('flightEdit')" class="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-black/10 flex items-center justify-center text-white backdrop-blur-md hover:bg-black/30 transition-all">
-              <i class="ph-fill ph-pencil-simple text-sm"></i>
-           </button>
-
-           <div v-if="flightSkin === 'hkg'" class="flight-card-base skin-hkg">
-               <div class="p-5 flex-1 relative">
-                  <div class="flex justify-between items-start">
-                      <div class="flex items-center gap-2">
-                         <i class="ph-fill ph-airplane-tilt text-red-600 text-xl"></i>
-                         <span class="font-bold text-gray-800 tracking-tight">{{ activeFlight.airline }}</span>
+      <div v-if="currentTab === '首頁'" class="space-y-5 animate-fade-in">
+        
+        <div class="relative transition-all duration-500">
+            <div class="absolute top-4 left-4 z-30">
+               <button @click="toggleSkin" class="glass-btn-high-contrast px-3 py-1.5 rounded-full text-[10px] font-bold transition-all active:scale-95 flex items-center gap-1 cursor-pointer">
+                  {{ flightCardSkin === 'ios' ? 'HKG' : 'iOS' }} <i class="ph ph-arrows-left-right ml-0.5 text-white/80"></i>
+               </button>
+            </div>
+            
+            <div v-if="flightCardSkin === 'ios'" @click="openFlightModal(activeFlight.id || 'new')" class="ios-card-dark-glass p-0 shadow-xl relative group min-h-[220px] cursor-pointer">
+                <div class="dark-glass-gradient"></div>
+                <div class="relative z-10 p-6 flex flex-col justify-between h-full">
+                    <div class="flex justify-between items-start mt-8">
+                       <div>
+                          <div class="text-3xl font-bold tracking-tight text-white">{{ activeFlight.code || '--' }}</div>
+                          <div class="text-xs text-white/60 font-medium tracking-wide uppercase">{{ activeFlight.title || 'Airline' }}</div>
+                       </div>
+                       <a v-if="activeFlight.liveLink" :href="activeFlight.liveLink" target="_blank" @click.stop class="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-1.5 rounded-full text-[11px] font-bold text-white transition-all backdrop-blur-md">
+                           <i class="ph ph-broadcast text-[#34C759] animate-pulse"></i> {{ t('activeFlightText') }}
+                       </a>
+                    </div>
+                    <div class="mt-6 flex justify-between items-end">
+                      <div class="text-left">
+                        <div class="text-5xl font-bold text-white tracking-tight">{{ activeFlight.fromCode }}</div>
+                        <div class="text-sm font-mono text-white/80 mt-1">{{ activeFlight.depTime }}</div>
                       </div>
-                      <span class="font-mono font-bold text-gray-400">{{ activeFlight.code }}</span>
-                  </div>
-                  <div class="mt-4 flex justify-between items-end">
-                      <div class="text-center">
-                          <div class="text-4xl font-black text-gray-900">{{ activeFlight.time }}</div>
-                          <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">{{ t('departure') }}</div>
+                      <div class="flex flex-col items-center justify-center pb-2 opacity-60">
+                        <i class="ph-fill ph-airplane text-2xl rotate-90 mb-1 text-blue-400"></i>
                       </div>
-                      <div class="pb-2"><i class="ph-duotone ph-arrow-right text-gray-300 text-2xl"></i></div>
-                  </div>
-                  <div class="mt-4 text-center">
-                      <div class="text-[10px] text-gray-400 font-bold uppercase tracking-[2px]">{{ t('gate') }}</div>
-                      <div class="text-6xl font-black text-gray-900 leading-none tracking-tighter">{{ activeFlight.gate }}</div>
-                  </div>
-               </div>
-               <div class="hkg-footer">
-                   <div>
-                       <div class="text-[9px] opacity-80 font-bold uppercase">{{ t('terminal') }}</div>
-                       <div class="text-xl font-bold">{{ activeFlight.terminal }}</div>
-                   </div>
-                   <div class="text-right">
-                       <span class="px-2 py-0.5 bg-white/20 rounded text-[10px] font-bold uppercase tracking-wider">{{ activeFlight.status }}</span>
-                   </div>
-               </div>
-               <div class="absolute top-[18px] left-0 w-full flex justify-center pointer-events-none">
-                  <div class="bg-gray-100 rounded-lg p-0.5 flex pointer-events-auto shadow-inner">
-                     <button @click="isReturnFlight=false" :class="!isReturnFlight?'bg-white shadow text-red-600':'text-gray-400'" class="px-3 py-1 text-[9px] font-bold rounded-md transition-all">OUT</button>
-                     <button @click="isReturnFlight=true" :class="isReturnFlight?'bg-white shadow text-red-600':'text-gray-400'" class="px-3 py-1 text-[9px] font-bold rounded-md transition-all">IN</button>
-                  </div>
-               </div>
-           </div>
+                      <div class="text-right flex flex-col items-end">
+                        <div class="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide backdrop-blur-md mb-2 inline-block border border-white/20 text-white">
+                          {{ activeFlight.status || 'Scheduled' }}
+                        </div>
+                        <div class="text-5xl font-bold text-white tracking-tight">{{ activeFlight.toCode }}</div>
+                        <div class="text-sm font-mono text-white/80 mt-1">{{ activeFlight.arrTime }}</div>
+                      </div>
+                    </div>
+                </div>
+            </div>
 
-           <div v-else class="flight-card-base skin-ios p-6 flex flex-col justify-between">
-               <div class="flex justify-center mb-2">
-                  <div class="bg-white/10 p-0.5 rounded-lg flex backdrop-blur-md">
-                     <button @click="isReturnFlight=false" :class="!isReturnFlight?'bg-white/20 text-white':'text-white/40'" class="px-3 py-1 text-[10px] font-bold rounded-md transition-all">OUTBOUND</button>
-                     <button @click="isReturnFlight=true" :class="isReturnFlight?'bg-white/20 text-white':'text-white/40'" class="px-3 py-1 text-[10px] font-bold rounded-md transition-all">INBOUND</button>
-                  </div>
-               </div>
-               <div class="flex justify-between items-end">
-                   <div>
-                       <div class="text-4xl font-bold tracking-tight">{{ activeFlight.code }}</div>
-                       <div class="text-xs text-blue-300 font-medium mt-1">{{ activeFlight.airline }}</div>
-                   </div>
-                   <div class="text-right">
-                       <span class="px-2 py-1 rounded bg-white/10 text-[10px] font-bold">{{ activeFlight.status }}</span>
-                   </div>
-               </div>
-               <div class="flex justify-between items-end mt-4">
-                   <div>
-                       <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">{{ t('terminal') }} {{ activeFlight.terminal }}</div>
-                       <div class="text-[10px] text-gray-400 uppercase tracking-widest">{{ t('gate') }} <span class="text-white text-xl font-bold ml-1">{{ activeFlight.gate }}</span></div>
-                   </div>
-                   <div class="text-5xl font-light tracking-tight">{{ activeFlight.time }}</div>
-               </div>
-           </div>
+            <div v-else @click="openFlightModal(activeFlight.id || 'new')" class="rounded-[20px] overflow-hidden shadow-lg bg-white font-sans relative border border-gray-100 flex flex-col min-h-[220px] cursor-pointer">
+                <div class="bg-[#353E53] text-[#E9EB4F] px-5 py-3 flex justify-center items-center relative min-h-[60px]">
+                    <div class="flex flex-col items-center">
+                        <span class="text-[10px] opacity-80 uppercase tracking-widest font-semibold">{{ t('gate') }}</span>
+                        <span class="text-4xl font-bold leading-none mt-1">{{ activeFlight.gate || '--' }}</span>
+                    </div>
+                    <div class="absolute right-3 top-3">
+                       <a v-if="activeFlight.liveLink" :href="activeFlight.liveLink" target="_blank" @click.stop class="bg-white/20 px-3 py-1.5 rounded-full text-[10px] font-bold text-white flex items-center gap-1">
+                          <i class="ph ph-broadcast"></i> Flighty
+                       </a>
+                    </div>
+                </div>
+                <div class="px-5 py-6 bg-white flex justify-between items-end mt-2">
+                    <div class="flex flex-col items-center w-1/3">
+                        <span class="text-[10px] text-gray-400 font-bold uppercase">{{ t('estimatedDeparture') }}</span>
+                        <span class="text-3xl font-bold text-slate-800">{{ activeFlight.depTime }}</span>
+                        <span class="text-sm font-semibold text-gray-500">{{ activeFlight.fromCode }}</span>
+                    </div>
+                    <div class="flex flex-col items-center justify-center w-1/3 pb-2">
+                         <span class="text-lg font-bold text-slate-800">{{ activeFlight.code }}</span>
+                         <div class="w-full h-[1px] bg-gray-200 my-2 relative">
+                            <i class="ph-fill ph-airplane absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-1 text-gray-400 text-sm rotate-90"></i>
+                         </div>
+                    </div>
+                    <div class="flex flex-col items-center w-1/3">
+                        <span class="text-[10px] text-gray-400 font-bold uppercase">{{ t('estimatedArrival') }}</span>
+                        <span class="text-3xl font-bold text-slate-800">{{ activeFlight.arrTime }}</span>
+                        <span class="text-sm font-semibold text-gray-500">{{ activeFlight.toCode }}</span>
+                    </div>
+                </div>
+                <div class="bg-[#BF443B] text-white px-5 py-2 flex justify-between items-center text-xs">
+                     <span class="font-bold">ECONOMY</span>
+                     <span class="opacity-80">{{ activeFlight.fromTerminal }} → {{ activeFlight.toTerminal }}</span>
+                </div>
+            </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-           <div class="ios-card p-4 flex flex-col justify-between h-44">
-              <div class="flex justify-between items-start">
-                 <div class="flex flex-col">
-                    <span class="text-xs font-bold text-gray-400 uppercase truncate w-20">{{ displayCity }}</span>
-                    <span class="text-4xl font-light mt-1 tracking-tighter">{{ weather.temp }}°</span>
-                 </div>
-                 <i :class="[weather.icon, weather.color]" class="ph-fill text-3xl"></i>
-              </div>
-              <div class="text-[10px] font-bold text-blue-500 mt-1 flex items-center gap-1">
-                 <i class="ph-bold ph-cloud-rain"></i> {{ weather.precip }}% Rain
-              </div>
-              <div class="grid grid-cols-2 gap-x-1 gap-y-1 mt-auto pt-2 border-t border-gray-100/50">
-                 <div class="text-[9px] text-gray-500">Feels {{ weather.feelsLike }}°</div>
-                 <div class="text-[9px] text-gray-500">Hum {{ weather.humidity }}%</div>
-                 <div class="text-[9px] text-gray-500">UV {{ weather.uv }}</div>
-                 <div class="text-[9px] text-gray-500">Wind {{ weather.wind }}</div>
-              </div>
-           </div>
+            <div class="ios-card p-4 relative overflow-hidden group">
+               <div class="flex justify-between items-start mb-2">
+                   <div class="flex items-center gap-2">
+                       <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-lg">
+                           <i class="ph-bold ph-currency-circle-dollar"></i>
+                       </div>
+                       <span class="text-xs font-bold text-gray-500 uppercase">{{ t('rate') }}</span>
+                   </div>
+                   <button @click="toggleRateOrder" class="text-gray-400 hover:text-blue-500 p-1">
+                       <i class="ph ph-arrows-left-right"></i>
+                   </button>
+               </div>
+               <div class="flex flex-col">
+                   <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">
+                       {{ rateDisplayMode === 0 ? (settings.localCurrency + ' / ' + settings.homeCurrency) : (settings.homeCurrency + ' / ' + settings.localCurrency) }}
+                   </div>
+                   <div class="text-3xl font-bold text-slate-800 tracking-tight leading-none">
+                       {{ displayedRate }}
+                   </div>
+                   <div class="text-[9px] text-gray-400 mt-1 font-mono">
+                       {{ t('feeIncluded') }} • {{ lastRateUpdateLabel }}
+                   </div>
+               </div>
+            </div>
 
-           <div class="ios-card p-4 flex flex-col justify-between h-44 relative" @click="rateDisplayMode = rateDisplayMode==='S_to_L'?'L_to_S':'S_to_L'">
-              <div class="flex justify-between items-center z-10">
-                 <div class="flex items-center gap-1 text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">
-                     <span>{{ rateDisplayMode === 'S_to_L' ? settings.currency.settle : settings.currency.local }}</span>
-                     <i class="ph-bold ph-arrows-left-right text-blue-500"></i>
-                     <span>{{ rateDisplayMode === 'S_to_L' ? settings.currency.local : settings.currency.settle }}</span>
-                 </div>
-              </div>
-              <div class="z-10 mt-2">
-                 <div class="text-3xl font-semibold tracking-tight text-gray-800 break-all">
-                    {{ getRateDisplayValue() }}
-                 </div>
-                 <div class="text-[9px] text-gray-400 mt-1">Rate: {{ baseRate.toFixed(4) }}</div>
-                 <div class="text-[8px] text-red-400 mt-2 font-medium bg-red-50 inline-block px-1.5 py-0.5 rounded">
-                    +3% Fee Included
-                 </div>
-              </div>
-           </div>
-        </div>
-
-        <div>
-           <div class="flex justify-between items-end mb-2 px-1">
-              <h3 class="text-lg font-bold text-gray-800">{{ t('itinerary') }}</h3>
-           </div>
-           
-           <div class="flex gap-3 overflow-x-auto no-scrollbar pb-2 pl-1 snap-x">
-              <div v-for="(day, idx) in tripDays" :key="idx" 
-                   class="flex-shrink-0 w-16 h-20 rounded-xl flex flex-col items-center justify-center snap-start border transition-all"
-                   :class="selectedDayIndex === idx ? 'bg-black text-white border-black shadow-lg scale-105' : 'bg-white border-gray-200 text-gray-400'"
-                   @click="selectedDayIndex = idx">
-                 <span class="text-[9px] font-bold uppercase tracking-wider mb-0.5">DAY {{ idx + 1 }}</span>
-                 <span class="text-[10px] font-medium opacity-80">{{ day.weekday }}</span>
-                 <span class="text-xl font-bold mt-0.5 leading-none">{{ day.dateStr.split(' ')[0] }}</span>
-              </div>
-              <div @click="openItineraryAdd" class="flex-shrink-0 w-16 h-20 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 snap-start active:bg-gray-100">
-                  <i class="ph-bold ph-plus text-xl"></i>
-              </div>
-           </div>
-           
-           <div class="mt-2 space-y-3 min-h-[60px]">
-              <div v-for="item in currentDayItinerary" :key="item.id" 
-                   class="cal-stripe-item active:scale-[0.98] transition-transform"
-                   @click="handleItineraryClick(item)">
-                 <div class="item-time-box">
-                    <span class="item-time-main">{{ item.time.split(':')[0] }}:{{ item.time.split(':')[1] }}</span>
-                    <span class="item-time-sub">{{ parseInt(item.time) >= 12 ? 'PM' : 'AM' }}</span>
-                 </div>
-                 <div class="flex-1 min-w-0">
-                    <div class="font-bold text-gray-900 text-[15px] truncate">{{ item.title }}</div>
-                    <div class="text-xs text-gray-500 mt-0.5 truncate flex items-center gap-1">
-                        <i v-if="item.location" class="ph-fill ph-map-pin text-blue-500 text-[10px]"></i>
-                        {{ item.location || '---' }}
+            <div class="ios-card p-4 flex flex-col justify-between group cursor-pointer hover:bg-white/80 transition-colors">
+                <div class="flex justify-between items-start">
+                    <div class="w-8 h-8 rounded-full bg-orange-100 text-orange-500 flex items-center justify-center text-lg">
+                        <i :class="weatherIconClass"></i>
                     </div>
-                 </div>
-                 <div class="text-gray-300">
-                    <i class="ph-bold ph-caret-right text-sm"></i>
-                 </div>
-              </div>
-              <div v-if="currentDayItinerary.length === 0" class="text-center py-6 text-xs text-gray-400 bg-white/50 rounded-xl border border-dashed border-gray-200">
-                 {{ t('noActivity') }}
-              </div>
-           </div>
+                    <span class="text-xs font-bold text-gray-400 uppercase truncate max-w-[80px]">{{ settings.weatherLoc || 'Taipei' }}</span>
+                </div>
+                <div class="mt-2 text-right">
+                    <div class="text-3xl font-bold text-slate-800">{{ weather.temp }}°</div>
+                    <div class="text-xs text-gray-500 font-medium flex justify-end gap-1">
+                        <span>H:{{ weather.max }}°</span><span>L:{{ weather.min }}°</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div>
-           <div class="flex justify-between items-center mb-2 px-1">
-              <h3 class="text-lg font-bold text-gray-800">Prep List</h3>
-              <button @click="openSubPage('prep')" class="w-8 h-8 rounded-full bg-blue-500 text-white shadow flex items-center justify-center"><i class="ph-bold ph-plus"></i></button>
-           </div>
-           <div class="rounded-xl overflow-hidden shadow-sm" ref="homePrepListRef">
-              <div v-for="item in prepList" :key="item.id" class="prep-item bg-white" :class="{ 'done': item.done }">
-                 <div @click="item.done=!item.done; saveToCloud('prepList', prepList)" class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0" :class="item.done ? 'bg-green-500 border-green-500' : 'border-gray-300'">
-                    <i v-if="item.done" class="ph-bold ph-check text-white text-[10px]"></i>
+        <section>
+            <div class="flex items-center justify-between mb-3 px-1">
+                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i class="ph-fill ph-calendar-check text-blue-500"></i> {{ t('itinerary') }}
+                </h2>
+                <button @click="currentTab='行程'" class="text-blue-500 text-xs font-bold uppercase tracking-wide hover:bg-blue-50 px-2 py-1 rounded-lg">
+                    {{ t('viewAll') }}
+                </button>
+            </div>
+            <div class="flex overflow-x-auto gap-3 pb-4 no-scrollbar -mx-5 px-5 snap-x">
+                <div v-for="(dayItems, idx) in itinerary" :key="idx" class="snap-center shrink-0 w-[240px] ios-card p-4 flex flex-col gap-3 h-full">
+                    <div class="flex justify-between items-center border-b border-gray-200/50 pb-2">
+                        <span class="font-bold text-slate-700">Day {{ idx + 1 }}</span>
+                        <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">{{ dayItems.length }}</span>
+                    </div>
+                    <div class="flex flex-col gap-2 max-h-[150px] overflow-y-auto pr-1">
+                        <div v-for="item in dayItems" :key="item.id" class="text-sm border-l-2 border-blue-500 pl-2 py-0.5">
+                            <div class="font-bold text-slate-800 truncate">{{ item.time }} {{ item.title }}</div>
+                        </div>
+                        <div v-if="dayItems.length===0" class="text-xs text-gray-400 italic">{{ t('noItems') }}</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="ios-card p-5">
+             <div class="flex items-center justify-between mb-4">
+               <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                 <i class="ph-fill ph-check-square text-green-500"></i> {{ t('prepList') }}
+               </h2>
+               <button @click="addPreNote" class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center hover:bg-green-200 transition-colors">
+                 <i class="ph-bold ph-plus"></i>
+               </button>
+             </div>
+             <ul class="space-y-2" id="sortable-pre-home">
+               <li v-for="item in preTripNotes" :key="item.id" :data-id="item.id" class="flex items-center justify-between p-3 bg-white/60 rounded-xl border border-white/50 shadow-sm">
+                 <div class="drag-handle text-gray-300 mr-2"><i class="ph ph-dots-six-vertical"></i></div>
+                 <div class="flex items-center gap-3 overflow-hidden w-full">
+                   <button @click="togglePreNoteDone(item.id)" class="text-gray-400 hover:text-green-500 shrink-0">
+                     <i :class="item.isDone ? 'ph-fill ph-check-circle text-green-500' : 'ph-bold ph-circle'"></i>
+                   </button>
+                   <span @click="editPreNote(item)" :class="{'line-through text-gray-400': item.isDone}" class="font-medium text-slate-800 truncate flex-1 cursor-pointer">{{ item.name }}</span>
                  </div>
-                 <span class="text-sm font-medium flex-1 text-gray-800">{{ item.text }}</span>
-                 <button @click="editingId=item.id; editingItem={...item}; openSubPage('prep')" class="text-gray-400 p-2"><i class="ph-bold ph-pencil-simple"></i></button>
-              </div>
-           </div>
+               </li>
+             </ul>
+        </div>
+
+        <div class="ios-card p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <i class="ph-fill ph-shopping-bag text-pink-500"></i> {{ t('shopping') }}
+              </h2>
+              <button @click="openShoppingModal()" class="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center hover:bg-pink-200 transition-colors">
+                <i class="ph-bold ph-plus"></i>
+              </button>
+            </div>
+            <ul class="space-y-2" id="sortable-shop-home">
+              <li v-for="item in shoppingList" :key="item.id" :data-id="item.id" class="flex items-center justify-between p-3 bg-white/60 rounded-xl border border-white/50 shadow-sm group">
+                <div class="drag-handle text-gray-300 mr-2"><i class="ph ph-dots-six-vertical"></i></div>
+                <div class="flex items-center gap-3 overflow-hidden w-full">
+                  <button @click="item.isDone = !item.isDone; saveAll()" class="text-gray-400 hover:text-green-500 shrink-0">
+                    <i :class="item.isDone ? 'ph-fill ph-check-circle text-green-500' : 'ph-bold ph-circle'"></i>
+                  </button>
+                  <div @click="openShoppingModal(item)" class="flex flex-col min-w-0 flex-1 cursor-pointer">
+                    <span :class="{'line-through text-gray-400': item.isDone}" class="font-medium text-slate-800 truncate">{{ item.name }}</span>
+                    <span v-if="item.imageURL" class="text-[10px] text-blue-500 flex items-center gap-1"><i class="ph ph-image"></i> Image</span>
+                  </div>
+                </div>
+              </li>
+            </ul>
+        </div>
+
+        <section class="ios-card p-5 bg-gradient-to-br from-slate-800 to-slate-900 text-white border-none">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-lg font-bold flex items-center gap-2">
+                 <i class="ph-fill ph-receipt text-yellow-400"></i> {{ t('expenses') }}
+              </h2>
+              <button @click="currentTab='記帳'" class="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded-full text-xs font-bold transition-colors shadow-lg">
+                {{ t('view') }}
+              </button>
+            </div>
+            <div class="flex items-end gap-2 mb-2">
+              <span class="text-4xl font-bold tracking-tight">{{ settings.homeCurrency }} {{ formatNumber(totalExpense.hkd) }}</span>
+            </div>
+            <div class="text-xs text-white/50 mb-6">≈ {{ settings.localCurrency }} {{ formatNumber(totalExpense.twd) }}</div>
+        </section>
+
+        <section class="ios-card p-5 bg-blue-50/50 border-blue-100 mb-6">
+             <h2 class="text-sm font-bold text-blue-800 mb-2 flex items-center gap-2">
+                <i class="ph-fill ph-info"></i> {{ t('info') }}
+             </h2>
+             <p class="text-xs text-blue-900/70 leading-relaxed whitespace-pre-line">{{ settings.infoText || 'No info text set.' }}</p>
+        </section>
+
+        <div class="flex flex-col items-center justify-center pb-8 opacity-30 select-none pointer-events-none">
+            <div class="text-[10px] font-bold uppercase tracking-widest">TRAVEL SYNC</div>
+            <div class="text-[9px] font-mono mt-0.5">{{ appVersion }}</div>
         </div>
 
       </div>
-    </main>
-
-    <main v-if="currentTab === 'itinerary'" class="flex-1 overflow-y-auto pb-32 pt-safe px-5 bg-white">
-        <h2 class="text-3xl font-bold mb-4 text-black">{{ t('itinerary') }}</h2>
-        
-        <div class="sticky top-0 z-20 bg-white/95 backdrop-blur-xl py-2 -mx-5 px-5 border-b border-gray-100">
-           <div class="flex gap-3 overflow-x-auto no-scrollbar snap-x">
-              <div v-for="(day, idx) in tripDays" :key="idx" 
-                   class="flex-shrink-0 w-16 h-20 rounded-xl flex flex-col items-center justify-center snap-start border transition-all"
-                   :class="selectedDayIndex === idx ? 'bg-black text-white border-black' : 'bg-gray-50 border-gray-100 text-gray-400'"
-                   @click="selectedDayIndex = idx">
-                 <span class="text-[9px] font-bold uppercase mb-0.5">DAY {{ idx + 1 }}</span>
-                 <span class="text-[10px] font-medium">{{ day.weekday }}</span>
-                 <span class="text-xl font-bold mt-0.5">{{ day.dateStr.split(' ')[0] }}</span>
-              </div>
-           </div>
-        </div>
-
-        <div class="mt-6 space-y-3" ref="itineraryListRef">
-            <div v-for="item in currentDayItinerary" :key="item.id" :data-id="item.id"
-                 class="cal-stripe-item rounded-xl group active:scale-[0.98] transition-transform cursor-move"
-                 @click="handleItineraryClick(item)">
-               <div class="item-time-box">
-                    <span class="item-time-main">{{ item.time }}</span>
-               </div>
-               <div class="flex-1 min-w-0">
-                  <div class="font-bold text-gray-900 text-base truncate">{{ item.title }}</div>
-                  <div class="text-sm text-gray-500 mt-1 truncate flex items-center gap-1">
-                      <i v-if="item.location" class="ph-fill ph-map-pin text-gray-400"></i>
-                      {{ item.location }}
-                  </div>
-               </div>
-               <i class="ph-bold ph-dots-six-vertical text-gray-300"></i>
-            </div>
-        </div>
-        
-        <button @click="openItineraryAdd" class="w-full mt-4 py-4 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 font-bold flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors">
-            <i class="ph-bold ph-plus-circle text-xl"></i>
-            {{ t('add') }}
-        </button>
-    </main>
-
-    <main v-if="currentTab === 'expense'" class="flex-1 overflow-y-auto pb-32 pt-safe px-5">
-        
-        <div class="ios-card-dark-glass p-6 mb-6">
-             <div class="dark-glass-gradient"></div>
-             <div class="absolute top-4 left-4 z-10">
-                <button @click="openMemberModal" class="bg-white/10 hover:bg-white/20 border border-white/10 text-white p-2 rounded-full backdrop-blur-md transition">
-                    <i class="ph-bold ph-gear text-xl"></i>
-                 </button>
+      <div v-if="currentTab === '行程'" class="space-y-4 animate-fade-in pb-20">
+         <div class="flex justify-between gap-2 overflow-x-auto no-scrollbar py-2">
+            <button v-for="(d, i) in days" :key="i" @click="selectDay(i)" 
+              class="flex-shrink-0 w-[22%] h-[70px] rounded-xl flex flex-col items-center justify-center border transition-all"
+              :class="selectedDay === i ? 'bg-white border-blue-400 shadow-sm' : 'bg-white/40 border-transparent'">
+              <span class="text-[10px] font-bold uppercase text-gray-400">Day {{ i + 1 }}</span>
+              <span class="text-lg font-bold text-slate-800">{{ d.date }}</span>
+            </button>
+         </div>
+         
+         <div id="sortable-itinerary" class="space-y-3">
+             <div v-for="it in sortedItinerary" :key="it.id" :data-id="it.id" @click="openItineraryModal(it)" class="ios-card p-3 relative group active:scale-[0.99] transition-transform">
+                 <div class="flex items-start gap-3">
+                     <div class="drag-handle text-gray-300 py-1"><i class="ph ph-dots-six-vertical"></i></div>
+                     <div class="flex-1">
+                         <div class="flex justify-between">
+                             <span class="text-xs font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">{{ it.time }}</span>
+                         </div>
+                         <div class="font-bold text-[16px] text-gray-900 mt-1">{{ it.title }}</div>
+                         <div v-if="it.note" class="text-xs text-gray-500 mt-0.5">{{ it.note }}</div>
+                     </div>
+                     <button @click.stop="removeItineraryItem(it.id)" class="text-gray-300 hover:text-red-500"><i class="ph ph-trash"></i></button>
+                 </div>
              </div>
-             <div class="absolute top-4 right-4 z-10">
-                <button @click="openExpenseModal(null)" class="bg-white/10 hover:bg-white/20 border border-white/10 text-white p-2 rounded-full backdrop-blur-md transition">
-                   <i class="ph-bold ph-plus text-xl"></i>
-                </button>
+         </div>
+         <div class="ios-card !bg-white/60 p-3 mt-4"> 
+             <div class="flex gap-2">
+                <input v-model="quickItinerary.time" type="time" class="ios-input !w-auto text-center !px-2 font-mono text-sm">
+                <input v-model="quickItinerary.title" class="ios-input flex-1 text-sm" placeholder="Quick add...">
+                <button @click="addQuickItinerary" class="w-10 bg-blue-500 text-white rounded-xl shadow-md flex items-center justify-center"><i class="ph ph-plus"></i></button>
+             </div>
+         </div>
+      </div>
+
+      <div v-if="currentTab === '記帳'" class="pb-20 animate-fade-in">
+          <div class="ios-card-dark-glass p-6 mb-4 relative">
+             <div class="dark-glass-gradient"></div>
+             <div class="relative z-10 flex flex-col items-center justify-center">
+                 <div class="text-white/60 text-[11px] font-bold tracking-widest uppercase mb-1">Total ({{ settings.homeCurrency }})</div>
+                 <div class="text-4xl font-light tracking-tight mb-2 text-white">{{ formatNumber(totalExpense.hkd) }}</div>
+                 <div class="text-white/40 text-sm font-medium">≈ {{ settings.localCurrency }} {{ formatNumber(totalExpense.twd) }}</div>
+             </div>
+             <button @click="openExpenseModal(null)" class="absolute top-4 right-4 bg-white/10 p-2 rounded-full text-white z-20"><i class="ph ph-plus"></i></button>
+          </div>
+          
+          <div class="bg-gray-200/50 p-1 rounded-xl flex mb-4 mx-1">
+              <button v-for="f in ['all', 'credit', 'settlement']" :key="f" @click="expenseFilter = f" 
+                 class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all"
+                 :class="expenseFilter === f ? 'bg-white shadow-sm text-black' : 'text-gray-500'">
+                 {{ f === 'all' ? 'All' : (f === 'credit' ? 'Credit' : 'Settlement') }}
+              </button>
+          </div>
+
+          <div v-if="expenseFilter === 'settlement'" class="space-y-3">
+             <div v-for="s in settlementList" :key="s.name" class="ios-card bg-white p-4 flex justify-between items-center">
+                 <div class="font-bold text-lg">{{ s.name }}</div>
+                 <div class="text-right">
+                     <div class="text-[10px] uppercase text-gray-400 font-bold mb-0.5">{{ s.amount >= 0 ? t('shouldReceive') : t('shouldPay') }}</div>
+                     <div class="text-xl font-bold font-mono" :class="s.amount >= 0 ? 'text-green-500' : 'text-red-500'">{{ s.amount >= 0 ? '+' : '' }}{{ formatNumber(s.amount) }}</div>
+                 </div>
+             </div>
+          </div>
+          
+          <div v-else id="sortable-expenses" class="space-y-2">
+             <div v-for="e in filteredExpenses" :key="e.id" :data-id="e.id" @click="openExpenseModal(e)" class="ios-list-item !items-start !flex-col !p-3 cursor-pointer">
+                 <div class="w-full flex justify-between items-center mb-1.5">
+                     <div class="flex items-center gap-2">
+                         <div v-if="expenseFilter === 'all'" class="drag-handle text-gray-300 p-1 -ml-1"><i class="ph ph-dots-six-vertical"></i></div>
+                         <span class="text-[10px] font-bold text-gray-400">{{ e.date }}</span>
+                         <span class="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{{ e.category }}</span>
+                     </div>
+                 </div>
+                 <div class="w-full flex justify-between items-end pl-6">
+                     <div class="font-bold text-xl text-blue-600"><span class="text-[10px] text-gray-500 mr-1">{{ e.currency }}</span>{{ formatNumber(e.amount) }}</div>
+                     <div class="text-right">
+                         <div class="font-bold text-gray-900">{{ e.name }}</div>
+                         <div class="text-[10px] text-gray-400">{{ e.payer }} paid</div>
+                     </div>
+                 </div>
+             </div>
+          </div>
+      </div>
+
+      <div v-if="currentTab === '設定'" class="animate-fade-in pb-24">
+          <div class="ios-card p-5 space-y-6">
+             <h2 class="text-xl font-bold mb-4">Settings</h2>
+             
+             <div>
+                 <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Route Header</label>
+                 <input v-model="settings.route" class="ios-input font-bold" placeholder="HKG ✈️ KIX">
+             </div>
+
+             <div class="grid grid-cols-2 gap-4">
+                 <div>
+                     <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Start Date</label>
+                     <input v-model="settings.startDate" type="date" class="ios-input">
+                 </div>
+                 <div>
+                     <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">End Date</label>
+                     <input v-model="settings.endDate" type="date" class="ios-input">
+                 </div>
+             </div>
+
+             <div class="grid grid-cols-2 gap-4">
+                 <div>
+                     <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Local Currency</label>
+                     <input v-model="settings.localCurrency" class="ios-input font-mono uppercase" placeholder="TWD">
+                 </div>
+                 <div>
+                     <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Home Currency</label>
+                     <input v-model="settings.homeCurrency" class="ios-input font-mono uppercase" placeholder="HKD">
+                 </div>
              </div>
              
-             <div class="relative z-10 flex flex-col items-center justify-center">
-                 <div class="text-white/60 text-[11px] font-bold tracking-widest uppercase mb-1">TOTAL ({{ settings.currency.settle }})</div>
-                 <div class="text-5xl font-light tracking-tight mb-2 text-white flex items-baseline">
-                    <span class="text-2xl opacity-60 mr-1">$</span>{{ formatNumber(totalExpense.hkd, 0) }}
-                 </div>
-                 <div class="text-white/40 text-sm font-medium">≈ {{ settings.currency.local }} {{ formatNumber(totalExpense.twd, 0) }}</div>
+             <div>
+                 <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Weather Location Name</label>
+                 <input v-model="settings.weatherLoc" class="ios-input" placeholder="e.g. Taipei">
              </div>
-            
-             <div class="grid grid-cols-2 gap-4 mt-6 relative z-10">
-                <div class="bg-white/5 rounded-xl p-3 backdrop-blur-sm border border-white/5 flex flex-col items-center justify-center text-center">
-                     <div class="text-white/50 text-[10px] uppercase tracking-wider mb-1"><i class="ph-bold ph-credit-card mr-1"></i>Card</div>
-                    <div class="text-lg font-bold text-white mb-0.5">${{ formatNumber(totalExpense.creditHkd, 0) }}</div>
-                </div>
-                <div class="bg-white/5 rounded-xl p-3 backdrop-blur-sm border border-white/5 flex flex-col items-center justify-center text-center">
-                    <div class="text-white/50 text-[10px] uppercase tracking-wider mb-1"><i class="ph-bold ph-coins mr-1"></i>Cash</div>
-                    <div class="text-lg font-bold text-white mb-0.5">${{ formatNumber(totalExpense.cashHkd, 0) }}</div>
-                </div>
+             
+             <div>
+                 <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Info Text</label>
+                 <textarea v-model="settings.infoText" class="ios-input h-24" placeholder="Important info..."></textarea>
              </div>
-        </div>
 
-        <div class="bg-gray-200/50 p-1 rounded-xl flex mb-6 mx-1 backdrop-blur-sm overflow-x-auto">
-             <button v-for="f in ['all', 'credit', 'cash']" :key="f"
-                @click="expenseFilter = f"
-                class="flex-1 min-w-[60px] py-1.5 text-xs font-bold rounded-lg transition-all duration-200 whitespace-nowrap"
-                :class="expenseFilter === f ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-gray-700'">
-                {{ f === 'all' ? 'All' : (f === 'credit' ? 'Card' : 'Cash') }}
-            </button>
-            <button v-if="settlementStatus.hasData" 
-                @click="expenseFilter = 'settlement'"
-                class="flex-1 min-w-[60px] py-1.5 text-xs font-bold rounded-lg transition-all duration-200 whitespace-nowrap ml-1"
-                :class="expenseFilter === 'settlement' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-gray-700'">
-                Settle
-            </button>
-        </div>
-
-        <div v-if="expenseFilter === 'settlement'" class="space-y-3 pb-10">
-            <div v-for="s in settlementList" :key="s.name" class="ios-card bg-white p-4 flex justify-between items-center">
-                <div class="font-bold text-lg text-gray-800">{{ s.name }}</div>
-                <div class="text-right">
-                   <div class="text-[10px] uppercase text-gray-400 font-bold mb-0.5">
-                        {{ s.amount >= 0 ? 'Receives' : 'Pays' }}
-                   </div>
-                   <div class="text-xl font-bold font-mono" :class="s.amount >= 0 ? 'text-[#34C759]' : 'text-[#FF3B30]'">
-                        {{ s.amount >= 0 ? '+' : '' }}{{ formatNumber(s.amount, 0) }} <span class="text-[10px] text-gray-400 font-normal ml-0.5">{{ settings.currency.settle }}</span>
-                   </div>
-                </div>
-            </div>
-        </div>
-
-        <div v-else class="space-y-3 pb-10">
-           <div v-for="e in filteredExpenses" :key="e.id" 
-                @click="openExpenseModal(e)"
-                class="ios-card bg-white p-4 flex justify-between items-center active:scale-[0.99] transition-transform">
-               <div class="flex items-center gap-4">
-                   <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
-                       <i class="ph-fill text-lg" :class="getCategoryIcon(e.category)"></i>
-                   </div>
-                   <div>
-                       <div class="font-bold text-gray-900 leading-tight">{{ e.name || e.category }}</div>
-                       <div class="text-[10px] text-gray-400 mt-1 font-medium">
-                           {{ e.payer }} paid • {{ e.date.split('-').slice(1).join('/') }}
-                       </div>
-                   </div>
-               </div>
-               <div class="text-right">
-                   <div class="font-bold text-lg text-blue-600">
-                       {{ formatNumber(e.amount, 0) }} <span class="text-xs text-gray-400">{{ e.currency }}</span>
-                   </div>
-                   <div class="text-[10px] text-gray-400 flex items-center justify-end gap-1">
-                       <i class="ph-fill text-[10px]" :class="e.paymentMethod==='credit_card'?'ph-credit-card':'ph-coins'"></i>
-                       {{ e.paymentMethod==='credit_card'?'Card':'Cash' }}
-                   </div>
-               </div>
-           </div>
-           <div v-if="filteredExpenses.length === 0" class="text-center py-10 text-gray-400 text-sm">No expenses yet.</div>
-        </div>
-    </main>
-
-    <main v-if="currentTab === 'info'" class="flex-1 overflow-y-auto pb-32 pt-safe px-5 bg-gray-50">
-         <h2 class="text-3xl font-bold mb-6 text-black">{{ t('info') }}</h2>
-         <div class="grid grid-cols-1 gap-4">
-             <div v-for="info in infoList" :key="info.id" @click="editingId=info.id; editingItem={...info}; openSubPage('info')" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                 <h3 class="font-bold text-lg text-gray-900 mb-2">{{ info.title }}</h3>
-                 <p class="text-sm text-gray-500 whitespace-pre-wrap leading-relaxed">{{ info.content }}</p>
-             </div>
-             <button @click="editingId=null; editingItem={title:'', content:''}; openSubPage('info')" class="w-full py-4 rounded-xl bg-white border-2 border-dashed border-gray-300 text-gray-400 font-bold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-                 <i class="ph-bold ph-plus"></i> {{ t('add') }}
-             </button>
-         </div>
-    </main>
-
-    <transition name="slide-up">
-      <div v-if="activeSubPage === 'settings'" class="fixed inset-0 bg-[#F2F2F7] z-50 flex flex-col">
-        <div class="bg-white px-5 pt-safe pb-4 border-b border-gray-200 flex justify-between items-center sticky top-0 z-10">
-           <button @click="closeSubPage" class="text-blue-500 font-medium text-lg flex items-center gap-1"><i class="ph-bold ph-caret-left"></i> {{ t('back') }}</button>
-           <span class="font-bold text-lg text-gray-900">{{ t('settings') }}</span>
-           <div class="w-16"></div>
-        </div>
-        <div class="flex-1 overflow-y-auto p-5 space-y-6">
-           <div class="bg-white rounded-xl overflow-hidden shadow-sm p-4 flex justify-between items-center">
-                <span>Flight Card Skin</span>
-                <div class="bg-gray-100 p-1 rounded-lg flex">
-                   <button @click="flightSkin='ios'; saveToCloud('skin', 'ios')" :class="flightSkin==='ios'?'bg-white shadow':''" class="px-4 py-1 rounded text-xs font-bold">iOS</button>
-                   <button @click="flightSkin='hkg'; saveToCloud('skin', 'hkg')" :class="flightSkin==='hkg'?'bg-white shadow':''" class="px-4 py-1 rounded text-xs font-bold">HKG</button>
-                </div>
-           </div>
-           <div class="bg-white rounded-xl overflow-hidden shadow-sm p-4 space-y-4">
-               <div><label class="text-xs text-gray-400 font-bold uppercase">Origin</label><input v-model="settings.origin" class="w-full text-lg font-bold outline-none uppercase" @change="saveToCloud('settings', settings)"></div>
-               <div><label class="text-xs text-gray-400 font-bold uppercase">Destination</label><input v-model="settings.destination" class="w-full text-lg font-bold outline-none uppercase" @change="saveToCloud('settings', settings)"></div>
-               <div><label class="text-xs text-gray-400 font-bold uppercase">Weather City</label><input v-model="settings.weatherCity" class="w-full text-lg font-bold outline-none" @change="saveToCloud('settings', settings)"></div>
-           </div>
-           <button @click="if(confirm('Reset?')) {localStorage.clear(); location.reload()}" class="w-full py-4 text-red-500 bg-white rounded-xl font-bold">Reset All Data</button>
-        </div>
+             <button @click="saveAll" class="btn-ios-primary w-full mt-4">Save Changes</button>
+          </div>
       </div>
-    </transition>
 
-    <div v-if="showExpenseModal" class="modal-overlay" @click.self="showExpenseModal=false">
-        <div class="modal-content">
-            <div class="flex justify-between items-center mb-4">
-                <button @click="showExpenseModal=false" class="text-gray-400 p-2"><i class="ph-bold ph-x text-xl"></i></button>
-                <div class="flex bg-gray-800 rounded-lg p-1">
-                    <button @click="editingExpense.currency=settings.currency.local" :class="editingExpense.currency===settings.currency.local?'bg-gray-600 text-white':'text-gray-500'" class="px-3 py-1 rounded text-xs font-bold transition">{{ settings.currency.local }}</button>
-                    <button @click="editingExpense.currency=settings.currency.settle" :class="editingExpense.currency===settings.currency.settle?'bg-gray-600 text-white':'text-gray-500'" class="px-3 py-1 rounded text-xs font-bold transition">{{ settings.currency.settle }}</button>
-                </div>
-                <button v-if="editingExpense.id" @click="removeExpense(editingExpense.id)" class="text-red-500 p-2"><i class="ph-bold ph-trash text-xl"></i></button>
-                <div v-else class="w-10"></div>
-            </div>
-            
-            <div class="mb-6 text-right px-2">
-                <div class="text-5xl font-light text-white tracking-tight">{{ calcDisplay }}</div>
-                <div class="text-gray-500 text-xs mt-1 font-mono uppercase tracking-widest">Amount Input</div>
-            </div>
+    </main>
 
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <input v-model="editingExpense.name" placeholder="Item Name" class="bg-gray-800 rounded-xl px-4 py-3 text-white outline-none">
-                <select v-model="editingExpense.category" class="bg-gray-800 rounded-xl px-4 py-3 text-white outline-none appearance-none">
-                    <option value="food">Food</option><option value="transport">Transport</option><option value="shopping">Shopping</option>
-                    <option value="ticket">Ticket</option><option value="stay">Stay</option><option value="other">Other</option>
-                </select>
-                <select v-model="editingExpense.payer" class="bg-gray-800 rounded-xl px-4 py-3 text-white outline-none appearance-none">
-                    <option v-for="m in members" :key="m" :value="m">{{ m }} Pays</option>
-                </select>
-                <div class="flex bg-gray-800 rounded-xl p-1">
-                     <button @click="editingExpense.paymentMethod='credit_card'" class="flex-1 rounded-lg text-xs font-bold" :class="editingExpense.paymentMethod==='credit_card'?'bg-gray-600 text-white':'text-gray-500'">Card</button>
-                     <button @click="editingExpense.paymentMethod='cash'" class="flex-1 rounded-lg text-xs font-bold" :class="editingExpense.paymentMethod==='cash'?'bg-gray-600 text-white':'text-gray-500'">Cash</button>
-                </div>
-            </div>
-            
-            <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
-                <button v-for="m in members" :key="m" 
-                    @click="toggleInvolved(m)"
-                    class="px-3 py-1.5 rounded-full text-xs font-bold border transition-colors whitespace-nowrap"
-                    :class="(editingExpense.involved.length===0 || editingExpense.involved.includes(m)) ? 'bg-blue-500/20 border-blue-500 text-blue-400' : 'border-gray-700 text-gray-500'">
-                    {{ m }}
-                </button>
-            </div>
-
-            <div class="grid grid-cols-4 gap-3">
-                <button v-for="n in ['7','8','9','/']" :key="n" @click="handleCalcInput(n)" class="calc-btn" :class="'/'===n?'calc-op':'calc-num'">{{ n }}</button>
-                <button v-for="n in ['4','5','6','*']" :key="n" @click="handleCalcInput(n)" class="calc-btn" :class="'*'===n?'calc-op':'calc-num'">{{ n }}</button>
-                <button v-for="n in ['1','2','3','-']" :key="n" @click="handleCalcInput(n)" class="calc-btn" :class="'-'===n?'calc-op':'calc-num'">{{ n }}</button>
-                <button @click="handleCalcInput('C')" class="calc-btn calc-action">C</button>
-                <button @click="handleCalcInput('0')" class="calc-btn calc-num">0</button>
-                <button @click="handleCalcInput('.')" class="calc-btn calc-num">.</button>
-                <button @click="handleCalcInput('+')" class="calc-btn calc-op">+</button>
-            </div>
-            <button @click="saveExpenseResult" class="w-full bg-blue-500 text-white font-bold text-xl py-4 rounded-2xl mt-3 active:scale-[0.98] transition">
-                {{ editingExpense.id ? 'Update Expense' : 'Add Expense' }}
-            </button>
-        </div>
-    </div>
-
-    <div v-if="showMemberModal" class="modal-overlay" @click.self="showMemberModal=false">
-        <div class="modal-content bg-white text-gray-900 rounded-t-3xl">
-            <h3 class="text-xl font-bold mb-4">Manage Members</h3>
-            <div class="space-y-3 mb-6">
-                <div v-for="m in members" :key="m" class="flex justify-between items-center bg-gray-50 p-3 rounded-xl">
-                    <span class="font-bold">{{ m }}</span>
-                    <button v-if="members.length > 1" @click="removeMember(m)" class="text-red-500 text-sm font-bold">Remove</button>
-                </div>
-            </div>
-            <button @click="addMember" class="w-full py-4 bg-black text-white rounded-xl font-bold mb-3">Add Member</button>
-            <button @click="showMemberModal=false" class="w-full py-4 text-gray-400 font-bold">Close</button>
-        </div>
-    </div>
-
-    <transition name="slide-up">
-        <div v-if="activeSubPage && !['settings','expense','flightEdit'].includes(activeSubPage)" class="fixed inset-0 bg-white z-50 flex flex-col">
-            <div class="px-5 pt-safe pb-4 border-b border-gray-100 flex justify-between items-center">
-                <button @click="closeSubPage" class="text-blue-500 font-medium text-lg">{{ t('cancel') }}</button>
-                <span class="font-bold text-lg">{{ editingId ? t('edit') : t('new') }}</span>
-                <button @click="saveGenericItem" class="text-blue-500 font-bold text-lg">{{ t('save') }}</button>
-            </div>
-            <div class="p-5 bg-gray-50 flex-1 space-y-4">
-                <template v-if="activeSubPage === 'itinerary'">
-                    <div class="bg-white p-4 rounded-xl shadow-sm grid grid-cols-2 gap-4">
-                        <select v-model="editingItem.dayIndex" class="bg-gray-100 rounded-lg p-2 font-bold"><option v-for="(d,i) in tripDays" :key="i" :value="i">Day {{i+1}}</option></select>
-                        <input type="time" v-model="editingItem.time" class="bg-gray-100 rounded-lg p-2 font-bold">
-                    </div>
-                    <input v-model="editingItem.title" placeholder="Title" class="w-full p-4 rounded-xl shadow-sm outline-none">
-                    <input v-model="editingItem.location" placeholder="Location" class="w-full p-4 rounded-xl shadow-sm outline-none">
-                </template>
-                <template v-else>
-                     <input v-if="activeSubPage==='prep'" v-model="editingItem.text" placeholder="Item" class="w-full p-4 rounded-xl shadow-sm outline-none">
-                     <template v-if="activeSubPage==='info'">
-                         <input v-model="editingItem.title" placeholder="Title" class="w-full p-4 rounded-xl shadow-sm outline-none font-bold">
-                         <textarea v-model="editingItem.content" placeholder="Content" class="w-full p-4 h-40 rounded-xl shadow-sm outline-none"></textarea>
-                     </template>
-                </template>
-                <button v-if="editingId" @click="deleteItem" class="w-full py-4 text-red-500 bg-white rounded-xl shadow-sm font-bold">Delete</button>
-            </div>
-        </div>
-    </transition>
-
-    <nav class="fixed bottom-0 w-full bg-white/90 backdrop-blur-xl border-t border-gray-200 pb-safe pt-2 flex justify-around items-center z-40">
-      <button v-for="tab in ['home', 'itinerary', 'expense', 'info']" :key="tab" @click="currentTab = tab" class="flex flex-col items-center gap-1 w-16 transition-all" :class="currentTab === tab ? 'text-blue-500 scale-105' : 'text-gray-400'">
-         <i :class="[currentTab === tab ? 'ph-fill' : 'ph-bold', {'home':'ph-house','itinerary':'ph-calendar-blank','expense':'ph-wallet','info':'ph-info'}[tab]]" class="text-2xl"></i>
-         <span class="text-[10px] font-medium capitalize">{{ t(tab) }}</span>
-      </button>
+    <nav class="fixed bottom-6 left-0 right-0 z-50 px-4 pointer-events-none">
+      <div class="iphone-dock pointer-events-auto">
+               <button @click="currentTab='首頁'" class="group flex flex-col items-center justify-center flex-1 transition-all text-gray-400" :class="{'!text-[#007AFF]': currentTab==='首頁'}">
+            <i class="text-[28px] mb-1 transition-transform group-active:scale-90" :class="currentTab==='首頁' ? 'ph-fill ph-house' : 'ph-bold ph-house'"></i>
+            <span class="text-[10px] font-semibold">首頁</span>
+        </button>
+        <button @click="currentTab='行程'" class="group flex flex-col items-center justify-center flex-1 transition-all text-gray-400" :class="{'!text-[#007AFF]': currentTab==='行程'}">
+            <i class="text-[28px] mb-1 transition-transform group-active:scale-90" :class="currentTab==='行程' ? 'ph-fill ph-map-trifold' : 'ph-bold ph-map-trifold'"></i>
+            <span class="text-[10px] font-semibold">行程</span>
+        </button>
+        <button @click="currentTab='記帳'" class="group flex flex-col items-center justify-center flex-1 transition-all text-gray-400" :class="{'!text-[#007AFF]': currentTab==='記帳'}">
+            <i class="text-[28px] mb-1 transition-transform group-active:scale-90" :class="currentTab==='記帳' ? 'ph-fill ph-wallet' : 'ph-bold ph-wallet'"></i>
+            <span class="text-[10px] font-semibold">記帳</span>
+        </button>
+        <button @click="currentTab='設定'" class="group flex flex-col items-center justify-center flex-1 transition-all text-gray-400" :class="{'!text-[#007AFF]': currentTab==='設定'}">
+            <i class="text-[28px] mb-1 transition-transform group-active:scale-90" :class="currentTab==='設定' ? 'ph-fill ph-gear' : 'ph-bold ph-gear'"></i>
+            <span class="text-[10px] font-semibold">設定</span>
+        </button>
+      </div>
     </nav>
+    
+    <div v-if="flightModalOpen" class="modal-backdrop" @click.self="flightModalOpen=false">
+        <div class="ios-modal-container">
+            <div class="ios-modal-header">Edit Flight</div>
+            <div class="ios-modal-body space-y-3">
+                <input v-model="newFlight.code" class="ios-input" placeholder="Flight Code (e.g. CX400)">
+                <input v-model="newFlight.title" class="ios-input" placeholder="Airline Name">
+                <div class="flex gap-2">
+                    <input v-model="newFlight.fromCode" class="ios-input text-center uppercase" placeholder="HKG">
+                    <input v-model="newFlight.toCode" class="ios-input text-center uppercase" placeholder="TPE">
+                </div>
+                <div class="flex gap-2">
+                    <input v-model="newFlight.depTime" type="time" class="ios-input">
+                    <input v-model="newFlight.arrTime" type="time" class="ios-input">
+                </div>
+                <div class="flex gap-2">
+                    <input v-model="newFlight.fromTerminal" class="ios-input" placeholder="Dep Term">
+                    <input v-model="newFlight.toTerminal" class="ios-input" placeholder="Arr Term">
+                </div>
+                <input v-model="newFlight.gate" class="ios-input" placeholder="Gate">
+                <select v-model="newFlight.status" class="ios-input">
+                    <option value="Scheduled">Scheduled</option>
+                    <option value="On Time">On Time</option>
+                    <option value="Delayed">Delayed</option>
+                    <option value="Boarding">Boarding</option>
+                </select>
+                <input v-model="newFlight.liveLink" class="ios-input" placeholder="Flighty/Tracking URL">
+            </div>
+            <div class="ios-modal-footer">
+                <button @click="flightModalOpen=false" class="btn-ios-cancel">Cancel</button>
+                <button @click="saveFlight" class="btn-ios-primary">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="preNoteModalOpen" class="modal-backdrop" @click.self="preNoteModalOpen=false">
+        <div class="ios-modal-container">
+            <div class="ios-modal-header">Edit Item</div>
+            <div class="ios-modal-body space-y-4">
+                <input v-model="editingPreNote.name" class="ios-input" placeholder="Task Name">
+            </div>
+            <div class="ios-modal-footer">
+                <button v-if="editingPreNote.id" @click="removePreNote(editingPreNote.id); preNoteModalOpen=false" class="btn-ios-cancel text-red-500">Delete</button>
+                <button @click="preNoteModalOpen=false" class="btn-ios-cancel">Cancel</button>
+                <button @click="savePreNoteEdit" class="btn-ios-primary">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="shoppingModalOpen" class="modal-backdrop" @click.self="shoppingModalOpen=false">
+        <div class="ios-modal-container">
+            <div class="ios-modal-header">Shopping Item</div>
+            <div class="ios-modal-body space-y-4">
+                <input v-model="newShoppingItem.name" class="ios-input" placeholder="Item Name">
+                <input v-model="newShoppingItem.imageURL" class="ios-input" placeholder="Image URL">
+            </div>
+            <div class="ios-modal-footer">
+                <button v-if="newShoppingItem.id" @click="removeShoppingItem(newShoppingItem.id); shoppingModalOpen=false" class="btn-ios-cancel text-red-500">Delete</button>
+                <button @click="shoppingModalOpen=false" class="btn-ios-cancel">Cancel</button>
+                <button @click="saveShoppingItem" class="btn-ios-primary">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="expenseModalOpen" class="modal-backdrop" @click.self="expenseModalOpen=false">
+        <div class="ios-modal-container">
+            <div class="ios-modal-header">Expense</div>
+            <div class="ios-modal-body space-y-3">
+                 <div class="flex gap-2">
+                     <select v-model="newExpense.currency" class="ios-input w-24 font-bold text-center">
+                         <option :value="settings.localCurrency">{{ settings.localCurrency }}</option>
+                         <option :value="settings.homeCurrency">{{ settings.homeCurrency }}</option>
+                     </select>
+                     <input :value="newExpense.amount" readonly class="ios-input text-right font-bold text-2xl">
+                 </div>
+                 
+                 <div class="calc-grid">
+                     <button v-for="b in ['7','8','9','/','4','5','6','*','1','2','3','-','C','0','.','+']" :key="b" @click="handleCalcInput(b)" class="calc-btn" :class="{'op': ['/','*','-','+','='].includes(b)}">{{ b }}</button>
+                     <button @click="handleCalcInput('=')" class="calc-btn op">=</button>
+                 </div>
+                 
+                 <input v-model="newExpense.name" class="ios-input" placeholder="Description">
+                 <select v-model="newExpense.category" class="ios-input">
+                     <option value="餐飲">Food</option>
+                     <option value="交通">Transport</option>
+                     <option value="購物">Shopping</option>
+                     <option value="其他">Other</option>
+                 </select>
+                 <select v-model="newExpense.payer" class="ios-input">
+                     <option v-for="m in members" :value="m">{{ m }}</option>
+                 </select>
+                 <div class="flex gap-2">
+                     <button @click="newExpense.paymentMethod='cash'" class="flex-1 py-2 rounded-lg text-xs font-bold border" :class="newExpense.paymentMethod==='cash' ? 'bg-blue-500 text-white' : 'bg-white'">Cash</button>
+                     <button @click="newExpense.paymentMethod='credit_card'" class="flex-1 py-2 rounded-lg text-xs font-bold border" :class="newExpense.paymentMethod==='credit_card' ? 'bg-blue-500 text-white' : 'bg-white'">Card</button>
+                 </div>
+            </div>
+            <div class="ios-modal-footer">
+                <button v-if="newExpense.id" @click="removeExpense(newExpense.id); expenseModalOpen=false" class="btn-ios-cancel text-red-500">Delete</button>
+                <button @click="expenseModalOpen=false" class="btn-ios-cancel">Cancel</button>
+                <button @click="saveExpense" class="btn-ios-primary">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <div v-if="itineraryModalOpen" class="modal-backdrop" @click.self="itineraryModalOpen=false">
+        <div class="ios-modal-container">
+            <div class="ios-modal-header">Edit Event</div>
+            <div class="ios-modal-body space-y-3">
+                 <select v-model="newItineraryItem.dayIndex" class="ios-input">
+                     <option v-for="(d, i) in days" :key="i" :value="i">Day {{ i + 1 }} - {{ d.date }}</option>
+                 </select>
+                 <input type="time" v-model="newItineraryItem.time" class="ios-input">
+                 <input v-model="newItineraryItem.title" class="ios-input" placeholder="Title">
+                 <textarea v-model="newItineraryItem.note" class="ios-input" placeholder="Notes"></textarea>
+            </div>
+            <div class="ios-modal-footer">
+                <button @click="itineraryModalOpen=false" class="btn-ios-cancel">Cancel</button>
+                <button @click="saveItineraryItem" class="btn-ios-primary">Save</button>
+            </div>
+        </div>
+    </div>
 
   </div>
 </body>
+<script>
+    const { createApp, ref, reactive, computed, onMounted, watch, nextTick } = Vue;
+    const SUPABASE_URL = 'https://myrhatzdypiwwgmmfbuw.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_bnnah-2fsCaQnKZDoKNJQw_NuYQVvKi'; // Replace if needed
+    const TRIP_ID = 'travel_sync_ultimate_v1';
+    
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    createApp({
+      setup() {
+        const appVersion = ref('v251228-7.2');
+        const currentTab = ref('首頁');
+        const syncState = ref('loading');
+        const isInitialized = ref(false);
+        const lang = ref(localStorage.getItem('app_lang') || 'zh');
+        const flightCardSkin = ref(localStorage.getItem('flight_skin') || 'ios');
+        const rateDisplayMode = ref(0); // 0: Local/Home, 1: Home/Local
+        
+        // Data Structures
+        const settings = reactive({
+            route: 'HKG ✈️ KIX',
+            startDate: '2025-12-21',
+            endDate: '2025-12-25',
+            localCurrency: 'TWD',
+            homeCurrency: 'HKD',
+            weatherLoc: 'Taipei',
+            infoText: ''
+        });
+        
+        const itinerary = reactive([[], [], [], []]);
+        const preTripNotes = ref([]);
+        const shoppingList = ref([]);
+        const expenses = ref([]);
+        const members = ref(['Me', 'Partner']);
+        
+        // Flight Data
+        const activeFlight = reactive({
+            id: 'f1', code: 'CX400', title: 'Cathay Pacific',
+            fromCode: 'HKG', fromTerminal: '1',
+            toCode: 'TPE', toTerminal: '1',
+            depTime: '10:00', arrTime: '11:50',
+            status: 'On Time', gate: '24', liveLink: ''
+        });
+
+        // Modals Refs
+        const flightModalOpen = ref(false);
+        const newFlight = reactive({});
+        const preNoteModalOpen = ref(false);
+        const editingPreNote = reactive({});
+        const shoppingModalOpen = ref(false);
+        const newShoppingItem = reactive({});
+        const expenseModalOpen = ref(false);
+        const newExpense = reactive({});
+        const itineraryModalOpen = ref(false);
+        const newItineraryItem = reactive({});
+        const expenseFilter = ref('all');
+        const selectedDay = ref(0);
+        const quickItinerary = reactive({ title: '', time: '' });
+
+        // Computed
+        const syncStatusText = computed(() => ({ 'synced': '已同步', 'saving': '儲存中...', 'loading': '載入中...', 'error': '錯誤' }[syncState.value] || ''));
+        const days = computed(() => {
+            if(!settings.startDate) return [];
+            const start = new Date(settings.startDate);
+            return itinerary.map((_, i) => {
+                const d = new Date(start); d.setDate(d.getDate() + i);
+                return { date: d.toLocaleDateString('en-GB', {day:'numeric', month:'short'}), full: d };
+            });
+        });
+        const sortedItinerary = computed(() => itinerary[selectedDay.value] || []);
+        
+        // Expense Logic
+        const rate = ref(4.1); // Base Rate from API
+        const currentLiveRate = ref(4.1);
+        const lastRateUpdateLabel = ref('--:--');
+        
+                const displayedRate = computed(() => {
+             // 1. 先取得原始匯率
+             let r = currentLiveRate.value; 
+             
+             // 2. 如果是反向顯示 (Local -> Home)，先進行倒數
+             if (rateDisplayMode.value === 1) {
+                 r = 1 / r;
+             }
+             
+             // 3. 無論哪個方向，最後才扣除 3% 手續費 (* 0.97)
+             // 這樣確保數值永遠是「變小」，符合使用者預期的「扣手續費」直覺
+             return (r * 0.97).toFixed(4);
+        });
+        
+        const totalExpense = computed(() => {
+            let totalHome = 0;
+            expenses.value.forEach(e => {
+                let amt = parseFloat(e.amount) || 0;
+                let homeAmt = 0;
+                // Simplified conversion logic
+                if(e.currency === settings.homeCurrency) homeAmt = amt;
+                else if(e.currency === settings.localCurrency) homeAmt = amt / currentLiveRate.value; 
+                else homeAmt = amt; // Fallback
+                totalHome += homeAmt;
+            });
+            return { hkd: totalHome, twd: totalHome * currentLiveRate.value };
+        });
+
+        const filteredExpenses = computed(() => {
+            let list = [...expenses.value].sort((a,b) => b.created_at - a.created_at);
+            if(expenseFilter.value === 'credit') return list.filter(e => e.paymentMethod === 'credit_card');
+            return list;
+        });
+
+        const settlementList = computed(() => {
+            const bal = {};
+            members.value.forEach(m => bal[m] = 0);
+            expenses.value.forEach(e => {
+                let amt = parseFloat(e.amount) || 0;
+                let homeAmt = (e.currency === settings.localCurrency) ? amt / currentLiveRate.value : amt;
+                let payer = e.payer || members.value[0];
+                if(bal[payer] === undefined) bal[payer] = 0;
+                bal[payer] += homeAmt;
+                let split = homeAmt / members.value.length;
+                members.value.forEach(m => bal[m] -= split);
+            });
+            return Object.keys(bal).map(k => ({name: k, amount: bal[k]})).filter(x => Math.abs(x.amount) > 1);
+        });
+
+               // Weather
+        const weather = reactive({ temp: '--', min: '--', max: '--', code: -1 });
+        const weatherIconClass = computed(() => {
+            const c = weather.code;
+            if (c === -1) return 'ph-bold ph-dots-three';
+            if (c === 0) return 'ph-fill ph-sun text-orange-500';
+            if (c >= 1 && c <= 3) return 'ph-fill ph-cloud-sun text-yellow-500';
+            if (c >= 45 && c <= 48) return 'ph-fill ph-cloud-fog text-gray-400';
+            if (c >= 51 && c <= 67) return 'ph-fill ph-cloud-rain text-blue-400';
+            if (c >= 71 && c <= 77) return 'ph-fill ph-snowflake text-cyan-300';
+            if (c >= 80 && c <= 82) return 'ph-fill ph-cloud-rain text-blue-500';
+            if (c >= 95) return 'ph-fill ph-cloud-lightning text-purple-500';
+            return 'ph-fill ph-cloud text-gray-400';
+        });
+
+        // Functions
+        const t = (k) => {
+            const dict = {
+                'activeFlightText': { zh: '航班實況', en: 'Live Status' },
+                'rate': { zh: '即時匯率', en: 'Live Rate' },
+                'feeIncluded': { zh: '含3%手續費', en: 'Incl. 3% Fee' },
+                'itinerary': { zh: '行程', en: 'Itinerary' },
+                'viewAll': { zh: '查看全部', en: 'View All' },
+                'prepList': { zh: '準備清單', en: 'Preparation' },
+                'shopping': { zh: '購物清單', en: 'Shopping' },
+                'expenses': { zh: '支出總覽', en: 'Expenses' },
+                'view': { zh: '查看', en: 'View' },
+                'info': { zh: '資訊', en: 'Info' },
+                'gate': { zh: '登機閘口', en: 'Gate' },
+                'shouldPay': { zh: '需支付', en: 'Should Pay' },
+                'shouldReceive': { zh: '需收取', en: 'Should Receive' }
+            };
+            return dict[k]?.[lang.value] || k;
+        };
+
+        function toggleLang() { lang.value = lang.value === 'zh' ? 'en' : 'zh'; localStorage.setItem('app_lang', lang.value); }
+        function toggleSkin() { flightCardSkin.value = flightCardSkin.value === 'ios' ? 'hkg' : 'ios'; localStorage.setItem('flight_skin', flightCardSkin.value); }
+        function toggleRateOrder() { rateDisplayMode.value = rateDisplayMode.value === 0 ? 1 : 0; }
+        
+        function formatNumber(n) { return Number(n).toLocaleString('en-US', {maximumFractionDigits: 1}); }
+        function generateId() { return Date.now() + Math.random().toString(36).substr(2, 5); }
+        
+        // Modals Actions
+        function openFlightModal(id) { Object.assign(newFlight, activeFlight); flightModalOpen.value = true; }
+        function saveFlight() { Object.assign(activeFlight, newFlight); flightModalOpen.value = false; saveAll(); }
+        
+        function addPreNote() { editingPreNote.id = null; editingPreNote.name = ''; preNoteModalOpen.value = true; }
+        function editPreNote(n) { Object.assign(editingPreNote, n); preNoteModalOpen.value = true; }
+        function savePreNoteEdit() {
+            if(!editingPreNote.id) preTripNotes.value.push({ ...editingPreNote, id: generateId(), isDone: false });
+            else { const idx = preTripNotes.value.findIndex(x=>x.id===editingPreNote.id); if(idx!==-1) preTripNotes.value[idx] = {...editingPreNote}; }
+            preNoteModalOpen.value = false; saveAll();
+        }
+        function removePreNote(id) { preTripNotes.value = preTripNotes.value.filter(x=>x.id!==id); }
+        function togglePreNoteDone(id) { const n = preTripNotes.value.find(x=>x.id===id); if(n) n.isDone = !n.isDone; saveAll(); }
+
+        function openShoppingModal(item) { Object.assign(newShoppingItem, item || {id:null, name:'', imageURL:'', isDone:false}); shoppingModalOpen.value = true; }
+        function saveShoppingItem() {
+             if(!newShoppingItem.id) shoppingList.value.push({ ...newShoppingItem, id: generateId() });
+             else { const idx = shoppingList.value.findIndex(x=>x.id===newShoppingItem.id); if(idx!==-1) shoppingList.value[idx] = {...newShoppingItem}; }
+             shoppingModalOpen.value = false; saveAll();
+        }
+        function removeShoppingItem(id) { shoppingList.value = shoppingList.value.filter(x=>x.id!==id); }
+
+        function openExpenseModal(item) { 
+            Object.assign(newExpense, item || {id:null, amount:'', currency: settings.localCurrency, category:'餐飲', paymentMethod:'cash', payer: members.value[0]});
+            expenseModalOpen.value = true; 
+        }
+        function handleCalcInput(k) {
+            let val = String(newExpense.amount);
+            if(k === 'C') val = '';
+            else if(k === '=') { try { val = eval(val); } catch{} }
+            else val += k;
+            newExpense.amount = val;
+        }
+        function saveExpense() {
+            const item = { ...newExpense, id: newExpense.id || generateId(), created_at: Date.now() };
+            const idx = expenses.value.findIndex(e => e.id === item.id);
+            if(idx !== -1) expenses.value[idx] = item; else expenses.value.push(item);
+            expenseModalOpen.value = false; saveAll();
+        }
+        function removeExpense(id) { expenses.value = expenses.value.filter(x=>x.id!==id); }
+
+        function openItineraryModal(item) { Object.assign(newItineraryItem, item || {id:null, dayIndex: selectedDay.value}); itineraryModalOpen.value = true; }
+        function saveItineraryItem() {
+            const item = { ...newItineraryItem, id: newItineraryItem.id || generateId() };
+            const target = itinerary[item.dayIndex];
+            if(!target) return;
+            const idx = target.findIndex(x=>x.id===item.id);
+            if(idx!==-1) target[idx] = item; else target.push(item);
+            target.sort((a,b) => (a.time||'').localeCompare(b.time||''));
+            itineraryModalOpen.value = false; saveAll();
+        }
+        function removeItineraryItem(id) { 
+            itinerary[selectedDay.value] = itinerary[selectedDay.value].filter(x=>x.id!==id); saveAll(); 
+        }
+        function addQuickItinerary() { 
+            itinerary[selectedDay.value].push({id: generateId(), time: quickItinerary.time, title: quickItinerary.title});
+            itinerary[selectedDay.value].sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+            quickItinerary.title=''; saveAll();
+        }
+        function selectDay(i) { selectedDay.value = i; nextTick(()=> initSortable('sortable-itinerary', itinerary[i])); }
+
+        // Sync & Init
+        async function fetchCloud() {
+            syncState.value = 'loading';
+            try {
+                const { data } = await supabaseClient.from('trip_data').select('content').eq('id', TRIP_ID).single();
+                if(data?.content) {
+                    const c = data.content;
+                    if(c.settings) Object.assign(settings, c.settings);
+                    if(c.itinerary) c.itinerary.forEach((d,i) => itinerary[i] = d);
+                    if(c.preTripNotes) preTripNotes.value = c.preTripNotes;
+                    if(c.shoppingList) shoppingList.value = c.shoppingList;
+                    if(c.expenses) expenses.value = c.expenses;
+                    if(c.flight) Object.assign(activeFlight, c.flight);
+                }
+                syncState.value = 'synced';
+                isInitialized.value = true;
+            } catch { syncState.value = 'error'; }
+        }
+        
+        async function saveAll() {
+            if(!isInitialized.value) return;
+            syncState.value = 'saving';
+            const payload = {
+                settings, itinerary, preTripNotes: preTripNotes.value, 
+                shoppingList: shoppingList.value, expenses: expenses.value, flight: activeFlight
+            };
+            await supabaseClient.from('trip_data').upsert({ id: TRIP_ID, content: payload, updated_at: new Date() });
+            setTimeout(() => syncState.value = 'synced', 800);
+        }
+        
+        async function fetchRate() {
+            // Hardcoded to TWD base for v5.09 logic compatibility, but ideally dynamic
+            try {
+                const res = await fetch(`https://open.er-api.com/v6/latest/${settings.localCurrency}`);
+                const d = await res.json();
+                if(d?.rates?.[settings.homeCurrency]) {
+                    // Inverse because API gives 1 Local = X Home
+                    // We often want 1 Home = X Local for travel
+                    const r = 1 / d.rates[settings.homeCurrency];
+                    currentLiveRate.value = r;
+                    lastRateUpdateLabel.value = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+                }
+            } catch {}
+        }
+
+                async function fetchWeather() {
+             const loc = settings.weatherLoc || 'Taipei';
+             try {
+                 // 1. Geocoding: City Name -> Lat/Lon
+                 const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(loc)}&count=1&language=en&format=json`);
+                 const geoData = await geoRes.json();
+                 
+                 if (!geoData.results || geoData.results.length === 0) {
+                     console.warn('Weather location not found');
+                     return;
+                 }
+                 
+                 const { latitude, longitude } = geoData.results[0];
+
+                 // 2. Weather Fetch
+                 const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=temperature_2m_max,temperature_2m_min&timezone=auto`);
+                 const d = await res.json();
+                 
+                 if(d.current_weather) {
+                     weather.temp = Math.round(d.current_weather.temperature);
+                     weather.code = d.current_weather.weathercode;
+                 }
+                 if(d.daily) {
+                     weather.max = Math.round(d.daily.temperature_2m_max[0]);
+                     weather.min = Math.round(d.daily.temperature_2m_min[0]);
+                 }
+             } catch(e) { console.error("Weather Error", e); }
+        }
+
+        function initSortable(id, list) {
+            const el = document.getElementById(id);
+            if(el) Sortable.create(el, { handle:'.drag-handle', animation:150, onEnd:(evt)=>{
+                 const item = list.splice(evt.oldIndex, 1)[0];
+                 list.splice(evt.newIndex, 0, item);
+                 saveAll();
+            }});
+        }
+
+        onMounted(() => {
+            fetchCloud().then(() => {
+                fetchRate(); fetchWeather();
+                nextTick(() => {
+                    initSortable('sortable-pre-home', preTripNotes.value);
+                    initSortable('sortable-shop-home', shoppingList.value);
+                });
+            });
+            setInterval(fetchRate, 600000);
+        });
+
+        return {
+            appVersion, currentTab, syncState, syncStatusText, lang, t, toggleLang,
+            settings, itinerary, preTripNotes, shoppingList, expenses, totalExpense,
+            activeFlight, flightCardSkin, toggleSkin, openFlightModal, flightModalOpen, newFlight, saveFlight,
+            rateDisplayMode, toggleRateOrder, displayedRate, lastRateUpdateLabel,
+            weather, weatherIconClass,
+            days, selectedDay, selectDay, sortedItinerary, openItineraryModal, itineraryModalOpen, newItineraryItem, saveItineraryItem, removeItineraryItem, quickItinerary, addQuickItinerary,
+            preNoteModalOpen, editingPreNote, addPreNote, editPreNote, savePreNoteEdit, removePreNote, togglePreNoteDone,
+            shoppingModalOpen, newShoppingItem, openShoppingModal, saveShoppingItem, removeShoppingItem,
+            expenseModalOpen, newExpense, expenseFilter, filteredExpenses, settlementList, openExpenseModal, handleCalcInput, saveExpense, removeExpense,
+            saveAll, formatNumber, members
+        };
+      }
+    }).mount('#app');
+</script>
 </html>
