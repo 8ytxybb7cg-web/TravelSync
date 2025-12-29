@@ -727,7 +727,7 @@
         
         const displayedRate = computed(() => {
              // 3% Fee applied
-             let r = currentLiveRate.value * 1.03; 
+             let r = currentLiveRate.value * 0.97; 
              if(rateDisplayMode.value === 1) r = 1 / r;
              return r.toFixed(4);
         });
