@@ -726,11 +726,20 @@
         const lastRateUpdateLabel = ref('--:--');
         
         const displayedRate = computed(() => {
-             // 3% Fee applied
-             let r = currentLiveRate.value * 0.97; 
-             if(rateDisplayMode.value === 1) r = 1 / r;
-             return r.toFixed(4);
-        });
+             let r;
+
+if (rateDisplayMode.value === 1) {
+    // 反向顯示：先倒數
+    r = 1 / currentLiveRate.value;
+} else {
+    // 正向顯示
+    r = currentLiveRate.value;
+}
+
+// 最後才統一扣 3% 手續費
+r = r * 0.97;
+
+return r.toFixed(4);
         
         const totalExpense = computed(() => {
             let totalHome = 0;
