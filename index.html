@@ -960,10 +960,21 @@
         }
 
         function cancelSettings() { Object.assign(editingSettings, settings); showToast("Changes Discarded"); }
-        function saveSettings() {
+                function saveSettings() {
             Object.assign(settings, editingSettings);
             const days = dayList.value.length;
-            while(itinerary.length < days) itinerary.push([]);
+            
+            // Sync itinerary array length with new date range
+            if(itinerary.length < days) {
+                while(itinerary.length < days) itinerary.push([]);
+            } else if(itinerary.length > days) {
+                // Remove extra days if date range shortened
+                itinerary.splice(days);
+            }
+            
+            // Safety: Reset selected day if out of bounds
+            if(selectedDay.value >= days) selectedDay.value = 0;
+            
             saveAll(); showToast("Settings Saved!");
         }
 
