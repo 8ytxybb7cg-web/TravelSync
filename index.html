@@ -184,15 +184,10 @@
           <span class="text-xs font-medium text-gray-500 font-mono tracking-normal whitespace-nowrap">{{ headerDateRange }}</span>
         </h1>
       </div>
-            <div class="flex flex-col items-end gap-2">
-         <div class="flex items-center gap-2">
-             <button @click="user ? logout() : login()" class="w-6 h-6 rounded-full flex items-center justify-center transition-colors" :class="user ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-400'">
-                <i class="ph-bold text-xs" :class="user ? 'ph-sign-out' : 'ph-user'"></i>
-             </button>
-             <button @click="toggleLang" class="text-[10px] font-bold bg-gray-200/80 text-gray-600 px-2 py-0.5 rounded-md hover:bg-gray-300 transition-colors">
-                {{ lang === 'zh' ? 'EN' : '繁' }}
-             </button>
-         </div>
+      <div class="flex flex-col items-end gap-2">
+         <button @click="toggleLang" class="text-[10px] font-bold bg-gray-200/80 text-gray-600 px-2 py-0.5 rounded-md hover:bg-gray-300 transition-colors">
+            {{ lang === 'zh' ? 'EN' : '繁' }}
+         </button>
       </div>
     </header>
 
@@ -863,22 +858,7 @@
         const isInitialized = ref(false);
         const lang = ref(localStorage.getItem('app_lang') || 'zh');
         const rateDisplayMode = ref(Number(localStorage.getItem('rate_mode') || 0));
-                const notification = ref(null);
-        const user = ref(null);
-
-        const login = async () => {
-            await supabaseClient.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: window.location.href } });
-        };
-        const logout = async () => {
-            await supabaseClient.auth.signOut();
-            user.value = null;
-            window.location.reload(); 
-        };
-
-        supabaseClient.auth.onAuthStateChange((_, session) => {
-            user.value = session?.user || null;
-        });
-
+        const notification = ref(null);
 
         // Core Data
         const settings = reactive({
@@ -943,7 +923,6 @@
             for(let i=0; i<diffDays; i++){
                 const d = new Date(start); d.setDate(d.getDate() + i);
                                 const dateStr = `${d.getDate()}/${d.getMonth()+1}`;
-
                 const weekday = d.toLocaleDateString('en-US', {weekday:'short'});
                 list.push({ dateStr, weekday, fullDate: d });
             }
@@ -1105,9 +1084,8 @@
         }
 
         // Upload Helper (Supabase)
-                async function uploadFileToSupabase(file) {
+        async function uploadFileToSupabase(file) {
             if (!file) return null;
-            if (!user.value) { alert('Login required'); return null; }
             const fileName = `${Date.now()}_${Math.floor(Math.random()*1000)}_${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
             try {
                 const { error } = await supabaseClient.storage.from('uploads').upload(fileName, file);
@@ -1248,9 +1226,8 @@
             } catch { syncState.value = 'error'; }
         }
         
-                async function saveAll() {
+        async function saveAll() {
             if(!isInitialized.value) return;
-            if(!user.value) return; // Auth Guard
             syncState.value = 'saving';
             const payload = { settings, itinerary, preTripNotes: preTripNotes.value, shoppingList: shoppingList.value, expenses: expenses.value, infoList: infoList.value, flights, members: members.value };
             await supabaseClient.from('trip_data').upsert({ id: TRIP_ID, content: payload, updated_at: new Date() });
@@ -1301,8 +1278,7 @@
              } catch {}
         }
 
-                function initSortable(id, list) {
-            if(!user.value) return; 
+        function initSortable(id, list) {
             const el = document.getElementById(id);
             if(el) Sortable.create(el, { handle:'.drag-handle', animation:150, onEnd:(evt)=>{ const item = list.splice(evt.oldIndex, 1)[0]; list.splice(evt.newIndex, 0, item); saveAll(); }});
         }
@@ -1325,8 +1301,7 @@
              if(val === '首頁') nextTick(() => { initSortable('sortable-pre-home', preTripNotes.value); initSortable('sortable-shop-home', shoppingList.value); });
         });
 
-                return {
-            user, login, logout,
+        return {
             appVersion, currentTab, syncState, syncStatusText, lang, t, toggleLang, showToast, notification,
             settings, editingSettings, saveSettings, cancelSettings, headerDateRange, dayList, getDayHeader,
             itinerary, preTripNotes, shoppingList, expenses, totalExpense, expensesBreakdown, infoList,
