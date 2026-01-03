@@ -1,3 +1,5 @@
+翻譯
+
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
@@ -289,32 +291,34 @@
                </div>
             </div>
             
-            <div class="ios-card p-3 relative group overflow-hidden h-full flex flex-col justify-between">
+                       <div class="ios-card p-3 relative group overflow-hidden h-full flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <i :class="weatherIconClass" class="text-[3.5rem] leading-none text-gray-800/80 drop-shadow-sm -ml-1 mt-1"></i>
                     <div class="text-right z-10">
-                       <span class="text-[10px] font-bold text-gray-400 uppercase truncate max-w-[80px] block">{{ settings.weatherLoc || 'Taipei' }}</span>
+                       <span class="text-[10px] font-bold text-gray-400 uppercase truncate max-w-[80px] block">
+                           {{ lang === 'zh' ? (settings.weatherLoc || 'Taipei') : (settings.weatherLocEn || settings.weatherLoc || 'Taipei') }}
+                       </span>
                     </div>
                 </div>
                 <div class="flex justify-between items-end mt-2">
                      <div class="flex flex-col gap-[2px] pb-[2px]">
-                          <div class="flex items-center gap-1.5">
-                              <span class="text-[9px] font-bold text-gray-400 uppercase w-6 text-right">體感</span>
+                         <div class="flex items-center gap-1.5">
+                              <span class="text-[9px] font-bold text-gray-400 uppercase w-8 text-right">{{ t('feelsLike') }}</span>
                               <span class="text-[10px] font-bold text-gray-700">{{ weather.feelsLike }}°</span>
-                          </div>
+                         </div>
                           <div class="flex items-center gap-1.5">
-                              <span class="text-[9px] font-bold text-gray-400 uppercase w-6 text-right">濕度</span>
+                              <span class="text-[9px] font-bold text-gray-400 uppercase w-8 text-right">{{ t('humidity') }}</span>
                               <span class="text-[10px] font-bold text-gray-700">{{ weather.humidity }}%</span>
                           </div>
                           <div class="flex items-center gap-1.5">
-                              <span class="text-[9px] font-bold text-gray-400 uppercase w-6 text-right">UV</span>
+                              <span class="text-[9px] font-bold text-gray-400 uppercase w-8 text-right">UV</span>
                               <span class="text-[10px] font-bold text-gray-700">{{ weather.uv }}</span>
                           </div>
                           <div class="flex items-center gap-1.5">
-                              <span class="text-[9px] font-bold text-gray-400 uppercase w-6 text-right">降雨</span>
+                              <span class="text-[9px] font-bold text-gray-400 uppercase w-8 text-right">{{ t('rain') }}</span>
                               <span class="text-[10px] font-bold text-[#007AFF]">{{ weather.rain }}%</span>
                               <i v-if="weather.warning" class="ph-fill ph-warning text-red-500 text-xs animate-pulse ml-0.5" :title="weather.warning"></i>
-                          </div>
+                         </div>
                      </div>
                      <div class="text-right">
                         <div class="text-4xl font-light tracking-tighter text-slate-800 leading-none">{{ weather.temp }}°</div>
