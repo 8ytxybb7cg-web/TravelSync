@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v7.7</title>
+  <title>Travel Sync v7.8</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -289,34 +289,32 @@
                </div>
             </div>
             
-                       <div class="ios-card p-3 relative group overflow-hidden h-full flex flex-col justify-between">
+            <div class="ios-card p-3 relative group overflow-hidden h-full flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <i :class="weatherIconClass" class="text-[3.5rem] leading-none text-gray-800/80 drop-shadow-sm -ml-1 mt-1"></i>
                     <div class="text-right z-10">
-                       <span class="text-[10px] font-bold text-gray-400 uppercase truncate max-w-[80px] block">
-                           {{ lang === 'zh' ? (settings.weatherLoc || 'Taipei') : (settings.weatherLocEn || settings.weatherLoc || 'Taipei') }}
-                       </span>
+                       <span class="text-[10px] font-bold text-gray-400 uppercase truncate max-w-[80px] block">{{ settings.weatherLoc || 'Taipei' }}</span>
                     </div>
                 </div>
                 <div class="flex justify-between items-end mt-2">
                      <div class="flex flex-col gap-[2px] pb-[2px]">
-                         <div class="flex items-center gap-1.5">
-                              <span class="text-[9px] font-bold text-gray-400 uppercase w-8 text-right">{{ t('feelsLike') }}</span>
-                              <span class="text-[10px] font-bold text-gray-700">{{ weather.feelsLike }}°</span>
-                         </div>
                           <div class="flex items-center gap-1.5">
-                              <span class="text-[9px] font-bold text-gray-400 uppercase w-8 text-right">{{ t('humidity') }}</span>
+                              <span class="text-[9px] font-bold text-gray-400 uppercase w-6 text-right">體感</span>
+                              <span class="text-[10px] font-bold text-gray-700">{{ weather.feelsLike }}°</span>
+                          </div>
+                          <div class="flex items-center gap-1.5">
+                              <span class="text-[9px] font-bold text-gray-400 uppercase w-6 text-right">濕度</span>
                               <span class="text-[10px] font-bold text-gray-700">{{ weather.humidity }}%</span>
                           </div>
                           <div class="flex items-center gap-1.5">
-                              <span class="text-[9px] font-bold text-gray-400 uppercase w-8 text-right">UV</span>
+                              <span class="text-[9px] font-bold text-gray-400 uppercase w-6 text-right">UV</span>
                               <span class="text-[10px] font-bold text-gray-700">{{ weather.uv }}</span>
                           </div>
                           <div class="flex items-center gap-1.5">
-                              <span class="text-[9px] font-bold text-gray-400 uppercase w-8 text-right">{{ t('rain') }}</span>
+                              <span class="text-[9px] font-bold text-gray-400 uppercase w-6 text-right">降雨</span>
                               <span class="text-[10px] font-bold text-[#007AFF]">{{ weather.rain }}%</span>
                               <i v-if="weather.warning" class="ph-fill ph-warning text-red-500 text-xs animate-pulse ml-0.5" :title="weather.warning"></i>
-                         </div>
+                          </div>
                      </div>
                      <div class="text-right">
                         <div class="text-4xl font-light tracking-tighter text-slate-800 leading-none">{{ weather.temp }}°</div>
@@ -324,6 +322,7 @@
                      </div>
                 </div>
             </div>
+        </div>
 
         <section>
             <div class="flex items-center justify-between mb-3 px-1">
@@ -451,7 +450,7 @@
              </div>
              <button @click="openItineraryModal(null)" class="flex-shrink-0 w-[70px] h-[70px] rounded-xl bg-blue-500 text-white shadow-lg flex flex-col items-center justify-center active:scale-95 transition">
                  <i class="ph-bold ph-plus text-2xl mb-1"></i>
-                                  <span class="text-[10px] font-bold">{{ t('add') }}</span>
+                 <span class="text-[10px] font-bold">Add</span>
              </button>
          </div>
 
@@ -588,34 +587,22 @@
           </div>
       </div>
 
-           <div v-if="currentTab === '設定'" class="animate-fade-in pb-24">
+      <div v-if="currentTab === '設定'" class="animate-fade-in pb-24">
          <div class="ios-card p-5 space-y-6">
-             <h2 class="text-xl font-bold mb-4">{{ t('settings') }}</h2>
-             <div>
-                 <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('routeHeader') }}</label>
-                 <input v-model="editingSettings.route" class="ios-input font-bold" placeholder="HKG ✈️ KIX">
+             <h2 class="text-xl font-bold mb-4">Settings</h2>
+             <div><label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Route Header</label><input v-model="editingSettings.route" class="ios-input font-bold" placeholder="HKG ✈️ KIX"></div>
+             <div class="grid grid-cols-2 gap-4">
+                 <div><label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Start Date</label><input v-model="editingSettings.startDate" type="date" class="ios-input"></div>
+                 <div><label class="block text-xs font-bold text-gray-400 mb-2 uppercase">End Date</label><input v-model="editingSettings.endDate" type="date" class="ios-input"></div>
              </div>
              <div class="grid grid-cols-2 gap-4">
-                 <div><label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('startDate') }}</label><input v-model="editingSettings.startDate" type="date" class="ios-input"></div>
-                 <div><label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('endDate') }}</label><input v-model="editingSettings.endDate" type="date" class="ios-input"></div>
+                 <div><label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Local Currency</label><input v-model="editingSettings.localCurrency" class="ios-input font-mono uppercase" placeholder="TWD"></div>
+                 <div><label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Home Currency</label><input v-model="editingSettings.homeCurrency" class="ios-input font-mono uppercase" placeholder="HKD"></div>
              </div>
-             <div class="grid grid-cols-2 gap-4">
-                 <div><label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('localCurr') }}</label><input v-model="editingSettings.localCurrency" class="ios-input font-mono uppercase" placeholder="TWD"></div>
-                 <div><label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('homeCurr') }}</label><input v-model="editingSettings.homeCurrency" class="ios-input font-mono uppercase" placeholder="HKD"></div>
-             </div>
-             <div class="grid grid-cols-2 gap-4">
-                 <div>
-                     <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('weatherLoc') }} (中文)</label>
-                     <input v-model="editingSettings.weatherLoc" class="ios-input" placeholder="e.g. 台北">
-                 </div>
-                 <div>
-                     <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('weatherLoc') }} (EN)</label>
-                     <input v-model="editingSettings.weatherLocEn" class="ios-input" placeholder="e.g. Taipei">
-                 </div>
-             </div>
+             <div><label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Weather Location Name</label><input v-model="editingSettings.weatherLoc" class="ios-input" placeholder="e.g. Taipei"></div>
              <div class="flex gap-3 mt-4">
-                 <button @click="cancelSettings" class="btn-ios-cancel">{{ t('cancel') }}</button>
-                 <button @click="saveSettings" class="btn-ios-primary">{{ t('save') }}</button>
+                 <button @click="cancelSettings" class="btn-ios-cancel">Cancel</button>
+                 <button @click="saveSettings" class="btn-ios-primary">Save Changes</button>
              </div>
           </div>
       </div>
@@ -637,9 +624,9 @@
     </nav>
     
     <div v-if="flightModalOpen" class="modal-backdrop" @click.self="flightModalOpen=false">
-               <div class="ios-modal-container">
+        <div class="ios-modal-container">
             <div class="ios-modal-header">
-                {{ t('editFlight') }}
+                Edit Flight
                 <div class="flex justify-center mt-2">
                     <div class="bg-gray-200 p-0.5 rounded-lg flex">
                          <button @click="currentFlightView='outbound'; syncModalToView()" class="px-3 py-1 text-xs font-bold rounded-md transition-all" :class="currentFlightView==='outbound' ? 'bg-white shadow text-black' : 'text-gray-500'">{{ t('outbound') }}</button>
@@ -648,35 +635,29 @@
                 </div>
             </div>
             <div class="ios-modal-body space-y-3">
-                <input v-model="newFlight.code" class="ios-input" :placeholder="t('flightCode')">
-                <input v-model="newFlight.title" class="ios-input" :placeholder="t('airline')">
+                <input v-model="newFlight.code" class="ios-input" placeholder="Flight Code (e.g. CX400)">
+                <input v-model="newFlight.title" class="ios-input" placeholder="Airline Name">
                 <div class="flex gap-2"><input v-model="newFlight.fromCode" class="ios-input text-center uppercase" placeholder="HKG"><input v-model="newFlight.toCode" class="ios-input text-center uppercase" placeholder="TPE"></div>
                 <div class="flex gap-2"><input v-model="newFlight.depTime" type="time" class="ios-input"><input v-model="newFlight.arrTime" type="time" class="ios-input"></div>
-                <div class="flex gap-2"><input v-model="newFlight.fromTerminal" class="ios-input" :placeholder="t('depTerm')"><input v-model="newFlight.toTerminal" class="ios-input" :placeholder="t('arrTerm')"></div>
-                <input v-model="newFlight.gate" class="ios-input" :placeholder="t('gate')">
-                <select v-model="newFlight.status" class="ios-input">
-                    <option value="Scheduled">{{ t('Scheduled') }}</option>
-                    <option value="On Time">{{ t('On Time') }}</option>
-                    <option value="Delayed">{{ t('Delayed') }}</option>
-                    <option value="Boarding">{{ t('Boarding') }}</option>
-                    <option value="Landed">{{ t('Landed') }}</option>
-                </select>
-                <input v-model="newFlight.liveLink" class="ios-input" :placeholder="t('trackingUrl')">
+                <div class="flex gap-2"><input v-model="newFlight.fromTerminal" class="ios-input" placeholder="Dep Term"><input v-model="newFlight.toTerminal" class="ios-input" placeholder="Arr Term"></div>
+                <input v-model="newFlight.gate" class="ios-input" placeholder="Gate">
+                <select v-model="newFlight.status" class="ios-input"><option value="Scheduled">Scheduled</option><option value="On Time">On Time</option><option value="Delayed">Delayed</option><option value="Boarding">Boarding</option><option value="Landed">Landed</option></select>
+                <input v-model="newFlight.liveLink" class="ios-input" placeholder="Flighty/Tracking URL">
             </div>
-            <div class="ios-modal-footer"><button @click="flightModalOpen=false" class="btn-ios-cancel">{{ t('cancel') }}</button><button @click="saveFlight" class="btn-ios-primary">{{ t('save') }}</button></div>
+            <div class="ios-modal-footer"><button @click="flightModalOpen=false" class="btn-ios-cancel">Cancel</button><button @click="saveFlight" class="btn-ios-primary">Save</button></div>
         </div>
     </div>
 
     <div v-if="expenseModalOpen" class="modal-backdrop" @click.self="expenseModalOpen=false">
-               <div class="ios-modal-container">
+        <div class="ios-modal-container">
             <div class="ios-modal-header relative">
                  <div class="flex items-center justify-center gap-2 text-[#007AFF] font-bold text-lg">
                      <i class="ph" :class="getCategoryIcon(newExpense.category)"></i>
-                     <span>{{ t(newExpense.category) }}</span>
+                     <span>{{ newExpense.category }}</span>
                      <i class="ph ph-caret-down text-sm"></i>
                  </div>
                  <select v-model="newExpense.category" class="absolute inset-0 w-full h-full opacity-0 z-10">
-                    <option v-for="cat in expenseCats" :key="cat" :value="cat.name">{{ t(cat.name) }}</option>
+                    <option v-for="cat in expenseCats" :key="cat" :value="cat.name">{{ cat.name }}</option>
                  </select>
             </div>
             <div class="ios-modal-body calc-body gap-2">
@@ -696,14 +677,14 @@
                  </div>
                  <div class="flex flex-col gap-2 p-2 bg-gray-100/60 rounded-xl mb-1">
                     <div class="flex items-center gap-2">
-                        <span class="text-[10px] font-bold text-gray-400 w-12 text-right">{{ t('payer') }}</span>
+                        <span class="text-[10px] font-bold text-gray-400 w-12 text-right">Payer</span>
                         <select v-model="newExpense.payer" class="flex-1 bg-white h-8 rounded-lg text-xs font-bold px-2 border border-gray-200">
                            <option v-for="m in members" :key="m" :value="m">{{ m }}</option>
                         </select>
                     </div>
                      <div class="flex items-start gap-2">
                         <div class="w-12 text-right mt-1.5 flex flex-col items-end">
-                             <button @click="toggleAllParticipants" class="text-[10px] font-bold text-[#007AFF]">{{ t('all') }}</button>
+                            <button @click="toggleAllParticipants" class="text-[10px] font-bold text-[#007AFF]">All</button>
                          </div>
                          <div class="flex-1 flex flex-wrap gap-1.5">
                              <button v-for="m in members" :key="m" @click="toggleParticipant(m)"
@@ -715,7 +696,7 @@
                      </div>
                 </div>
                  <div class="flex gap-2">
-                     <input v-model="newExpense.name" class="ios-input flex-1 text-center font-medium h-10 text-sm" :placeholder="t('desc')">
+                     <input v-model="newExpense.name" class="ios-input flex-1 text-center font-medium h-10 text-sm" placeholder="Description">
                      <input v-model="newExpense.date" type="date" class="ios-input w-32 text-gray-600 text-sm h-10 text-center">
                  </div>
                  <div class="flex gap-2 mb-1 p-1 bg-gray-200/50 rounded-xl">
@@ -741,113 +722,113 @@
                      <button class="calc-btn op" @click="handleCalcInput('=')">=</button>
                      <button class="calc-btn col-span-2" @click="handleCalcInput('0')">0</button>
                      <button class="calc-btn" @click="handleCalcInput('.')">.</button>
-                     <button class="calc-btn done-btn" @click="saveExpense">{{ t('done') }}</button>
+                     <button class="calc-btn done-btn" @click="saveExpense">Done</button>
                  </div>
             </div>
             <div class="ios-modal-footer">
-                <button v-if="newExpense.id" @click="removeExpense(newExpense.id); expenseModalOpen=false" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
-                <button @click="expenseModalOpen=false" class="btn-ios-cancel">{{ t('cancel') }}</button>
+                <button v-if="newExpense.id" @click="removeExpense(newExpense.id); expenseModalOpen=false" class="btn-ios-cancel text-red-500">Delete</button>
+                <button @click="expenseModalOpen=false" class="btn-ios-cancel">Cancel</button>
             </div>
         </div>
     </div>
     
     <div v-if="memberModalOpen" class="modal-backdrop" @click.self="memberModalOpen=false">
-               <div class="ios-modal-container">
-             <div class="ios-modal-header">{{ t('manageMembers') }}</div>
+        <div class="ios-modal-container">
+             <div class="ios-modal-header">Manage Members</div>
               <div class="ios-modal-body space-y-3">
                  <div v-for="(m, idx) in members" :key="idx" class="flex justify-between items-center p-3 bg-white rounded-xl shadow-sm">
                      <span class="font-bold">{{ m }}</span>
                      <button v-if="members.length > 1" @click="removeMember(m)" class="text-red-500"><i class="ph-bold ph-trash"></i></button>
                  </div>
                  <div class="flex gap-2 mt-4">
-                     <input v-model="newMemberName" class="ios-input" :placeholder="t('newName')">
+                     <input v-model="newMemberName" class="ios-input" placeholder="New Name">
                      <button @click="addMember" class="bg-black text-white px-4 rounded-xl font-bold"><i class="ph-bold ph-plus"></i></button>
                  </div>
              </div>
              <div class="ios-modal-footer">
-                 <button @click="memberModalOpen=false" class="btn-ios-cancel">{{ t('done') }}</button>
+                 <button @click="memberModalOpen=false" class="btn-ios-cancel">Done</button>
              </div>
         </div>
     </div>
 
     <div v-if="itineraryModalOpen" class="modal-backdrop" @click.self="itineraryModalOpen=false">
-               <div class="ios-modal-container">
-            <div class="ios-modal-header">{{ t('editEvent') }}</div>
+        <div class="ios-modal-container">
+            <div class="ios-modal-header">Edit Event</div>
             <div class="ios-modal-body space-y-3">
                 <select v-model="newItineraryItem.dayIndex" class="ios-input">
                     <option v-for="(d, i) in dayList" :key="i" :value="i">Day {{ i + 1 }} - {{ d.dateStr }}</option>
                 </select>
                 <div class="flex gap-2">
                     <input type="time" v-model="newItineraryItem.time" class="ios-input !w-auto text-center font-bold">
-                    <input v-model="newItineraryItem.title" class="ios-input flex-1" :placeholder="t('title')">
+                    <input v-model="newItineraryItem.title" class="ios-input flex-1" placeholder="Title">
                 </div>
                 <div class="relative">
                     <i class="ph ph-map-pin absolute left-3 top-3.5 text-gray-400"></i>
-                    <input v-model="newItineraryItem.address" class="ios-input pl-10 text-sm" :placeholder="t('mapAddr')">
+                    <input v-model="newItineraryItem.address" class="ios-input pl-10 text-sm" placeholder="Google Map Address">
                 </div>
-                <textarea v-model="newItineraryItem.note" class="ios-input" :placeholder="t('notes')" rows="3"></textarea>
+                <textarea v-model="newItineraryItem.note" class="ios-input" placeholder="Notes" rows="3"></textarea>
             </div>
             <div class="ios-modal-footer">
-                <button @click="itineraryModalOpen=false" class="btn-ios-cancel">{{ t('cancel') }}</button>
-                <button @click="saveItineraryItem" class="btn-ios-primary">{{ t('save') }}</button>
+                <button @click="itineraryModalOpen=false" class="btn-ios-cancel">Cancel</button>
+                <button @click="saveItineraryItem" class="btn-ios-primary">Save</button>
             </div>
         </div>
     </div>
 
     <div v-if="shoppingModalOpen" class="modal-backdrop" @click.self="shoppingModalOpen=false">
-               <div class="ios-modal-container">
-            <div class="ios-modal-header">{{ t('shoppingItem') }}</div>
+        <div class="ios-modal-container">
+            <div class="ios-modal-header">Shopping Item</div>
             <div class="ios-modal-body space-y-4">
-                <input v-model="newShoppingItem.name" class="ios-input font-medium" :placeholder="t('itemName')">
+                <input v-model="newShoppingItem.name" class="ios-input font-medium" placeholder="Item Name">
                 <div class="border-t border-gray-100 pt-4">
-                    <label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">{{ t('imgRef') }}</label>
+                    <label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">Image Reference</label>
                     <label class="flex flex-col items-center justify-center w-full p-6 border border-dashed border-gray-300 rounded-2xl cursor-pointer hover:bg-gray-50 transition">
-                         <div class="text-center" v-if="!newShoppingItem.imageURL && !tempUploadPreview">
+                        <div class="text-center" v-if="!newShoppingItem.imageURL && !tempUploadPreview">
                             <i class="ph ph-image text-3xl text-gray-300 mb-2"></i>
-                            <div class="text-[#007AFF] text-sm font-medium">{{ t('uploadImg') }}</div>
-                         </div>
-                        <div v-else class="text-center text-[#007AFF] font-bold text-sm">{{ tempUploadPreview ? t('imgSelected') : t('changeImg') }}</div>
+                            <div class="text-[#007AFF] text-sm font-medium">Upload Image</div>
+                        </div>
+                        <div v-else class="text-center text-[#007AFF] font-bold text-sm">{{ tempUploadPreview ? 'Image Selected' : 'Change Image' }}</div>
                         <input type="file" accept="image/*" class="hidden" @change="handleFileUpload">
                     </label>
-                    <input v-model="newShoppingItem.imageURL" class="w-full mt-3 p-2 text-xs text-gray-400 bg-transparent text-center border-none focus:outline-none" :placeholder="t('pasteUrl')">
-                     <div v-if="tempUploadPreview || newShoppingItem.imageURL" class="mt-4 flex justify-center">
+                    <input v-model="newShoppingItem.imageURL" class="w-full mt-3 p-2 text-xs text-gray-400 bg-transparent text-center border-none focus:outline-none" placeholder="Or paste URL here">
+                    <div v-if="tempUploadPreview || newShoppingItem.imageURL" class="mt-4 flex justify-center">
                         <img :src="tempUploadPreview || newShoppingItem.imageURL" class="h-24 w-24 object-cover rounded-2xl shadow-sm border border-gray-100">
                     </div>
                 </div>
             </div>
             <div class="ios-modal-footer">
-                <button v-if="newShoppingItem.id" @click="removeShoppingItem(newShoppingItem.id); shoppingModalOpen=false" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
-                <button @click="shoppingModalOpen=false" class="btn-ios-cancel">{{ t('cancel') }}</button>
-                <button @click="saveShoppingItem" class="btn-ios-primary">{{ t('save') }}</button>
+                <button v-if="newShoppingItem.id" @click="removeShoppingItem(newShoppingItem.id); shoppingModalOpen=false" class="btn-ios-cancel text-red-500">Delete</button>
+                <button @click="shoppingModalOpen=false" class="btn-ios-cancel">Cancel</button>
+                <button @click="saveShoppingItem" class="btn-ios-primary">Save</button>
             </div>
         </div>
     </div>
     
     <div v-if="infoModalOpen" class="modal-backdrop" @click.self="infoModalOpen=false">
-               <div class="ios-modal-container">
-            <div class="ios-modal-header">{{ t('editInfo') }}</div>
+        <div class="ios-modal-container">
+            <div class="ios-modal-header">Edit Info</div>
             <div class="ios-modal-body space-y-3">
-                <input v-model="newInfoItem.title" class="ios-input" :placeholder="t('title')">
-                <textarea v-model="newInfoItem.note" class="ios-input h-32" :placeholder="t('details')"></textarea>
+                <input v-model="newInfoItem.title" class="ios-input" placeholder="Title">
+                <textarea v-model="newInfoItem.note" class="ios-input h-32" placeholder="Details..."></textarea>
             </div>
             <div class="ios-modal-footer">
-                <button v-if="newInfoItem.id" @click="removeInfo(newInfoItem.id); infoModalOpen=false" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
-                <button @click="infoModalOpen=false" class="btn-ios-cancel">{{ t('cancel') }}</button>
-                <button @click="saveInfoItem" class="btn-ios-primary">{{ t('save') }}</button>
+                <button v-if="newInfoItem.id" @click="removeInfo(newInfoItem.id); infoModalOpen=false" class="btn-ios-cancel text-red-500">Delete</button>
+                <button @click="infoModalOpen=false" class="btn-ios-cancel">Cancel</button>
+                <button @click="saveInfoItem" class="btn-ios-primary">Save</button>
             </div>
         </div>
     </div>
 
     <div v-if="preNoteModalOpen" class="modal-backdrop" @click.self="preNoteModalOpen=false">
-               <div class="ios-modal-container">
-            <div class="ios-modal-header">{{ t('editItem') }}</div>
+        <div class="ios-modal-container">
+            <div class="ios-modal-header">Edit Item</div>
             <div class="ios-modal-body space-y-4">
-                <input v-model="editingPreNote.name" class="ios-input" :placeholder="t('taskName')">
+                <input v-model="editingPreNote.name" class="ios-input" placeholder="Task Name">
             </div>
             <div class="ios-modal-footer">
-                <button v-if="editingPreNote.id" @click="removePreNote(editingPreNote.id); preNoteModalOpen=false" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
-                <button @click="preNoteModalOpen=false" class="btn-ios-cancel">{{ t('cancel') }}</button>
-                <button @click="savePreNoteEdit" class="btn-ios-primary">{{ t('save') }}</button>
+                <button v-if="editingPreNote.id" @click="removePreNote(editingPreNote.id); preNoteModalOpen=false" class="btn-ios-cancel text-red-500">Delete</button>
+                <button @click="preNoteModalOpen=false" class="btn-ios-cancel">Cancel</button>
+                <button @click="savePreNoteEdit" class="btn-ios-primary">Save</button>
             </div>
         </div>
     </div>
@@ -871,7 +852,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v251231-7.7');
+        const appVersion = ref('v251231-7.8');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -880,9 +861,9 @@
         const notification = ref(null);
 
         // Core Data
-                const settings = reactive({
+        const settings = reactive({
             route: 'HKG ✈️ TPE', startDate: '2026-03-22', endDate: '2026-03-27',
-            localCurrency: 'TWD', homeCurrency: 'HKD', weatherLoc: '台北', weatherLocEn: 'Taipei'
+            localCurrency: 'TWD', homeCurrency: 'HKD', weatherLoc: 'Taipei'
         });
         const editingSettings = reactive({});
 
@@ -941,7 +922,7 @@
             const list = [];
             for(let i=0; i<diffDays; i++){
                 const d = new Date(start); d.setDate(d.getDate() + i);
-                                const dateStr = `${d.getDate()}/${d.getMonth()+1}`;
+                const dateStr = d.toLocaleDateString('en-GB', {day:'numeric', month:'short'});
                 const weekday = d.toLocaleDateString('en-US', {weekday:'short'});
                 list.push({ dateStr, weekday, fullDate: d });
             }
@@ -1059,7 +1040,7 @@
                 'outbound': { zh: '去程', en: 'Outbound' },
                 'return': { zh: '回程', en: 'Return' },
                 'gate': { zh: '閘口', en: 'GATE' },
-                'terminal': { zh: '客運大樓', en: ' ' },
+                'terminal': { zh: '', en: 'T' },
                 'estDep': { zh: '預計起飛', en: 'Est. Dep' },
                 'estArr': { zh: '預計抵達', en: 'Est. Arr' },
                 'economy': { zh: '經濟艙', en: 'Economy' },
@@ -1090,7 +1071,7 @@
                 'airline': { zh: '航空公司', en: 'Airline Name' },
                 'depTerm': { zh: '出發客運大樓', en: 'Dep Term' },
                 'arrTerm': { zh: '抵達客運大樓', en: 'Arr Term' },
-                'trackingUrl': { zh: '追蹤連結', en: 'Tracking URL' },
+                'trackingUrl': { zh: 'Flighty/追蹤連結', en: 'Tracking URL' },
 
                 // 支出
                 'filter_all': { zh: '全部', en: 'All' },
@@ -1132,6 +1113,12 @@
                 'editEvent': { zh: '編輯行程', en: 'Edit Event' },
                 'mapAddr': { zh: 'Google Map 地址', en: 'Google Map Address' },
 
+                // Dock Tabs (直接用中文做 Key)
+                '首頁': { zh: '首頁', en: 'Home' },
+                '行程': { zh: '行程', en: 'Itinerary' },
+                '記帳': { zh: '記帳', en: 'Expenses' },
+                '設定': { zh: '設定', en: 'Settings' },
+
                 // 設定
                 'settings': { zh: '設定', en: 'Settings' },
                 'routeHeader': { zh: '路線標題', en: 'Route Header' },
@@ -1143,6 +1130,7 @@
             };
             return dict[k]?.[lang.value] || k;
         };
+
 
         function toggleLang() { lang.value = lang.value === 'zh' ? 'en' : 'zh'; localStorage.setItem('app_lang', lang.value); }
         function toggleRateOrder() { 
