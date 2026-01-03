@@ -881,10 +881,11 @@
         const notification = ref(null);
 
         // Core Data
-        const settings = reactive({
+                const settings = reactive({
             route: 'HKG ✈️ TPE', startDate: '2026-03-22', endDate: '2026-03-27',
-            localCurrency: 'TWD', homeCurrency: 'HKD', weatherLoc: 'Taipei'
+            localCurrency: 'TWD', homeCurrency: 'HKD', weatherLoc: '台北', weatherLocEn: 'Taipei'
         });
+
         const editingSettings = reactive({});
 
         const itinerary = reactive([[], [], [], [], [], []]);
