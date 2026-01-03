@@ -292,9 +292,10 @@
                        <div class="ios-card p-3 relative group overflow-hidden h-full flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <i :class="weatherIconClass" class="text-[3.5rem] leading-none text-gray-800/80 drop-shadow-sm -ml-1 mt-1"></i>
-                                        <div class="text-right z-10 flex-1 ml-2">
-                       <span class="text-lg font-bold text-gray-800 leading-tight block break-words">
-                           {{ lang === 'zh' ? (settings.weatherLoc || 'Taipei') : (settings.weatherLocEn || settings.weatherLoc || 'Taipei') }}
+                                        <div class="text-right z-10">
+                       <span class="text-2xl font-bold text-gray-600 uppercase block">
+                           {{ lang === 'zh' ?
+(settings.weatherLoc || 'Taipei') : (settings.weatherLocEn || settings.weatherLoc || 'Taipei') }}
                        </span>
                     </div>
                 </div>
