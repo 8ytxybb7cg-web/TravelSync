@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v7.9</title>
+  <title>Travel Sync v8.0</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -507,14 +507,17 @@
                     </div>
                     <p class="text-sm text-gray-500 pl-[44px] leading-relaxed">{{ selectedMapLocation.address }}</p>
                </div>
-                <div class="flex gap-3 pl-[44px]">
+                                <div class="flex gap-3 pl-[44px]">
                    <a :href="generateMapLink(selectedMapLocation.address, 'search')" target="_blank"
-                       class="h-10 px-4 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 rounded-xl font-bold active:scale-95 transition text-sm border border-gray-200">
-                    Google Map
+                       class="h-10 px-4 flex items-center justify-center 
+                       gap-2 bg-gray-100 text-gray-700 rounded-xl font-bold active:scale-95 transition text-sm border border-gray-200">
+                    Google Search
                     </a>
                    <a :href="generateMapLink(selectedMapLocation.address, 'navigate')" target="_blank"
-                       class="flex-1 h-10 flex items-center justify-center gap-2 bg-[#007AFF] text-white rounded-xl font-bold active:scale-95 transition text-sm shadow-sm shadow-blue-200">
-                    <i class="ph ph-navigation-arrow text-lg"></i> 導航
+                       class="flex-1 h-10 flex items-center justify-center 
+                       gap-2 bg-[#007AFF] text-white rounded-xl font-bold active:scale-95 transition text-sm shadow-sm shadow-blue-200">
+                    <i class="ph ph-navigation-arrow text-lg"></i> 
+                    {{ t('navigate') }} ({{ mapProvider === 'google' ? 'Google' : mapProvider === 'apple' ? 'Apple' : mapProvider === 'naver' ? 'Naver' : 'Map' }})
                     </a>
                  </div>
             </div>
@@ -610,10 +613,22 @@
                      <input v-model="editingSettings.weatherLoc" class="ios-input" placeholder="e.g. 台北">
                  </div>
                  <div>
-                     <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('weatherLoc') }} (EN)</label>
+                                          <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('weatherLoc') }} (EN)</label>
                      <input v-model="editingSettings.weatherLocEn" class="ios-input" placeholder="e.g. Taipei">
                  </div>
              </div>
+             
+             <div>
+                 <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('mapProvider') }}</label>
+                 <div class="bg-gray-200/50 p-1 rounded-xl flex">
+                    <button v-for="m in ['google','apple','naver','custom']" :key="m" @click="saveMapProvider(m)"
+                       class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all uppercase"
+                       :class="mapProvider === m ? 'bg-white shadow-sm text-black' : 'text-gray-500'">
+                       {{ m === 'custom' ? 'Map App' : m }}
+                    </button>
+                 </div>
+             </div>
+
              <div class="flex gap-3 mt-4">
                  <button @click="cancelSettings" class="btn-ios-cancel">{{ t('cancel') }}</button>
                  <button @click="saveSettings" class="btn-ios-primary">{{ t('save') }}</button>
@@ -782,9 +797,9 @@
                     <input type="time" v-model="newItineraryItem.time" class="ios-input !w-auto text-center font-bold">
                     <input v-model="newItineraryItem.title" class="ios-input flex-1" :placeholder="t('title')">
                 </div>
-                <div class="relative">
-                    <i class="ph ph-map-pin absolute left-3 top-3.5 text-gray-400"></i>
-                    <input v-model="newItineraryItem.address" class="ios-input pl-10 text-sm" :placeholder="t('mapAddr')">
+                                <div class="relative">
+             <i class="ph ph-map-pin absolute left-3 top-3.5 text-gray-400"></i>
+                    <input v-model="newItineraryItem.address" class="ios-input pl-10 text-sm" :placeholder="t('addrPlaceholder')">
                 </div>
                 <textarea v-model="newItineraryItem.note" class="ios-input" :placeholder="t('notes')" rows="3"></textarea>
             </div>
@@ -872,12 +887,13 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260103-7.9');
+        const appVersion = ref('v260104-8.0');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
-        const lang = ref(localStorage.getItem('app_lang') || 'zh');
+                const lang = ref(localStorage.getItem('app_lang') || 'zh');
         const rateDisplayMode = ref(Number(localStorage.getItem('rate_mode') || 0));
+        const mapProvider = ref(localStorage.getItem('map_provider') || 'google'); // map setting
         const notification = ref(null);
 
         // Core Data
@@ -1140,8 +1156,11 @@
                 '記帳': { zh: '記帳', en: 'Expenses' },
                 '設定': { zh: '設定', en: 'Settings' },
 
-                // 設定
+                                // 設定
                 'settings': { zh: '設定', en: 'Settings' },
+                'mapProvider': { zh: '預設地圖 App', en: 'Default Map App' },
+                'navigate': { zh: '導航', en: 'Navigate' },
+                'addrPlaceholder': { zh: '輸入標準地址 (非店名) 以兼容多平台', en: 'Standard address (not place name) for compatibility' },
                 'routeHeader': { zh: '路線標題', en: 'Route Header' },
                 'startDate': { zh: '開始日期', en: 'Start Date' },
                 'endDate': { zh: '結束日期', en: 'End Date' },
@@ -1170,15 +1189,31 @@
              return `${d.dateStr} ${d.weekday}`;
         }
 
-        // Map Functions
+                // Map Functions
         function showLocationOnMap(item) {
-             selectedMapLocation.value = (item.address && item.address.trim() !== '') ? { title: item.title, address: item.address, id: item.id } : null;
+             selectedMapLocation.value = (item.address && item.address.trim() !== '') ?
+                 { title: item.title, address: item.address, id: item.id } : null;
+        }
+        function saveMapProvider(val) {
+            mapProvider.value = val;
+            localStorage.setItem('map_provider', val);
         }
         function generateMapLink(address, type) {
             if (!address) return '#';
             const q = encodeURIComponent(address);
-            if (type === 'search') return `https://www.google.com/maps/search/?api=1&query=${q}`;
-            else return `https://www.google.com/maps/dir/?api=1&destination=${q}&travelmode=walking`;
+            const provider = mapProvider.value;
+            
+            // Search Link (通常用 Google 查資訊)
+            if (type === 'search') {
+                return `https://www.google.com/maps/search/?api=1&query=${q}`;
+            }
+            
+            // Navigate Link (根據設定跳轉)
+            if (provider === 'apple') return `http://maps.apple.com/?q=${q}`;
+            if (provider === 'naver') return `nmap://search?query=${q}&appname=TravelSync`; // 需安裝 App
+            if (provider === 'custom') return `maps://?q=${q}`; // 通用 Scheme
+            // Default Google
+            return `https://www.google.com/maps/search/?api=1&query=${q}&travelmode=walking`;
         }
 
         // Upload Helper (Supabase)
@@ -1413,8 +1448,8 @@
             expenseModalOpen, newExpense, expenseFilter, filteredExpenses, settlementList, openExpenseModal, handleCalcInput, saveExpense, removeExpense,
             memberModalOpen, members, newMemberName, openMemberModal, addMember, removeMember, toggleParticipant, toggleAllParticipants,
             infoModalOpen, newInfoItem, openInfoModal, saveInfoItem, removeInfo,
-            imageViewer, isInstagramLink, formatNumber, expenseCats, getCategoryIcon, openImageViewer,
-            selectedMapLocation, showLocationOnMap, generateMapLink
+                        imageViewer, isInstagramLink, formatNumber, expenseCats, getCategoryIcon, openImageViewer,
+            selectedMapLocation, showLocationOnMap, generateMapLink, mapProvider, saveMapProvider
         };
       }
     }).mount('#app');
