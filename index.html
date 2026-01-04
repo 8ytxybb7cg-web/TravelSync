@@ -611,26 +611,24 @@
                      <input v-model="editingSettings.weatherLoc" class="ios-input" placeholder="e.g. 台北">
                  </div>
                  <div>
-                     <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('weatherLoc') }} (EN)</label>
-                                          <input v-model="editingSettings.weatherLocEn" class="ios-input" placeholder="e.g. Taipei">
+                                          <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('weatherLoc') }} (EN)</label>
+                     <input v-model="editingSettings.weatherLocEn" class="ios-input" placeholder="e.g. Taipei">
                  </div>
              </div>
              
-             <div class="mt-4">
+             <div>
                  <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('mapProvider') }}</label>
                  <div class="bg-gray-200/50 p-1 rounded-xl flex">
-                      <button v-for="p in ['google', 'apple', 'naver', 'custom']" :key="p" @click="mapProvider = p" 
-                         class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all uppercase"
-                         :class="mapProvider === p ? 'bg-white shadow-sm text-black' : 'text-gray-500'">
-                         {{ t(p) }}
-                      </button>
-                  </div>
-                  <p v-if="mapProvider === 'custom'" class="text-[9px] text-gray-400 mt-1.5 ml-1">
-                    * {{ t('custom') }}: {{ lang === 'zh' ? '點擊地圖時將詢問開啟哪個 App' : 'Prompts app selection on click' }}
-                  </p>
+                    <button v-for="m in ['google','apple','naver','custom']" :key="m" @click="saveMapProvider(m)"
+                       class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all uppercase"
+                       :class="mapProvider === m ? 'bg-white shadow-sm text-black' : 'text-gray-500'">
+                       {{ m === 'custom' ? 'Map App' : m }}
+                    </button>
+                 </div>
              </div>
 
-             <div class="flex gap-3 mt-6">
+             <div class="flex gap-3 mt-4">
+
 
                  <button @click="cancelSettings" class="btn-ios-cancel">{{ t('cancel') }}</button>
                  <button @click="saveSettings" class="btn-ios-primary">{{ t('save') }}</button>
