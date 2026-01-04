@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v8.1</title>
+  <title>Travel Sync v7.9</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -507,17 +507,16 @@
                     </div>
                     <p class="text-sm text-gray-500 pl-[44px] leading-relaxed">{{ selectedMapLocation.address }}</p>
                </div>
-                                <div class="flex gap-3 pl-[44px]">
+                <div class="flex gap-3 pl-[44px]">
                    <a :href="generateMapLink(selectedMapLocation.address, 'search')" target="_blank"
                        class="h-10 px-4 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 rounded-xl font-bold active:scale-95 transition text-sm border border-gray-200">
-                    <i class="ph-bold ph-map-trifold"></i> {{ t('openMap') }}
+                    Google Map
                     </a>
                    <a :href="generateMapLink(selectedMapLocation.address, 'navigate')" target="_blank"
                        class="flex-1 h-10 flex items-center justify-center gap-2 bg-[#007AFF] text-white rounded-xl font-bold active:scale-95 transition text-sm shadow-sm shadow-blue-200">
-                    <i class="ph-bold ph-navigation-arrow text-lg"></i> {{ t('navigate') }}
+                    <i class="ph ph-navigation-arrow text-lg"></i> 導航
                     </a>
                  </div>
-
             </div>
         </transition>
       </div>
@@ -611,25 +610,11 @@
                      <input v-model="editingSettings.weatherLoc" class="ios-input" placeholder="e.g. 台北">
                  </div>
                  <div>
-                                          <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('weatherLoc') }} (EN)</label>
+                     <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('weatherLoc') }} (EN)</label>
                      <input v-model="editingSettings.weatherLocEn" class="ios-input" placeholder="e.g. Taipei">
                  </div>
              </div>
-             
-             <div>
-                 <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('mapProvider') }}</label>
-                 <div class="bg-gray-200/50 p-1 rounded-xl flex">
-                    <button v-for="m in ['google','apple','naver','custom']" :key="m" @click="saveMapProvider(m)"
-                       class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all uppercase"
-                       :class="mapProvider === m ? 'bg-white shadow-sm text-black' : 'text-gray-500'">
-                       {{ m === 'custom' ? 'Map App' : m }}
-                    </button>
-                 </div>
-             </div>
-
              <div class="flex gap-3 mt-4">
-
-
                  <button @click="cancelSettings" class="btn-ios-cancel">{{ t('cancel') }}</button>
                  <button @click="saveSettings" class="btn-ios-primary">{{ t('save') }}</button>
              </div>
@@ -797,13 +782,11 @@
                     <input type="time" v-model="newItineraryItem.time" class="ios-input !w-auto text-center font-bold">
                     <input v-model="newItineraryItem.title" class="ios-input flex-1" :placeholder="t('title')">
                 </div>
-                                <div class="relative">
-                     <i class="ph ph-map-pin absolute left-3 top-3.5 text-gray-400"></i>
+                <div class="relative">
+                    <i class="ph ph-map-pin absolute left-3 top-3.5 text-gray-400"></i>
                     <input v-model="newItineraryItem.address" class="ios-input pl-10 text-sm" :placeholder="t('mapAddr')">
                 </div>
-                <div class="text-[9px] text-gray-400 px-1 -mt-1 leading-tight"><i class="ph-bold ph-info"></i> {{ t('standardAddrHint') }}</div>
                 <textarea v-model="newItineraryItem.note" class="ios-input" :placeholder="t('notes')" rows="3"></textarea>
-
             </div>
             <div class="ios-modal-footer">
                 <button @click="itineraryModalOpen=false" class="btn-ios-cancel">{{ t('cancel') }}</button>
@@ -889,17 +872,11 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260104-8.1');
+        const appVersion = ref('v260103-7.9');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
-                const lang = ref(localStorage.getItem('app_lang') || 'zh');
-        const mapProvider = ref(localStorage.getItem('map_provider') || 'google');
-        
-        watch(mapProvider, (val) => {
-            localStorage.setItem('map_provider', val);
-        });
-
+        const lang = ref(localStorage.getItem('app_lang') || 'zh');
         const rateDisplayMode = ref(Number(localStorage.getItem('rate_mode') || 0));
         const notification = ref(null);
 
@@ -1170,19 +1147,8 @@
                 'endDate': { zh: '結束日期', en: 'End Date' },
                 'localCurr': { zh: '當地貨幣', en: 'Local Currency' },
                 'homeCurr': { zh: '本國貨幣', en: 'Home Currency' },
-                                'weatherLoc': { zh: '天氣地點', en: 'Weather Location' },
-                
-                // 地圖與導航
-                'navigate': { zh: '導航', en: 'Navigate' },
-                'openMap': { zh: '打開地圖', en: 'Open Maps' },
-                'mapProvider': { zh: '地圖來源', en: 'Map Provider' },
-                'google': { zh: 'Google', en: 'Google' },
-                'apple': { zh: 'Apple', en: 'Apple' },
-                'naver': { zh: 'NAVER', en: 'NAVER' },
-                'custom': { zh: '自定義', en: 'Custom' },
-                'standardAddrHint': { zh: '建議輸入標準地址 (如: 首爾特別市麻浦區...) 以確保跳轉正確', en: 'Use standard address format for best compatibility' }
+                'weatherLoc': { zh: '天氣地點', en: 'Weather Location' }
             };
-
             return dict[k]?.[lang.value] || k;
         };
 
@@ -1208,28 +1174,12 @@
         function showLocationOnMap(item) {
              selectedMapLocation.value = (item.address && item.address.trim() !== '') ? { title: item.title, address: item.address, id: item.id } : null;
         }
-                function generateMapLink(address, type) {
+        function generateMapLink(address, type) {
             if (!address) return '#';
             const q = encodeURIComponent(address);
-            const provider = mapProvider.value;
-            
-            // Search Mode
-            if (type === 'search') {
-                if (provider === 'apple') return `http://maps.apple.com/?q=${q}`;
-                if (provider === 'naver') return `nmap://search?query=${q}&appname=TravelSync`; // Requires App
-                if (provider === 'custom') return `maps:q=${q}`; // System chooser
-                return `https://www.google.com/maps/search/?api=1&query=${q}`; // Default Google
-            } 
-            
-            // Navigate Mode
-            else {
-                if (provider === 'apple') return `http://maps.apple.com/?daddr=${q}&dirflg=w`;
-                if (provider === 'naver') return `nmap://route/walk?dname=${q}&appname=TravelSync`;
-                if (provider === 'custom') return `maps:daddr=${q}`;
-                return `https://www.google.com/maps/dir/?api=1&destination=${q}&travelmode=walking`;
-            }
+            if (type === 'search') return `https://www.google.com/maps/search/?api=1&query=${q}`;
+            else return `https://www.google.com/maps/dir/?api=1&destination=${q}&travelmode=walking`;
         }
-
 
         // Upload Helper (Supabase)
         async function uploadFileToSupabase(file) {
