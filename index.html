@@ -618,10 +618,11 @@
              <div class="mt-4">
                  <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('mapApp') }}</label>
                  <div class="bg-gray-200/50 p-1 rounded-xl flex">
-                     <button v-for="app in ['Google', 'Apple', 'NAVER', 'Custom']" :key="app" @click="selectMapApp(app)" 
+                                <button v-for="app in ['Google', 'Apple', 'NAVER', 'Amap']" :key="app" @click="selectMapApp(app)" 
                         class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all"
-                        :class="mapApp === app ? 'bg-white shadow-sm text-black' : 'text-gray-500'">
-                        {{ app }}
+                        :class="mapApp === app ?
+'bg-white shadow-sm text-black' : 'text-gray-500'">
+                        {{ t('map_name_' + app) }}
                      </button>
                  </div>
              </div>
@@ -864,20 +865,6 @@
         </div>
     </div>
 
-    <div v-if="customMapModalOpen" class="modal-backdrop" @click.self="customMapModalOpen=false">
-        <div class="ios-modal-container">
-            <div class="ios-modal-header">{{ t('customScheme') }}</div>
-            <div class="ios-modal-body space-y-4">
-                <p class="text-xs text-gray-400 text-center">{{ t('schemeHint') }}</p>
-                <input v-model="customMapScheme" class="ios-input" placeholder="scheme://...?q={address}">
-            </div>
-            <div class="ios-modal-footer">
-                <button @click="customMapModalOpen=false" class="btn-ios-cancel">{{ t('cancel') }}</button>
-                <button @click="saveCustomScheme" class="btn-ios-primary">{{ t('save') }}</button>
-            </div>
-        </div>
-    </div>
-
     <transition name="fade">
         <div v-if="imageViewer.open" class="fixed inset-0 z-[200] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4" @click="imageViewer.open = false">
             <button class="absolute top-8 right-8 text-white/50 hover:text-white p-2 transition"><i class="ph ph-x-circle text-4xl"></i></button>
@@ -945,21 +932,15 @@
         // Map Logic (New in 7.5)
                 const selectedMapLocation = ref(null);
         
-        // Map Settings (Patch)
+                // Map Settings (Patch)
         const mapApp = ref(localStorage.getItem('mapApp') || 'Google');
-        const customMapScheme = ref(localStorage.getItem('customMapScheme') || '');
-        const customMapModalOpen = ref(false);
         const addressPlaceholder = computed(() => lang.value === 'zh' ? '香港九龍旺角亞皆老街8號' : '8 Argyle St, Mong Kok, Kowloon, Hong Kong');
-
+        
         function selectMapApp(app) {
             mapApp.value = app;
             localStorage.setItem('mapApp', app);
-            if(app === 'Custom') customMapModalOpen.value = true;
         }
-        function saveCustomScheme() {
-            localStorage.setItem('customMapScheme', customMapScheme.value);
-            customMapModalOpen.value = false;
-        }
+
         function openMap(addr) {
             if(!addr) return;
             const q = encodeURIComponent(addr);
@@ -967,10 +948,10 @@
             if(mapApp.value === 'Google') url = 'https://www.google.com/maps/search/?api=1&query=' + q;
             else if(mapApp.value === 'Apple') url = 'maps://?q=' + q;
             else if(mapApp.value === 'NAVER') url = 'nmap://search?query=' + q;
-            else if(mapApp.value === 'Custom') url = customMapScheme.value.replace('{address}', q);
+            else if(mapApp.value === 'Amap') url = 'androidamap://keywordNavi?keyword=' + q;
+            
             if(url) window.open(url, '_blank');
         }
-
         
         // Upload Logic
         const tempUploadPreview = ref(null);
@@ -1200,11 +1181,15 @@
                 'localCurr': { zh: '當地貨幣', en: 'Local Currency' },
                 'homeCurr': { zh: '本國貨幣', en: 'Home Currency' },
                                 'weatherLoc': { zh: '天氣地點', en: 'Weather Location' },
-                'openMaps': { zh: '打開地圖', en: 'Open Maps' },
+                                'openMaps': { zh: '打開地圖', en: 'Open Maps' },
                 'navigate': { zh: '導航', en: 'Navigate' },
                 'mapApp': { zh: '地圖 App', en: 'Map App' },
-                'customScheme': { zh: '自訂 URL Scheme', en: 'Custom URL Scheme' },
-                'schemeHint': { zh: '使用 {address} 作為地址佔位符', en: 'Use {address} as placeholder' }
+                
+                // 地圖名稱
+                'map_name_Google': { zh: 'Google', en: 'Google' },
+                'map_name_Apple': { zh: 'Apple', en: 'Apple' },
+                'map_name_NAVER': { zh: 'NAVER', en: 'NAVER' },
+                'map_name_Amap': { zh: '高德', en: 'A-map' }
             };
             return dict[k]?.[lang.value] || k;
         };
@@ -1464,9 +1449,9 @@
             expenseModalOpen, newExpense, expenseFilter, filteredExpenses, settlementList, openExpenseModal, handleCalcInput, saveExpense, removeExpense,
             memberModalOpen, members, newMemberName, openMemberModal, addMember, removeMember, toggleParticipant, toggleAllParticipants,
             infoModalOpen, newInfoItem, openInfoModal, saveInfoItem, removeInfo,
-                        imageViewer, isInstagramLink, formatNumber, expenseCats, getCategoryIcon, openImageViewer,
+                                    imageViewer, isInstagramLink, formatNumber, expenseCats, getCategoryIcon, openImageViewer,
             selectedMapLocation, showLocationOnMap, 
-            mapApp, selectMapApp, customMapScheme, customMapModalOpen, saveCustomScheme, openMap, addressPlaceholder
+            mapApp, selectMapApp, openMap, addressPlaceholder
         };
       }
     }).mount('#app');
