@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v7.9</title>
+  <title>Travel Sync v8.3</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -507,15 +507,15 @@
                     </div>
                     <p class="text-sm text-gray-500 pl-[44px] leading-relaxed">{{ selectedMapLocation.address }}</p>
                </div>
-                <div class="flex gap-3 pl-[44px]">
-                   <a :href="generateMapLink(selectedMapLocation.address, 'search')" target="_blank"
+                               <div class="flex gap-3 pl-[44px]">
+                   <button @click="openMap(selectedMapLocation.address)"
                        class="h-10 px-4 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 rounded-xl font-bold active:scale-95 transition text-sm border border-gray-200">
-                    Google Map
-                    </a>
-                   <a :href="generateMapLink(selectedMapLocation.address, 'navigate')" target="_blank"
+                    {{ t('openMaps') }}
+                    </button>
+                   <button @click="openMap(selectedMapLocation.address)"
                        class="flex-1 h-10 flex items-center justify-center gap-2 bg-[#007AFF] text-white rounded-xl font-bold active:scale-95 transition text-sm shadow-sm shadow-blue-200">
-                    <i class="ph ph-navigation-arrow text-lg"></i> 導航
-                    </a>
+                    <i class="ph ph-navigation-arrow text-lg"></i> {{ t('navigate') }}
+                    </button>
                  </div>
             </div>
         </transition>
@@ -612,6 +612,17 @@
                  <div>
                      <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('weatherLoc') }} (EN)</label>
                      <input v-model="editingSettings.weatherLocEn" class="ios-input" placeholder="e.g. Taipei">
+                 </div>
+             </div>
+
+             <div class="mt-4">
+                 <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('mapApp') }}</label>
+                 <div class="bg-gray-200/50 p-1 rounded-xl flex">
+                     <button v-for="app in ['Google', 'Apple', 'NAVER', 'Custom']" :key="app" @click="selectMapApp(app)" 
+                        class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all"
+                        :class="mapApp === app ? 'bg-white shadow-sm text-black' : 'text-gray-500'">
+                        {{ app }}
+                     </button>
                  </div>
              </div>
              <div class="flex gap-3 mt-4">
@@ -784,7 +795,7 @@
                 </div>
                 <div class="relative">
                     <i class="ph ph-map-pin absolute left-3 top-3.5 text-gray-400"></i>
-                    <input v-model="newItineraryItem.address" class="ios-input pl-10 text-sm" :placeholder="t('mapAddr')">
+                                        <input v-model="newItineraryItem.address" class="ios-input pl-10 text-sm" :placeholder="addressPlaceholder">
                 </div>
                 <textarea v-model="newItineraryItem.note" class="ios-input" :placeholder="t('notes')" rows="3"></textarea>
             </div>
@@ -853,6 +864,20 @@
         </div>
     </div>
 
+    <div v-if="customMapModalOpen" class="modal-backdrop" @click.self="customMapModalOpen=false">
+        <div class="ios-modal-container">
+            <div class="ios-modal-header">{{ t('customScheme') }}</div>
+            <div class="ios-modal-body space-y-4">
+                <p class="text-xs text-gray-400 text-center">{{ t('schemeHint') }}</p>
+                <input v-model="customMapScheme" class="ios-input" placeholder="scheme://...?q={address}">
+            </div>
+            <div class="ios-modal-footer">
+                <button @click="customMapModalOpen=false" class="btn-ios-cancel">{{ t('cancel') }}</button>
+                <button @click="saveCustomScheme" class="btn-ios-primary">{{ t('save') }}</button>
+            </div>
+        </div>
+    </div>
+
     <transition name="fade">
         <div v-if="imageViewer.open" class="fixed inset-0 z-[200] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4" @click="imageViewer.open = false">
             <button class="absolute top-8 right-8 text-white/50 hover:text-white p-2 transition"><i class="ph ph-x-circle text-4xl"></i></button>
@@ -872,7 +897,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260103-7.9');
+        const appVersion = ref('v260104-8.3');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -918,7 +943,34 @@
         const quickItinerary = reactive({ title: '', time: '' });
         
         // Map Logic (New in 7.5)
-        const selectedMapLocation = ref(null);
+                const selectedMapLocation = ref(null);
+        
+        // Map Settings (Patch)
+        const mapApp = ref(localStorage.getItem('mapApp') || 'Google');
+        const customMapScheme = ref(localStorage.getItem('customMapScheme') || '');
+        const customMapModalOpen = ref(false);
+        const addressPlaceholder = computed(() => lang.value === 'zh' ? '香港九龍旺角亞皆老街8號' : '8 Argyle St, Mong Kok, Kowloon, Hong Kong');
+
+        function selectMapApp(app) {
+            mapApp.value = app;
+            localStorage.setItem('mapApp', app);
+            if(app === 'Custom') customMapModalOpen.value = true;
+        }
+        function saveCustomScheme() {
+            localStorage.setItem('customMapScheme', customMapScheme.value);
+            customMapModalOpen.value = false;
+        }
+        function openMap(addr) {
+            if(!addr) return;
+            const q = encodeURIComponent(addr);
+            let url = '';
+            if(mapApp.value === 'Google') url = 'https://www.google.com/maps/search/?api=1&query=' + q;
+            else if(mapApp.value === 'Apple') url = 'maps://?q=' + q;
+            else if(mapApp.value === 'NAVER') url = 'nmap://search?query=' + q;
+            else if(mapApp.value === 'Custom') url = customMapScheme.value.replace('{address}', q);
+            if(url) window.open(url, '_blank');
+        }
+
         
         // Upload Logic
         const tempUploadPreview = ref(null);
@@ -1147,7 +1199,12 @@
                 'endDate': { zh: '結束日期', en: 'End Date' },
                 'localCurr': { zh: '當地貨幣', en: 'Local Currency' },
                 'homeCurr': { zh: '本國貨幣', en: 'Home Currency' },
-                'weatherLoc': { zh: '天氣地點', en: 'Weather Location' }
+                                'weatherLoc': { zh: '天氣地點', en: 'Weather Location' },
+                'openMaps': { zh: '打開地圖', en: 'Open Maps' },
+                'navigate': { zh: '導航', en: 'Navigate' },
+                'mapApp': { zh: '地圖 App', en: 'Map App' },
+                'customScheme': { zh: '自訂 URL Scheme', en: 'Custom URL Scheme' },
+                'schemeHint': { zh: '使用 {address} 作為地址佔位符', en: 'Use {address} as placeholder' }
             };
             return dict[k]?.[lang.value] || k;
         };
@@ -1173,12 +1230,6 @@
         // Map Functions
         function showLocationOnMap(item) {
              selectedMapLocation.value = (item.address && item.address.trim() !== '') ? { title: item.title, address: item.address, id: item.id } : null;
-        }
-        function generateMapLink(address, type) {
-            if (!address) return '#';
-            const q = encodeURIComponent(address);
-            if (type === 'search') return `https://www.google.com/maps/search/?api=1&query=${q}`;
-            else return `https://www.google.com/maps/dir/?api=1&destination=${q}&travelmode=walking`;
         }
 
         // Upload Helper (Supabase)
@@ -1413,8 +1464,9 @@
             expenseModalOpen, newExpense, expenseFilter, filteredExpenses, settlementList, openExpenseModal, handleCalcInput, saveExpense, removeExpense,
             memberModalOpen, members, newMemberName, openMemberModal, addMember, removeMember, toggleParticipant, toggleAllParticipants,
             infoModalOpen, newInfoItem, openInfoModal, saveInfoItem, removeInfo,
-            imageViewer, isInstagramLink, formatNumber, expenseCats, getCategoryIcon, openImageViewer,
-            selectedMapLocation, showLocationOnMap, generateMapLink
+                        imageViewer, isInstagramLink, formatNumber, expenseCats, getCategoryIcon, openImageViewer,
+            selectedMapLocation, showLocationOnMap, 
+            mapApp, selectMapApp, customMapScheme, customMapModalOpen, saveCustomScheme, openMap, addressPlaceholder
         };
       }
     }).mount('#app');
