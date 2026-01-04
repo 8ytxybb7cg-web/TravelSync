@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v8.5</title>
+  <title>Travel Sync v8.6</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -664,7 +664,8 @@
 
     <nav class="fixed bottom-6 left-0 right-0 z-50 px-4 pointer-events-none">
             <div class="iphone-dock pointer-events-auto">
-        <button v-for="tab in ['首頁','行程','記帳','設定']" :key="tab" @click="currentTab=tab" class="group flex flex-col items-center justify-center flex-1 transition-all text-gray-400" :class="{'!text-[#007AFF]': currentTab===tab}">
+        <button v-for="tab in ['首頁','行程','記帳','購物','設定']" :key="tab"
+ @click="currentTab=tab" class="group flex flex-col items-center justify-center flex-1 transition-all text-gray-400" :class="{'!text-[#007AFF]': currentTab===tab}">
             <i class="text-[28px] mb-1 transition-transform group-active:scale-90" :class="[currentTab===tab ? 'ph-fill' : 'ph-bold', {'首頁':'ph-house','行程':'ph-map-trifold','記帳':'ph-wallet','設定':'ph-gear'}[tab]]"></i>
             <span class="text-[10px] font-semibold">{{ t(tab) }}</span>
         </button>
@@ -906,7 +907,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260104-8.5');
+        const appVersion = ref('v260104-8.6');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
