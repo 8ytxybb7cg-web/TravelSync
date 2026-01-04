@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v8.3</title>
+  <title>Travel Sync v8.5</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -13,12 +13,15 @@
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
   <style>
-    :root {
+        :root {
       --ios-bg: #F2F2F7;
-      --ios-card-bg: rgba(255, 255, 255, 0.65);
-      --ios-card-border: rgba(255, 255, 255, 0.4);
+      /* iOS 26 Style: 降低白底濃度，讓背景透出來 */
+      --ios-card-bg: rgba(255, 255, 255, 0.55);
+      /* 增強邊框亮度，製造切割玻璃感 */
+      --ios-card-border: rgba(255, 255, 255, 0.65);
       --ios-primary: #007AFF;
-      --glass-blur: blur(25px);
+      /* 關鍵：加入 saturate(180%) 讓透視的顏色更鮮豔，增加模糊度 */
+      --glass-blur: blur(40px) saturate(180%);
       --hkg-navy: #353E53;
       --hkg-yellow: #E9EB4F;
       --hkg-red: #BF443B;
@@ -49,19 +52,25 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     
-    .ios-card {
+    .    .ios-card {
       background: var(--ios-card-bg);
       backdrop-filter: var(--glass-blur);
       -webkit-backdrop-filter: var(--glass-blur);
-      border: 1px solid var(--ios-card-border); border-radius: 20px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.03); overflow: hidden;
+      /* 複合邊框：外邊框 + 內部微光，增加立體感 */
+      border: 1px solid var(--ios-card-border); border-radius: 24px;
+      box-shadow: 
+        0 8px 32px 0 rgba(31, 38, 135, 0.07),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+      overflow: hidden;
     }
 
-    /* List Item Styles */
+        /* List Item Styles */
     .ios-list-item {
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(15px);
-      border-radius: 18px;
+      /* 更通透，形成「玻璃上的玻璃」層次感 */
+      background: rgba(255, 255, 255, 0.45);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 20px;
       margin-bottom: 8px; 
       padding: 14px;
       display: flex;
@@ -96,11 +105,16 @@
       background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(5px);
       z-index: 100; position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px;
     }
-    .ios-modal-container {
-      background: rgba(250, 250, 250, 0.95); backdrop-filter: blur(40px);
-      border-radius: 32px;
+        .ios-modal-container {
+      /* 統一使用玻璃變數，保持通透 */
+      background: rgba(255, 255, 255, 0.70);
+      backdrop-filter: blur(50px) saturate(200%);
+      -webkit-backdrop-filter: blur(50px) saturate(200%);
+      border-radius: 36px;
       display: flex; flex-direction: column; max-height: 90vh; width: 100%; max-width: 400px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.4);
+      /* 更柔和深邃的陰影 */
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.5);
+      border: 1px solid rgba(255,255,255,0.4);
     }
     .ios-modal-header { padding: 16px; text-align: center; font-weight: 600; font-size: 17px; border-bottom: 0.5px solid rgba(0,0,0,0.1); position: relative;}
     .ios-modal-body { flex: 1; overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; }
@@ -111,11 +125,13 @@
     .btn-ios-cancel { flex: 1; height: 44px; border-radius: 12px; background: rgba(118, 118, 128, 0.12); color: #000; font-weight: 600; }
     .btn-ios-primary { flex: 1; height: 44px; border-radius: 12px; background: var(--ios-primary); color: white; font-weight: 600; box-shadow: 0 0 15px rgba(0, 122, 255, 0.4); }
 
-    .iphone-dock {
-      background: rgba(245, 245, 245, 0.85);
-      backdrop-filter: blur(50px); -webkit-backdrop-filter: blur(50px);
-      border-radius: 38px; padding: 12px 24px; border: 1px solid rgba(255, 255, 255, 0.5);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        .iphone-dock {
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(40px) saturate(180%);
+      -webkit-backdrop-filter: blur(40px) saturate(180%);
+      border-radius: 40px; padding: 12px 24px; 
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
       display: flex; justify-content: space-between; align-items: flex-end;
       width: 100%; max-width: 360px;
       margin: 0 auto;
@@ -144,10 +160,13 @@
     .flight-tab { transition: all 0.2s; }
     .flight-tab.active { background: rgba(255,255,255,0.2); font-weight: bold; border: 1px solid rgba(255,255,255,0.3); }
 
-    .ios-card-dark-glass {
-      background: rgba(22, 22, 24, 0.85); backdrop-filter: blur(50px); -webkit-backdrop-filter: blur(50px);
-      border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 24px;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); color: white; position: relative; overflow: hidden;
+        .ios-card-dark-glass {
+      background: rgba(20, 20, 24, 0.75);
+      backdrop-filter: blur(50px) saturate(150%);
+      -webkit-backdrop-filter: blur(50px) saturate(150%);
+      /* 稍微調亮邊框，增加深色玻璃的邊緣反光 */
+      border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 28px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); color: white; position: relative; overflow: hidden;
     }
     .dark-glass-gradient {
         position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
@@ -259,8 +278,9 @@
              </div>
         </div>
 
-        <section class="ios-card p-5 bg-blue-50/50 border-blue-100 relative group">
+                <section class="ios-card p-5 bg-blue-50/10 border-blue-100/30 relative group">
              <button @click="openInfoModal(null)" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-200 transition-colors"><i class="ph-bold ph-plus"></i></button>
+
              <h2 class="text-sm font-bold text-blue-800 mb-2 flex items-center gap-2"><i class="ph-fill ph-info"></i> {{ t('info') }}</h2>
              <ul v-if="infoList.length > 0" class="space-y-2 mt-2">
                  <li v-for="info in infoList" :key="info.id" @click="openInfoModal(info)" class="text-xs text-blue-900/80 border-b border-blue-200/50 pb-1 last:border-0 cursor-pointer hover:opacity-70 flex justify-between">
@@ -884,7 +904,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260104-8.3');
+        const appVersion = ref('v260104-8.5');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
