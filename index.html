@@ -1267,8 +1267,7 @@
         function openShoppingModal(item) { 
             Object.assign(newShoppingItem, item || {id:null, name:'', imageURL:'', linkURL:'', isDone:false});
             tempUploadPreview.value = null; pendingUploadFile = null;
-            shoppingModalOpen.value = true; 
-        }
+            shoppingModalOpen.value = true; }
 
         function getCategoryIcon(c) { const f = expenseCats.find(x=>x.name===c); return f ? f.icon : 'ph-star'; }
         
