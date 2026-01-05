@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v8.7</title>
+  <title>Travel Sync v8.6</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -609,15 +609,13 @@
                     <i class="ph text-2xl transition-all" :class="item.isDone ? 'ph-check-circle-fill text-green-500' : 'ph-circle text-gray-300 hover:text-gray-400'"></i>
                   </div>
                   <div class="flex-1 min-w-0 pt-0.5">
-                                        <div class="font-bold text-[16px] text-gray-900 truncate" :class="{'task-done': item.isDone}">{{ item.name }}</div>
-                    
-                    <div v-if="item.imageURL || item.linkURL" class="mt-3 flex flex-wrap items-center gap-2">
-                        <a v-if="item.linkURL && isSocialLink(item.linkURL)" :href="item.linkURL" target="_blank" 
+                    <div class="font-bold text-[16px] text-gray-900 truncate" :class="{'task-done': item.isDone}">{{ item.name }}</div>
+                     <div v-if="item.imageURL" class="mt-3">
+                          <a v-if="isInstagramLink(item.imageURL)" :href="item.imageURL" target="_blank" 
                            class="text-xs font-semibold text-gray-600 bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 hover:bg-gray-200 transition">
-                           <i class="ph text-lg" :class="getSocialIcon(item.linkURL)"></i> {{ item.linkURL.includes('threads') ? 'Threads' : 'Post' }}
-                        </a>
-                        
-                        <div v-if="item.imageURL" class="relative group/img cursor-pointer w-20 h-20 overflow-hidden rounded-lg border border-gray-200 shadow-sm" @click="openImageViewer(item.imageURL)">
+                           <i class="ph ph-instagram-logo text-lg"></i> Post
+                          </a>
+                        <div v-else class="relative group/img cursor-pointer w-20 h-20 overflow-hidden rounded-lg border border-gray-200 shadow-sm" @click="openImageViewer(item.imageURL)">
                              <img :src="item.imageURL" class="w-full h-full object-cover" alt="Thumbnail">
                         </div>
                     </div>
@@ -867,17 +865,10 @@
                             <div class="text-[#007AFF] text-sm font-medium">{{ t('uploadImg') }}</div>
                          </div>
                         <div v-else class="text-center text-[#007AFF] font-bold text-sm">{{ tempUploadPreview ? t('imgSelected') : t('changeImg') }}</div>
-                                                <input type="file" accept="image/*" class="hidden" @change="handleFileUpload">
+                        <input type="file" accept="image/*" class="hidden" @change="handleFileUpload">
                     </label>
-                    
-                    <input v-model="newShoppingItem.imageURL" class="w-full mt-2 p-2 text-xs text-gray-400 bg-transparent text-center border-b border-gray-100 focus:outline-none rounded-none" placeholder="圖片網址 (Image URL)">
-                    
-                    <div class="relative mt-2">
-                        <i class="ph ph-link absolute left-2 top-2.5 text-gray-400"></i>
-                        <input v-model="newShoppingItem.linkURL" class="w-full p-2 pl-7 text-xs text-gray-600 bg-gray-50 rounded-lg focus:outline-none focus:bg-white border border-transparent focus:border-blue-200 transition-all" placeholder="Instagram / Threads URL">
-                    </div>
-
-                    <div v-if="tempUploadPreview || newShoppingItem.imageURL" class="mt-4 flex justify-center">
+                    <input v-model="newShoppingItem.imageURL" class="w-full mt-3 p-2 text-xs text-gray-400 bg-transparent text-center border-none focus:outline-none" :placeholder="t('pasteUrl')">
+                     <div v-if="tempUploadPreview || newShoppingItem.imageURL" class="mt-4 flex justify-center">
                         <img :src="tempUploadPreview || newShoppingItem.imageURL" class="h-24 w-24 object-cover rounded-2xl shadow-sm border border-gray-100">
                     </div>
                 </div>
@@ -938,7 +929,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260104-8.7');
+        const appVersion = ref('v260104-8.6');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1269,17 +1260,7 @@
         function formatNumber(n) { return Number(n).toLocaleString('en-US', {maximumFractionDigits: 1}); }
         function generateId() { return Date.now() + Math.random().toString(36).substr(2, 5); }
         function showToast(msg) { notification.value = msg; setTimeout(()=>notification.value=null, 3000); }
-                        function isSocialLink(url) { return url && (url.includes('instagram.com') || url.includes('ig.me') || url.includes('threads.net')); }
-        function getSocialIcon(url) { return url && url.includes('threads.net') ? 'ph-threads-logo' : 'ph-instagram-logo'; }
-
-        // Shopping with Image (Updated for 8.7)
-        function openShoppingModal(item) { 
-            Object.assign(newShoppingItem, item || {id:null, name:'', imageURL:'', linkURL:'', isDone:false});
-            tempUploadPreview.value = null; pendingUploadFile = null;
-            shoppingModalOpen.value = true; 
-        }
-
-
+        function isInstagramLink(url) { return url && (url.includes('instagram.com') || url.includes('ig.me')); }
         function getCategoryIcon(c) { const f = expenseCats.find(x=>x.name===c); return f ? f.icon : 'ph-star'; }
         
         function getDayHeader(idx) {
