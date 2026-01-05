@@ -1269,14 +1269,16 @@
         function formatNumber(n) { return Number(n).toLocaleString('en-US', {maximumFractionDigits: 1}); }
         function generateId() { return Date.now() + Math.random().toString(36).substr(2, 5); }
         function showToast(msg) { notification.value = msg; setTimeout(()=>notification.value=null, 3000); }
-                function isSocialLink(url) { return url && (url.includes('instagram.com') || url.includes('ig.me') || url.includes('threads.net')); }
+                        function isSocialLink(url) { return url && (url.includes('instagram.com') || url.includes('ig.me') || url.includes('threads.net')); }
         function getSocialIcon(url) { return url && url.includes('threads.net') ? 'ph-threads-logo' : 'ph-instagram-logo'; }
 
         // Shopping with Image (Updated for 8.7)
         function openShoppingModal(item) { 
             Object.assign(newShoppingItem, item || {id:null, name:'', imageURL:'', linkURL:'', isDone:false});
             tempUploadPreview.value = null; pendingUploadFile = null;
-            shoppingModalOpen.value = true; }
+            shoppingModalOpen.value = true; 
+        }
+
 
         function getCategoryIcon(c) { const f = expenseCats.find(x=>x.name===c); return f ? f.icon : 'ph-star'; }
         
