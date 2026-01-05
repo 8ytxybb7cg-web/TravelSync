@@ -980,6 +980,18 @@
                 // Map Settings (Patch)
         const mapApp = ref(localStorage.getItem('mapApp') || 'Google');
         const addressPlaceholder = computed(() => lang.value === 'zh' ? '香港九龍旺角亞皆老街8號' : '8 Argyle St, Mong Kok, Kowloon, Hong Kong');
+
+        function jumpToShoppingItem(id) {
+            currentTab.value = '購物';
+            nextTick(() => {
+                const el = document.querySelector(`li[data-id="${id}"]`);
+                if(el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.classList.add('bg-blue-50'); // Highlight effect
+                    setTimeout(() => el.classList.remove('bg-blue-50'), 1500);
+                }
+            });
+        }
         
         function selectMapApp(app) {
             mapApp.value = app;
