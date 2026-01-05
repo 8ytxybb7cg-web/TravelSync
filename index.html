@@ -666,7 +666,7 @@
             <div class="iphone-dock pointer-events-auto">
         <button v-for="tab in ['首頁','行程','記帳','購物','設定']" :key="tab"
  @click="currentTab=tab" class="group flex flex-col items-center justify-center flex-1 transition-all text-gray-400" :class="{'!text-[#007AFF]': currentTab===tab}">
-            <i class="text-[28px] mb-1 transition-transform group-active:scale-90" :class="[currentTab===tab ? 'ph-fill' : 'ph-bold', {'首頁':'ph-house','行程':'ph-map-trifold','記帳':'ph-wallet','設定':'ph-gear'}[tab]]"></i>
+            <i class="text-[28px] mb-1 transition-transform group-active:scale-90" :class="[currentTab===tab ? 'ph-fill' : 'ph-bold', {'首頁':'ph-house','行程':'ph-map-trifold','記帳':'ph-wallet','購物':'ph-shopping-bag','設定':'ph-gear'}[tab]]"></i>
             <span class="text-[10px] font-semibold">{{ t(tab) }}</span>
         </button>
       </div>
