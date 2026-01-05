@@ -1492,7 +1492,7 @@
 
                         watch(currentTab, (val) => {
              if(val === '行程') nextTick(() => initSortable('sortable-itinerary', itinerary[selectedDay.value]));
-             if(val === '首頁') nextTick(() => initSortable('sortable-pre-home', preTripNotes.value));
+             if(val === '首頁') nextTick(() => { initSortable('sortable-pre-home', preTripNotes.value); initSortable('sortable-shop-home', shoppingList.value); });
         });
 
  initSortable('sortable-shop-home', shoppingList.value); });
@@ -1512,7 +1512,7 @@
             infoModalOpen, newInfoItem, openInfoModal, saveInfoItem, removeInfo,
                                     imageViewer, isInstagramLink, formatNumber, expenseCats, getCategoryIcon, openImageViewer,
             selectedMapLocation, showLocationOnMap, 
-                        mapApp, selectMapApp, openMap, addressPlaceholder,
+                        mapApp, selectMapApp, openMap, addressPlaceholder
         };
       }
     }).mount('#app');
