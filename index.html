@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v8.6</title>
+  <title>Travel Sync v8.7</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -929,7 +929,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260104-8.6');
+        const appVersion = ref('v260104-8.7');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1260,7 +1260,16 @@
         function formatNumber(n) { return Number(n).toLocaleString('en-US', {maximumFractionDigits: 1}); }
         function generateId() { return Date.now() + Math.random().toString(36).substr(2, 5); }
         function showToast(msg) { notification.value = msg; setTimeout(()=>notification.value=null, 3000); }
-        function isInstagramLink(url) { return url && (url.includes('instagram.com') || url.includes('ig.me')); }
+                function isSocialLink(url) { return url && (url.includes('instagram.com') || url.includes('ig.me') || url.includes('threads.net')); }
+        function getSocialIcon(url) { return url && url.includes('threads.net') ? 'ph-threads-logo' : 'ph-instagram-logo'; }
+
+        // Shopping with Image (Updated for 8.7)
+        function openShoppingModal(item) { 
+            Object.assign(newShoppingItem, item || {id:null, name:'', imageURL:'', linkURL:'', isDone:false});
+            tempUploadPreview.value = null; pendingUploadFile = null;
+            shoppingModalOpen.value = true; 
+        }
+
         function getCategoryIcon(c) { const f = expenseCats.find(x=>x.name===c); return f ? f.icon : 'ph-star'; }
         
         function getDayHeader(idx) {
