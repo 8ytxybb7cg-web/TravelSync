@@ -1062,7 +1062,7 @@
         const displayedRate = computed(() => {
              let r = currentLiveRate.value; 
              if (rateDisplayMode.value === 1) r = 1 / r;
-             return (r * 0.98).toFixed(4);
+             return (r * 0.97).toFixed(5);
         });
 
         const totalExpense = computed(() => {
