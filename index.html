@@ -1476,13 +1476,14 @@
             if(el) Sortable.create(el, { handle:'.drag-handle', animation:150, onEnd:(evt)=>{ const item = list.splice(evt.oldIndex, 1)[0]; list.splice(evt.newIndex, 0, item); saveAll(); }});
         }
 
-        onMounted(() => {
+                onMounted(() => {
             Object.assign(editingSettings, settings);
             fetchCloud().then(() => {
                 fetchRate(); fetchWeather();
                 nextTick(() => { 
                     initSortable('sortable-pre-home', preTripNotes.value); 
-                    initSortable('sortable-shop-home', shoppingList.value);
+                    // 修改：移除 sortable-shop-home，新增購物頁判斷
+                    if(currentTab.value === '購物') initSortable('sortable-shop-page', shoppingList.value);
                     if(currentTab.value === '行程') initSortable('sortable-itinerary', itinerary[selectedDay.value]);
                 });
             });
