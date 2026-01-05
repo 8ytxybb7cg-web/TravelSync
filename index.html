@@ -1490,9 +1490,12 @@
             setInterval(fetchRate, 600000);
         });
 
-        watch(currentTab, (val) => {
+                watch(currentTab, (val) => {
              if(val === '行程') nextTick(() => initSortable('sortable-itinerary', itinerary[selectedDay.value]));
-             if(val === '首頁') nextTick(() => { initSortable('sortable-pre-home', preTripNotes.value); initSortable('sortable-shop-home', shoppingList.value); });
+             if(val === '首頁') nextTick(() => initSortable('sortable-pre-home', preTripNotes.value));
+             if(val === '購物') nextTick(() => initSortable('sortable-shop-page', shoppingList.value));
+        });
+ initSortable('sortable-shop-home', shoppingList.value); });
         });
 
         return {
