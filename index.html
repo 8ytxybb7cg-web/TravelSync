@@ -463,8 +463,8 @@
                 <div class="absolute -left-[23px] top-1 w-3.5 h-3.5 rounded-full bg-white border-[3px] border-gray-300 group-hover:border-[#007AFF] transition-colors z-10 shadow-sm"></div>
                 <div class="bg-white/70 backdrop-blur-xl rounded-2xl p-3 border border-white/60 shadow-sm transition-all active:scale-[0.99] active:bg-white/90">
                     <div class="flex items-start gap-2">
-                        <div class="drag-handle cursor-grab text-gray-300 hover:text-gray-500 p-1 mt-0.5 -ml-1 flex-shrink-0 touch-action-none">
-                                <i class="ph ph-dots-six-vertical text-xl"></i>
+                                                <div class="drag-handle cursor-grab text-gray-300 hover:text-gray-500 p-1 mt-0.5 -ml-1 flex-shrink-0 touch-action-none">
+                                 <i class="ph ph-dots-three-vertical text-xl"></i>
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex justify-between items-center mb-1">
@@ -569,10 +569,12 @@
           
           <div v-else id="sortable-expenses" class="space-y-2">
              <div v-for="e in filteredExpenses" :key="e.id" :data-id="e.id" @click="openExpenseModal(e)" class="ios-list-item !items-start !flex-col !p-3 cursor-pointer">
-                 <div class="w-full flex justify-between items-center mb-1.5">
+                                  <div class="w-full flex justify-between items-center mb-1.5">
                      <div class="flex items-center gap-2">
-                         <div v-if="expenseFilter === 'all'" class="drag-handle text-gray-300 p-1 -ml-1"><i class="ph ph-dots-six-vertical"></i></div>
-                         <span class="text-[10px] font-bold text-gray-400">{{ e.date }}</span>
+                         <div v-if="expenseFilter === 'all'" class="drag-handle text-gray-300 p-1 -ml-1"><i class="ph ph-dots-three-vertical"></i></div>
+                     
+     <span class="text-[10px] font-bold text-gray-400">{{ e.date }}</span>
+
                          <span class="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded flex items-center gap-1">
                              <i class="ph" :class="getCategoryIcon(e.category)"></i> {{ e.category }}
                          </span>
