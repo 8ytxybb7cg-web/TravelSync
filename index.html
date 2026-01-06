@@ -1269,8 +1269,8 @@
         function formatNumber(n) { return Number(n).toLocaleString('en-US', {maximumFractionDigits: 1}); }
         function generateId() { return Date.now() + Math.random().toString(36).substr(2, 5); }
         function showToast(msg) { notification.value = msg; setTimeout(()=>notification.value=null, 3000); }
-                function isSocialLink(url) { return url && (url.includes('instagram.com') || url.includes('ig.me') || url.includes('threads.net')); }
-        function getSocialIcon(url) { return url && url.includes('threads.net') ? 'ph-threads-logo' : 'ph-instagram-logo'; }
+                        function isSocialLink(url) { return url && (url.includes('instagram.com') || url.includes('ig.me') || url.includes('threads') || url.includes('threads.net')); }
+        function getSocialIcon(url) { return url && url.includes('threads') ? 'ph-threads-logo' : 'ph-instagram-logo'; }
         function getCategoryIcon(c) { const f = expenseCats.find(x=>x.name===c); return f ? f.icon : 'ph-star'; }
         
         function getDayHeader(idx) {
@@ -1307,7 +1307,8 @@
             if(itinerary.length < days) { while(itinerary.length < days) itinerary.push([]); } 
             else if(itinerary.length > days) { itinerary.splice(days); }
             if(selectedDay.value >= days) selectedDay.value = 0;
-            saveAll(); showToast("Settings Saved!");
+            saveAll();
+            showToast("Settings Saved!");
         }
 
         function openFlightModal() { Object.assign(newFlight, flights[currentFlightView.value]); flightModalOpen.value = true; }
@@ -1316,13 +1317,12 @@
         
         function addPreNote() { editingPreNote.id = null; editingPreNote.name = ''; preNoteModalOpen.value = true; }
         function editPreNote(n) { Object.assign(editingPreNote, n); preNoteModalOpen.value = true; }
-        function savePreNoteEdit() { if(!editingPreNote.id) preTripNotes.value.push({ ...editingPreNote, id: generateId(), isDone: false });
-        else { const idx = preTripNotes.value.findIndex(x=>x.id===editingPreNote.id); if(idx!==-1) preTripNotes.value[idx] = {...editingPreNote}; } preNoteModalOpen.value = false; saveAll(); }
-        function removePreNote(id) { preTripNotes.value = preTripNotes.value.filter(x=>x.id!==id); saveAll(); }
+        function savePreNoteEdit() { if(!editingPreNote.id) preTripNotes.value.push({ ...editingPreNote, id: generateId(), isDone: false }); else { const idx = preTripNotes.value.findIndex(x=>x.id===editingPreNote.id); if(idx!==-1) preTripNotes.value[idx] = {...editingPreNote}; } preNoteModalOpen.value = false; saveAll(); }
+        function removePreNote(id) { if(!confirm('Delete this task?')) return; preTripNotes.value = preTripNotes.value.filter(x=>x.id!==id); saveAll(); }
         function togglePreNoteDone(id) { const n = preTripNotes.value.find(x=>x.id===id); if(n) n.isDone = !n.isDone; saveAll(); }
 
-        // Shopping with Image (Corrected logic from 5.09)
-                function openShoppingModal(item) { 
+        // Shopping with Image
+        function openShoppingModal(item) { 
             Object.assign(newShoppingItem, item || {id:null, name:'', imageURL:'', linkURL:'', isDone:false});
             tempUploadPreview.value = null; pendingUploadFile = null;
             shoppingModalOpen.value = true; 
@@ -1341,11 +1341,14 @@
                 const url = await uploadFileToSupabase(pendingUploadFile);
                 if(url) newShoppingItem.imageURL = url;
             }
-            if(!newShoppingItem.id) shoppingList.value.push({ ...newShoppingItem, id: generateId() });
-            else { const idx = shoppingList.value.findIndex(x=>x.id===newShoppingItem.id); if(idx!==-1) shoppingList.value[idx] = {...newShoppingItem}; }
+            // Ensure linkURL is saved properly
+            const itemToSave = { ...newShoppingItem, linkURL: newShoppingItem.linkURL || '' };
+            
+            if(!itemToSave.id) shoppingList.value.push({ ...itemToSave, id: generateId() });
+            else { const idx = shoppingList.value.findIndex(x=>x.id===itemToSave.id); if(idx!==-1) shoppingList.value[idx] = {...itemToSave}; }
             shoppingModalOpen.value = false; saveAll();
         }
-        function removeShoppingItem(id) { shoppingList.value = shoppingList.value.filter(x=>x.id!==id); saveAll(); }
+        function removeShoppingItem(id) { if(!confirm('Delete this item?')) return; shoppingList.value = shoppingList.value.filter(x=>x.id!==id); saveAll(); }
 
         function openExpenseModal(item) { 
             Object.assign(newExpense, item || {
@@ -1371,16 +1374,15 @@
             if(idx !== -1) expenses.value[idx] = item; else expenses.value.push(item);
             expenseModalOpen.value = false; saveAll();
         }
-        function removeExpense(id) { expenses.value = expenses.value.filter(x=>x.id!==id); saveAll(); }
+        function removeExpense(id) { if(!confirm('Delete expense?')) return; expenses.value = expenses.value.filter(x=>x.id!==id); saveAll(); }
 
         function openMemberModal() { memberModalOpen.value = true; }
         function addMember() { if(newMemberName.value && !members.value.includes(newMemberName.value)) { members.value.push(newMemberName.value); newMemberName.value = ''; saveAll(); } }
-        function removeMember(m) { if(confirm('Remove?')) { members.value = members.value.filter(x => x !== m); saveAll(); } }
+        function removeMember(m) { if(confirm('Remove member?')) { members.value = members.value.filter(x => x !== m); saveAll(); } }
 
         function openInfoModal(item) { Object.assign(newInfoItem, item || {id:null, title:'', note:''}); infoModalOpen.value = true; }
-        function saveInfoItem() { if(!newInfoItem.id) infoList.value.push({...newInfoItem, id:generateId()});
-        else { const idx = infoList.value.findIndex(x=>x.id===newInfoItem.id); if(idx!==-1) infoList.value[idx]={...newInfoItem}; } infoModalOpen.value=false; saveAll(); }
-        function removeInfo(id) { infoList.value = infoList.value.filter(x=>x.id!==id); saveAll(); }
+        function saveInfoItem() { if(!newInfoItem.id) infoList.value.push({...newInfoItem, id:generateId()}); else { const idx = infoList.value.findIndex(x=>x.id===newInfoItem.id); if(idx!==-1) infoList.value[idx]={...newInfoItem}; } infoModalOpen.value=false; saveAll(); }
+        function removeInfo(id) { if(!confirm('Delete info?')) return; infoList.value = infoList.value.filter(x=>x.id!==id); saveAll(); }
 
         // Updated Itinerary Logic (Includes Address)
         function openItineraryModal(item) { 
@@ -1392,17 +1394,17 @@
             const target = itinerary[item.dayIndex]; 
             if(!target) return; 
             if (newItineraryItem.id) {
-                const idx = target.findIndex(x=>x.id===item.id); 
+                const idx = target.findIndex(x=>x.id===item.id);
                 if(idx!==-1) target[idx] = item; 
                 else target.push(item);
             } else {
                 target.push(item);
             }
             target.sort((a,b) => (a.time||'').localeCompare(b.time||'')); 
-            itineraryModalOpen.value = false; saveAll(); 
+            itineraryModalOpen.value = false; saveAll();
             if(selectedMapLocation.value?.id === item.id) showLocationOnMap(item);
         }
-        function removeItineraryItem(id) { itinerary[selectedDay.value] = itinerary[selectedDay.value].filter(x=>x.id!==id); saveAll(); }
+        function removeItineraryItem(id) { if(!confirm('Delete event?')) return; itinerary[selectedDay.value] = itinerary[selectedDay.value].filter(x=>x.id!==id); saveAll(); }
         function addQuickItinerary() { itinerary[selectedDay.value].push({id: generateId(), time: quickItinerary.time, title: quickItinerary.title, address: '', note: ''}); itinerary[selectedDay.value].sort((a,b)=>(a.time||'').localeCompare(b.time||'')); quickItinerary.title=''; saveAll(); }
         function selectDay(i) { selectedDay.value = i; selectedMapLocation.value = null; nextTick(()=> initSortable('sortable-itinerary', itinerary[i])); }
 
@@ -1458,13 +1460,12 @@
                  const { latitude, longitude } = geoData.results[0];
                  const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=precipitation_probability,relativehumidity_2m,apparent_temperature,uv_index&daily=temperature_2m_max,temperature_2m_min&timezone=auto`);
                  const d = await res.json();
-
                  if(d.current_weather) { 
-                    weather.temp = Math.round(d.current_weather.temperature); 
+                    weather.temp = Math.round(d.current_weather.temperature);
                     weather.code = d.current_weather.weathercode;
                     weather.warning = null;
                     const c = weather.code;
-                    if(c >= 95) weather.warning = '!'; 
+                    if(c >= 95) weather.warning = '!';
                     else if(c >= 63) weather.warning = '!'; 
                  }
                  if(d.hourly) {
@@ -1492,7 +1493,7 @@
                 fetchRate(); fetchWeather();
                 nextTick(() => { 
                     initSortable('sortable-pre-home', preTripNotes.value); 
-                    // 修改：移除 sortable-shop-home，新增購物頁判斷
+                    initSortable('sortable-info', infoList.value);
                     if(currentTab.value === '購物') initSortable('sortable-shop-page', shoppingList.value);
                     if(currentTab.value === '行程') initSortable('sortable-itinerary', itinerary[selectedDay.value]);
                 });
