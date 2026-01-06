@@ -380,15 +380,15 @@
                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="ph-fill ph-check-square text-green-500"></i> {{ t('prepList') }}</h2>
                <button @click="addPreNote" class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center hover:bg-green-200 transition-colors"><i class="ph-bold ph-plus"></i></button>
              </div>
-             <ul class="space-y-2" id="sortable-pre-home">
-               <li v-for="item in preTripNotes" :key="item.id" :data-id="item.id" class="flex items-center justify-between p-3 bg-white/60 rounded-xl border border-white/50 shadow-sm">
-                  <div class="drag-handle text-gray-300 mr-2"><i class="ph ph-dots-six-vertical"></i></div>
-                 <div class="flex items-center gap-3 overflow-hidden w-full">
-                   <button @click="togglePreNoteDone(item.id)" class="text-gray-400 hover:text-green-500 shrink-0">
-                      <i :class="item.isDone ? 'ph-fill ph-check-circle text-green-500' : 'ph-bold ph-circle'"></i>
-                   </button>
-                   <span @click="editPreNote(item)" :class="{'line-through text-gray-400': item.isDone}" class="font-medium text-slate-800 truncate flex-1 cursor-pointer">{{ item.name }}</span>
-                 </div>
+                          <ul class="space-y-3" id="sortable-pre-home">
+               <li v-for="item in preTripNotes" :key="item.id" :data-id="item.id" class="ios-list-item">
+                  <div class="drag-handle text-gray-300 hover:text-gray-500 mr-2 p-1"><i class="ph ph-dots-three-vertical text-xl"></i></div>
+                  <div class="flex gap-3.5 flex-1 min-w-0 items-center">
+                       <div class="cursor-pointer" @click="togglePreNoteDone(item.id)">
+                          <i class="ph text-2xl transition-all" :class="item.isDone ? 'ph-check-circle-fill text-green-500' : 'ph-circle text-gray-300 hover:text-gray-400'"></i>
+                       </div>
+                       <span @click="editPreNote(item)" :class="{'task-done': item.isDone}" class="font-bold text-[16px] text-gray-900 truncate flex-1 cursor-pointer">{{ item.name }}</span>
+                  </div>
                </li>
              </ul>
         </div>
