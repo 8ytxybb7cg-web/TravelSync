@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v8.9</title>
+  <title>Travel Sync v8.8</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -611,17 +611,15 @@
                   <div class="flex-1 min-w-0 pt-0.5">
                                         <div class="font-bold text-[16px] text-gray-900 truncate" :class="{'task-done': item.isDone}">{{ item.name }}</div>
                     
-                                        <div v-if="item.imageURL || item.linkURL" class="mt-2 flex flex-row items-center gap-3 w-full">
-                        <div v-if="item.imageURL" class="relative group/img cursor-pointer w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 shadow-sm" @click="openImageViewer(item.imageURL)">
+                    <div v-if="item.imageURL || item.linkURL" class="mt-3 flex flex-wrap items-center gap-2">
+                        <a v-if="item.linkURL && isSocialLink(item.linkURL)" :href="item.linkURL" target="_blank" 
+                           class="text-xs font-semibold text-gray-600 bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 hover:bg-gray-200 transition">
+                           <i class="ph text-lg" :class="getSocialIcon(item.linkURL)"></i> {{ item.linkURL.includes('threads') ? 'Threads' : 'Post' }}
+                        </a>
+                        
+                        <div v-if="item.imageURL" class="relative group/img cursor-pointer w-20 h-20 overflow-hidden rounded-lg border border-gray-200 shadow-sm" @click="openImageViewer(item.imageURL)">
                              <img :src="item.imageURL" class="w-full h-full object-cover" alt="Thumbnail">
                         </div>
-                        
-                        <a v-if="item.linkURL" :href="item.linkURL" target="_blank" 
-                           class="flex-1 min-w-0 h-10 flex items-center justify-center gap-2 bg-gray-100 border border-gray-200 hover:bg-gray-200 transition rounded-lg text-xs font-bold text-gray-700">
-                           <i class="ph text-lg" :class="getSocialIcon(item.linkURL)"></i> 
-                           {{ item.linkURL.includes('threads') ? 'Threads' : (item.linkURL.includes('instagram') ? 'Post' : 'Link') }}
-                        </a>
-                    </div>
                     </div>
                   </div>
                 </div>
@@ -940,7 +938,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260106-8.9');
+        const appVersion = ref('v260106-8.8');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1272,12 +1270,7 @@
         function generateId() { return Date.now() + Math.random().toString(36).substr(2, 5); }
         function showToast(msg) { notification.value = msg; setTimeout(()=>notification.value=null, 3000); }
                 function isSocialLink(url) { return url && (url.includes('instagram.com') || url.includes('ig.me') || url.includes('threads.net')); }
-                function getSocialIcon(url) { 
-            if (!url) return 'ph-link';
-            if (url.includes('threads.net')) return 'ph-threads-logo';
-            if (url.includes('instagram.com') || url.includes('ig.me')) return 'ph-instagram-logo';
-            return 'ph-link';
-        }
+        function getSocialIcon(url) { return url && url.includes('threads.net') ? 'ph-threads-logo' : 'ph-instagram-logo'; }
         function getCategoryIcon(c) { const f = expenseCats.find(x=>x.name===c); return f ? f.icon : 'ph-star'; }
         
         function getDayHeader(idx) {
