@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v8.7</title>
+  <title>Travel Sync v8.8</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -938,7 +938,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260104-8.7');
+        const appVersion = ref('v260106-8.8');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1069,7 +1069,7 @@
         const displayedRate = computed(() => {
              let r = currentLiveRate.value; 
              if (rateDisplayMode.value === 1) r = 1 / r;
-             return (r * 0.97).toFixed(5);
+             return (r * 0.98).toFixed(4);
         });
 
         const totalExpense = computed(() => {
@@ -1322,8 +1322,8 @@
         function togglePreNoteDone(id) { const n = preTripNotes.value.find(x=>x.id===id); if(n) n.isDone = !n.isDone; saveAll(); }
 
         // Shopping with Image (Corrected logic from 5.09)
-        function openShoppingModal(item) { 
-            Object.assign(newShoppingItem, item || {id:null, name:'', imageURL:'', isDone:false});
+                function openShoppingModal(item) { 
+            Object.assign(newShoppingItem, item || {id:null, name:'', imageURL:'', linkURL:'', isDone:false});
             tempUploadPreview.value = null; pendingUploadFile = null;
             shoppingModalOpen.value = true; 
         }
@@ -1517,9 +1517,9 @@
             shoppingModalOpen, newShoppingItem, openShoppingModal, saveShoppingItem, removeShoppingItem, handleFileUpload, tempUploadPreview,
             expenseModalOpen, newExpense, expenseFilter, filteredExpenses, settlementList, openExpenseModal, handleCalcInput, saveExpense, removeExpense,
             memberModalOpen, members, newMemberName, openMemberModal, addMember, removeMember, toggleParticipant, toggleAllParticipants,
-            infoModalOpen, newInfoItem, openInfoModal, saveInfoItem, removeInfo,
-                                    imageViewer, isInstagramLink, formatNumber, expenseCats, getCategoryIcon, openImageViewer,
-            selectedMapLocation, showLocationOnMap, 
+                        infoModalOpen, newInfoItem, openInfoModal, saveInfoItem, removeInfo,
+                                    imageViewer, isSocialLink, getSocialIcon, formatNumber, expenseCats, getCategoryIcon, openImageViewer,
+            selectedMapLocation, showLocationOnMap,  
             mapApp, selectMapApp, openMap, addressPlaceholder, jumpToShoppingItem
         };
       }
