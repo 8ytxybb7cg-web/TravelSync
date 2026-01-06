@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v8.8</title>
+  <title>Travel Sync v8.9</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -283,10 +283,11 @@
                 <section class="ios-card p-5 bg-blue-50/10 border-blue-100/30 relative group">
              <button @click="openInfoModal(null)" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-200 transition-colors"><i class="ph-bold ph-plus"></i></button>
 
-             <h2 class="text-sm font-bold text-blue-800 mb-2 flex items-center gap-2"><i class="ph-fill ph-info"></i> {{ t('info') }}</h2>
-             <ul v-if="infoList.length > 0" class="space-y-2 mt-2">
-                 <li v-for="info in infoList" :key="info.id" @click="openInfoModal(info)" class="text-xs text-blue-900/80 border-b border-blue-200/50 pb-1 last:border-0 cursor-pointer hover:opacity-70 flex justify-between">
-                     <span class="font-bold">{{ info.title }}</span>
+                          <h2 class="text-sm font-bold text-blue-800 mb-2 flex items-center gap-2"><i class="ph-fill ph-info"></i> {{ t('info') }}</h2>
+             <ul v-if="infoList.length > 0" class="space-y-2 mt-2" id="sortable-info">
+                 <li v-for="info in infoList" :key="info.id" :data-id="info.id" @click="openInfoModal(info)" class="text-xs text-blue-900/80 border-b border-blue-200/50 pb-1.5 last:border-0 cursor-pointer hover:bg-blue-50/50 flex items-center gap-2 transition-colors rounded px-1">
+                     <div class="drag-handle text-blue-300 hover:text-blue-500 cursor-grab"><i class="ph ph-dots-three-vertical text-sm"></i></div>
+                     <span class="font-bold flex-1">{{ info.title }}</span>
                      <i class="ph-bold ph-caret-right text-[10px] opacity-50"></i>
                  </li>
              </ul>
@@ -938,7 +939,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260106-8.8');
+        const appVersion = ref('v260106-8.9');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
