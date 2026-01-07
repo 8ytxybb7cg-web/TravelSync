@@ -1683,7 +1683,8 @@
                         watch(currentTab, (val) => {
              // 行程頁只在 Prep tab 有拖曳，其他自動排序
              if(val === '行程' && selectedDay.value === 'prep') nextTick(() => initSortable('sortable-pre-notes', preTripNotes.value));
-             if(val === '首頁' && isPreTrip.value) nextTick(() => { initSortable('sortable-pre-home', preTripNotes.value); });
+             if(val === '首頁' && isPreTrip.value)                 autoToggleFlightCard(); // 初始化航班卡片狀態
+                nextTick(() => { 
              if(val === '購物') nextTick(() => { initSortable('sortable-shop-page', shoppingList.value); });
         });
         watch(selectedDay, (val) => {
