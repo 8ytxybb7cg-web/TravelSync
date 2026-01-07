@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v9.0</title>
+  <title>Travel Sync v9.2</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -422,17 +422,18 @@
                 <div class="ios-card p-5 relative group">
             <button @click="currentTab='購物'; openShoppingModal()" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center hover:bg-pink-200 transition-colors"><i class="ph-bold ph-plus"></i></button>
 
-             <h2 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2"><i class="ph-fill ph-shopping-bag text-pink-500"></i> {{ t('shopping') }}</h2>
+                          <h2 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2"><i class="ph-fill ph-shopping-bag text-pink-500"></i> {{ t('shopping') }}</h2>
              
-             <ul v-if="shoppingList.length > 0" class="space-y-2 mt-2">
-                 <li v-for="item in shoppingList.slice(0, 5)" :key="item.id" @click="jumpToShoppingItem(item.id)" class="text-xs text-slate-700 border-b border-gray-100 pb-1 last:border-0 cursor-pointer hover:bg-gray-50/50 flex justify-between items-center transition-colors rounded px-1">
+             <ul v-if="shoppingList.filter(i=>!i.isDone).length > 0" class="space-y-2 mt-2">
+                 <li v-for="item in shoppingList.filter(i=>!i.isDone).slice(0, 5)" :key="item.id" @click="jumpToShoppingItem(item.id)" class="text-xs text-slate-700 border-b border-gray-100 pb-1 last:border-0 cursor-pointer hover:bg-gray-50/50 flex justify-between items-center transition-colors rounded px-1">
                      <div class="flex items-center gap-2 overflow-hidden">
-                        <i class="ph-fill ph-circle text-[8px]" :class="item.isDone ? 'text-green-500' : 'text-gray-300'"></i>
-                        <span :class="{'line-through text-gray-400': item.isDone}" class="font-bold truncate">{{ item.name }}</span>
+                        <i class="ph-fill ph-circle text-[8px] text-gray-300"></i>
+                        <span class="font-bold truncate">{{ item.name }}</span>
                      </div>
                      <i class="ph-bold ph-caret-right text-[10px] opacity-30"></i>
                  </li>
-                 <li v-if="shoppingList.length > 5" class="text-[10px] text-center text-gray-400 pt-1" @click="currentTab='購物'">
+    
+                 <li v-if="shoppingList.length > shoppingList.filter(i=>!i.isDone).slice(0, 5).length" class="text-[10px] text-center text-gray-400 pt-1" @click="currentTab='購物'">
                     {{ t('viewAll') }} ({{ shoppingList.length }})
                  </li>
              </ul>
@@ -967,7 +968,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260107-9.0');
+        const appVersion = ref('v260107-9.2');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
