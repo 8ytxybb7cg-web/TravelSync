@@ -452,10 +452,10 @@
              <p v-else class="text-xs text-gray-400 italic">{{ t('noItems') }}</p>
         </div>
 
-                <div class="ios-card p-5 relative group">
-            <button @click="currentTab='購物'; openShoppingModal()" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center hover:bg-pink-200 transition-colors"><i class="ph-bold ph-plus"></i></button>
+                        <div class="ios-card p-5 relative group cursor-pointer" @click="currentTab='購物'">
+            <button @click.stop="currentTab='購物'; openShoppingModal()" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center hover:bg-pink-200 transition-colors"><i class="ph-bold ph-plus"></i></button>
 
-                          <h2 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2"><i class="ph-fill ph-shopping-bag text-pink-500"></i> {{ t('shopping') }}</h2>
+            <h2 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2"><i class="ph-fill ph-shopping-bag text-pink-500"></i> {{ t('shopping') }}</h2>
              
              <ul v-if="shoppingList.filter(i=>!i.isDone).length > 0" class="space-y-2 mt-2">
                  <li v-for="item in shoppingList.filter(i=>!i.isDone).slice(0, 5)" :key="item.id" @click="jumpToShoppingItem(item.id)" class="text-xs text-slate-700 border-b border-gray-100 pb-1 last:border-0 cursor-pointer hover:bg-gray-50/50 flex justify-between items-center transition-colors rounded px-1">
