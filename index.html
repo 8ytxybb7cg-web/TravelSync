@@ -1188,7 +1188,48 @@
         
         const currentLiveRate = ref(4.0);
         const lastRateUpdateLabel = ref('--:--');
-        const displayedRate = computed(() => {
+                // 判斷是否為旅程前 (用於顯示準備清單)
+        const isPreTrip = computed(() => {
+            if(!settings.startDate) return false;
+            const now = new Date();
+            const start = new Date(settings.startDate);
+            // 當下時間 < 開始日期的 00:00 (簡單比較)
+            return now < start;
+        });
+
+        // 判斷今天是否在旅程中，回傳 Index，否則 -1
+        const currentTripDayIndex = computed(() => {
+            if(!settings.startDate) return -1;
+            const now = new Date();
+            const start = new Date(settings.startDate);
+            const diffTime = now - start;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            // 假設 itinerary 長度對應天數
+            if (diffDays >= 0 && diffDays < itinerary.length) {
+                return diffDays;
+            }
+            return -1;
+        });
+
+        // 自動收合航班卡片：若今天日期 != 航班日期，則收合
+        function autoToggleFlightCard() {
+            const nowStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric' }); // e.g., "15/12" (match headerDateRange partial logic or simple compare)
+            // 這裡做簡化：若非旅程當日，預設收合
+            if (currentTripDayIndex.value === -1) {
+                isFlightMinimized.value = true;
+            } else {
+                // 檢查是否為去程或回程日
+                const isOutbound = currentTripDayIndex.value === 0;
+                const isReturn = currentTripDayIndex.value === itinerary.length - 1;
+                if (isOutbound || isReturn) {
+                    isFlightMinimized.value = false;
+                    currentFlightView.value = isReturn ? 'return' : 'outbound';
+                } else {
+                    isFlightMinimized.value = true;
+                }
+            }
+        }
+
              let r = currentLiveRate.value; 
              if (rateDisplayMode.value === 1) r = 1 / r;
              return (r * 0.97).toFixed(5);
