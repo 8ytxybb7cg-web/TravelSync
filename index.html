@@ -632,8 +632,9 @@
                 <div class="drag-handle text-gray-400 hover:text-gray-600 mr-2 p-1 mt-1.5"><i class="ph-bold ph-dots-three-vertical text-xl"></i></div>
                 
                 <div class="flex gap-3 flex-1 min-w-0 items-start">
-                    <div class="cursor-pointer mt-1" @click.stop="item.isDone = !item.isDone; saveAll()">
-                        <i class="ph text-2xl transition-all" :class="item.isDone ? 'ph-check-circle-fill text-green-500' : 'ph-circle text-gray-300 hover:text-gray-400'"></i>
+                                        <div class="cursor-pointer mt-1" @click.stop="item.isDone = !item.isDone; saveAll()">
+                        <i class="text-2xl transition-all" :class="item.isDone ?
+'ph-fill ph-check-circle text-green-500' : 'ph-bold ph-circle text-gray-300 hover:text-gray-400'"></i>
                     </div>
 
                     <div class="flex-1 min-w-0 pt-0.5">
