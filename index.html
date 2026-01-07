@@ -385,26 +385,47 @@
             </div>
         </div>
 
-        <section>
+                <section>
             <div class="flex items-center justify-between mb-3 px-1">
                  <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                     <i class="ph-fill ph-calendar-check text-blue-500"></i> {{ t('itinerary') }}
-                </h2>
+                 </h2>
                 <button @click="currentTab='行程'" class="text-blue-500 text-xs font-bold uppercase tracking-wide hover:bg-blue-50 px-2 py-1 rounded-lg">{{ t('viewAll') }}</button>
             </div>
-            <div class="flex overflow-x-auto gap-3 pb-4 no-scrollbar -mx-5 px-5 snap-x">
-                <div v-for="(dayItems, idx) in itinerary" :key="idx" class="snap-center shrink-0 w-[240px] ios-card p-4 flex flex-col gap-3 h-full">
+
+            <div v-if="currentTripDayIndex !== -1" class="ios-card p-4 flex flex-col gap-3 cursor-pointer hover:bg-white/40 transition-colors"
+                 @click="selectDay(currentTripDayIndex); currentTab='行程'">
+                 <div class="flex justify-between items-center border-b border-gray-200/50 pb-2">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase">TODAY (DAY {{ currentTripDayIndex + 1 }})</span>
+                        <span class="font-bold text-slate-800 text-sm">{{ getDayHeader(currentTripDayIndex) }}</span>
+                    </div>
+                    <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">{{ itinerary[currentTripDayIndex]?.length || 0 }}</span>
+                 </div>
+                 <div class="flex flex-col gap-2 max-h-[200px] overflow-y-auto pr-1 pointer-events-none">
+                    <div v-for="item in itinerary[currentTripDayIndex]" :key="item.id" class="text-sm border-l-2 border-blue-500 pl-2 py-0.5">
+                        <div class="font-bold text-slate-800 truncate">{{ item.time }} {{ item.title }}</div>
+                    </div>
+                    <div v-if="(!itinerary[currentTripDayIndex] || itinerary[currentTripDayIndex].length===0)" class="text-xs text-gray-400 italic">{{ t('noItems') }}</div>
+                 </div>
+                 <div class="text-center text-[10px] text-[#007AFF] font-bold mt-1">點擊查看詳情</div>
+            </div>
+
+            <div v-else class="flex overflow-x-auto gap-3 pb-4 no-scrollbar -mx-5 px-5 snap-x">
+                <div v-for="(dayItems, idx) in itinerary" :key="idx" 
+                     @click="selectDay(idx); currentTab='行程'"
+                     class="snap-center shrink-0 w-[240px] ios-card p-4 flex flex-col gap-3 h-full cursor-pointer hover:bg-white/40 transition-colors">
                      <div class="flex justify-between items-center border-b border-gray-200/50 pb-2">
                         <div class="flex flex-col">
                             <span class="text-[10px] font-bold text-gray-400 uppercase">DAY {{ idx + 1 }}</span>
                             <span class="font-bold text-slate-800 text-sm">{{ getDayHeader(idx) }}</span>
                         </div>
                         <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">{{ dayItems.length }}</span>
-                    </div>
-                    <div class="flex flex-col gap-2 max-h-[150px] overflow-y-auto pr-1">
+                  </div>
+                    <div class="flex flex-col gap-2 max-h-[150px] overflow-y-auto pr-1 pointer-events-none">
                         <div v-for="item in dayItems" :key="item.id" class="text-sm border-l-2 border-blue-500 pl-2 py-0.5">
                             <div class="font-bold text-slate-800 truncate">{{ item.time }} {{ item.title }}</div>
-                        </div>
+                      </div>
                         <div v-if="dayItems.length===0" class="text-xs text-gray-400 italic">{{ t('noItems') }}</div>
                      </div>
                 </div>
