@@ -499,60 +499,110 @@
              </div>
         </div>
       </div>
-      <div v-if="currentTab === '行程'" class="space-y-4 animate-fade-in pb-20">
-         <div class="flex items-center gap-2">
-             <div class="flex-1 overflow-x-auto no-scrollbar py-2 flex gap-2">
-                <button v-for="(d, i) in dayList" :key="i" @click="selectDay(i)" 
-                  class="day-tab flex-shrink-0 w-[22%] h-[70px] rounded-xl flex flex-col items-center justify-center relative overflow-hidden group"
+            <div v-if="currentTab === '行程'" class="space-y-4 animate-fade-in pb-20">
+         
+         <div class="mb-4">
+            <div class="flex justify-between gap-3 overflow-x-auto no-scrollbar py-1 px-1">
+              <button @click="selectedDay = 'prep'" 
+                 class="day-tab flex-shrink-0 w-[20%] h-[76px] rounded-2xl flex flex-col items-center justify-center text-xs relative overflow-hidden group"
+                 :class="{ 'active': selectedDay === 'prep' }">
+                 <i class="ph ph-list-checks text-2xl mb-1 text-gray-400 transition-colors group-[.active]:text-[#007AFF]"></i>
+                 <span class="font-medium text-gray-500 group-[.active]:font-bold">準備</span>
+              </button>
+             
+              <button v-for="(d, i) in dayList" :key="i"
+                  @click="selectDay(i)"
+                  class="day-tab flex-shrink-0 w-[22%] h-[76px] rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group"
                   :class="{ 'active': selectedDay === i }">
-                  <span class="text-[9px] font-bold uppercase text-gray-500 mb-0.5">DAY {{ i + 1 }}</span>
-                  <span class="text-[10px] font-medium text-gray-500">{{ d.weekday }}</span>
-                  <span class="text-lg font-bold text-slate-800 leading-none mt-0.5">{{ d.dateStr }}</span>
-                </button>
-             </div>
-             <button @click="openItineraryModal(null)" class="flex-shrink-0 w-[70px] h-[70px] rounded-xl bg-blue-500 text-white shadow-lg flex flex-col items-center justify-center active:scale-95 transition">
-                 <i class="ph-bold ph-plus text-2xl mb-1"></i>
-                                  <span class="text-[10px] font-bold">{{ t('add') }}</span>
-             </button>
+                <span class="text-[10px] font-bold uppercase text-gray-400 mb-0.5 group-[.active]:text-[#007AFF]">Day {{ i + 1 }}</span>
+                <span class="text-[11px] font-medium text-gray-400 group-[.active]:text-gray-800">{{ d.weekday }}</span>
+                <span class="text-lg font-bold mt-0.5 leading-none text-gray-600 group-[.active]:text-black">{{ d.dateStr }}</span>
+              </button>
+            </div>
          </div>
 
-         <div class="relative pl-4 border-l-2 border-gray-300/50 ml-3 space-y-3 py-2" id="sortable-itinerary">
-             <div v-for="it in sortedItinerary" :key="it.id" :data-id="it.id"
-                  @click="showLocationOnMap(it)"
-                  class="relative group cursor-pointer">
-                <div class="absolute -left-[23px] top-1 w-3.5 h-3.5 rounded-full bg-white border-[3px] border-gray-300 group-hover:border-[#007AFF] transition-colors z-10 shadow-sm"></div>
-                <div class="bg-white/70 backdrop-blur-xl rounded-2xl p-3 border border-white/60 shadow-sm transition-all active:scale-[0.99] active:bg-white/90">
-                    <div class="flex items-start gap-2">
-                                                                        <div class="drag-handle cursor-grab text-gray-400 hover:text-gray-600 p-1 flex-shrink-0 touch-action-none flex items-center justify-center">
-                             <i class="ph-bold ph-dots-three-vertical text-lg"></i>
-                        </div>
+         <div v-if="selectedDay === 'prep'" class="rounded-3xl transition-all duration-300">
+            <h3 class="ml-2 mb-3 text-xs font-bold text-gray-500 uppercase tracking-widest">準備清單</h3>
+            <ul class="space-y-2.5" id="sortable-pre-notes">
+               <li v-for="(note, i) in preTripNotes" :key="note.id" :data-id="note.id" class="ios-list-item">
+                 <div class="drag-handle text-gray-300 hover:text-gray-500 mr-2 p-2">
+                     <i class="ph ph-dots-six-vertical text-xl"></i>
+                 </div>
+                 <div class="flex items-center gap-3.5 flex-1 min-w-0">
+                     <div class="relative cursor-pointer" @click="togglePreNoteDone(note.id)">
+                      <i class="ph text-2xl transition-colors" :class="note.isDone ? 'ph-check-circle-fill text-[#007AFF]' : 'ph-circle text-gray-300 hover:text-gray-400'"></i>
+                  </div>
+                  <span class="font-medium text-[16px] truncate" :class="{'task-done': note.isDone, 'text-gray-900': !note.isDone}">{{ note.name }}</span>
+                 </div>
+                <div class="action-btn-group">
+                   <button @click.stop="editPreNote(note)" class="icon-btn edit"><i class="ph ph-pencil-simple text-lg"></i></button>
+                   <button @click.stop="removePreNote(note.id)" class="icon-btn delete"><i class="ph ph-trash text-lg"></i></button>
+                </div>
+               </li>
+            </ul>
+            
+            <div v-if="preTripNotes.length === 0" class="py-12 text-center">
+                <i class="ph ph-clipboard-text text-4xl text-gray-300 mb-2"></i>
+                <p class="text-sm text-gray-400">尚未建立準備清單</p>
+            </div>
+  
+             <div class="mt-6 ios-card !bg-white/60 p-3">
+               <div class="flex gap-3">
+                <input v-model="newPreNoteInput" @keyup.enter="addPreNoteDirect" class="ios-input-bar bg-white/70 shadow-sm" placeholder="快速新增項目...">
+                  <button @click="addPreNoteDirect" class="w-12 h-full flex items-center justify-center bg-[#007AFF] text-white rounded-xl shadow-lg active:scale-95 transition flex-shrink-0">
+                    <i class="ph ph-plus text-xl"></i>
+                </button>
+              </div>
+            </div>
+         </div>
 
-                        <div class="flex-1 min-w-0">
-                            <div class="flex justify-between items-center mb-1">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-xs font-bold text-[#007AFF] font-mono bg-blue-50/80 px-1.5 rounded">{{ it.time || '--:--' }}</span>
+         <div v-else>
+             <div class="relative pl-4 border-l-2 border-gray-300/50 ml-3 space-y-3 py-2">
+                 <div v-for="it in sortedItinerary" :key="it.id"
+                      @click="showLocationOnMap(it)"
+                      class="relative group cursor-pointer">
+                    <div class="absolute -left-[23px] top-1 w-3.5 h-3.5 rounded-full bg-white border-[3px] border-gray-300 group-hover:border-[#007AFF] transition-colors z-10 shadow-sm"></div>
+                    <div class="bg-white/70 backdrop-blur-xl rounded-2xl p-3 border border-white/60 shadow-sm transition-all active:scale-[0.99] active:bg-white/90">
+                        <div class="flex items-start gap-2">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-center mb-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-bold text-[#007AFF] font-mono bg-blue-50/80 px-1.5 rounded">{{ it.time || '--:--' }}</span>
+                                    </div>
+                                    <button @click.stop="openItineraryModal(it)" class="text-gray-400 hover:text-[#007AFF] p-1 transition-colors rounded-full -mr-1">
+                                        <i class="ph ph-pencil-simple text-lg"></i>
+                                    </button>
                                 </div>
-                                <button @click.stop="openItineraryModal(it)" class="text-gray-400 hover:text-[#007AFF] p-1 transition-colors rounded-full -mr-1">
-                                     <i class="ph ph-pencil-simple text-lg"></i>
-                                </button>
+                                <div class="flex justify-between items-start">
+                                    <div class="font-bold text-[16px] text-gray-900 leading-snug">{{ it.title }}</div>
+                                    <button @click.stop="removeItineraryItem(it.id)" class="text-gray-400 hover:text-[#FF3B30] p-1 transition-colors rounded-full -mr-1 ml-2">
+                                        <i class="ph ph-trash text-lg"></i>
+                                    </button>
+                                </div>
+                                <div v-if="it.note" class="text-xs text-gray-500 mt-0.5 leading-relaxed">{{ it.note }}</div>
+                                <div v-if="(it.address || '').trim() !== ''" class="mt-1 flex items-center gap-1.5 text-[10px] text-gray-400 group-hover:text-[#007AFF] transition-colors">
+                                    <i class="ph ph-map-pin-line"></i>
+                                    <span class="font-medium">查看地圖</span>
+                                </div>
                             </div>
-                           <div class="flex justify-between items-start">
-                                <div class="font-bold text-[16px] text-gray-900 leading-snug">{{ it.title }}</div>
-                                <button @click.stop="removeItineraryItem(it.id)" class="text-gray-400 hover:text-[#FF3B30] p-1 transition-colors rounded-full -mr-1 ml-2">
-                                     <i class="ph ph-trash text-lg"></i>
-                                </button>
-                            </div>
-                            <div v-if="it.note" class="text-xs text-gray-500 mt-0.5 leading-relaxed">{{ it.note }}</div>
-                            <div v-if="(it.address || '').trim() !== ''" class="mt-1 flex items-center gap-1.5 text-[10px] text-gray-400 group-hover:text-[#007AFF] transition-colors">
-                                <i class="ph ph-map-pin-line"></i>
-                                <span class="font-medium">查看地圖</span>
-                             </div>
                         </div>
                     </div>
-                </div>
-              </div>
+                  </div>
+             </div>
+             
+             <p v-if="sortedItinerary.length === 0" class="py-12 text-center text-gray-400 text-sm">
+                <i class="ph ph-coffee text-3xl mb-2 block text-gray-300"></i>
+                  今日無行程，享受自由時光
+             </p>
+
+             <div class="mt-8 ios-card !bg-white/60 p-3"> 
+                 <div class="flex gap-2">
+                   <input v-model="quickItinerary.time" type="time" class="ios-input-bar !w-auto text-center !px-2 font-mono text-sm">
+                   <input v-model="quickItinerary.title" @keyup.enter="addQuickItinerary" class="ios-input-bar flex-1 text-sm" placeholder="快速新增活動...">
+                    <button @click="addQuickItinerary" class="w-12 bg-[#007AFF] text-white rounded-xl shadow-md active:scale-95 transition flex items-center justify-center"><i class="ph ph-plus text-xl"></i></button>
+                 </div>
+            </div>
          </div>
-         <div v-if="sortedItinerary.length === 0" class="text-center py-10 text-gray-400 text-sm italic">{{ t('noItems') }}</div>
 
          <transition name="fade">
             <div v-if="selectedMapLocation" class="fixed bottom-24 left-4 right-4 z-40 ios-card bg-white/90 p-4 border-2 border-[#007AFF]/10 shadow-2xl">
