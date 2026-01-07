@@ -325,13 +325,15 @@
                    </div>
                    <button @click="toggleRateOrder" class="text-gray-400 hover:text-blue-500 p-1"><i class="ph ph-arrows-left-right"></i></button>
                </div>
-               <div class="flex flex-col">
+               <               <div class="flex flex-col" style="container-type: inline-size;">
                    <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">
-                      {{ rateDisplayMode === 0 ? (settings.localCurrency + ' / ' + settings.homeCurrency) : (settings.homeCurrency + ' / ' + settings.localCurrency) }}
+                      {{ rateDisplayMode === 0 ?
+(settings.localCurrency + ' / ' + settings.homeCurrency) : (settings.homeCurrency + ' / ' + settings.localCurrency) }}
                    </div>
-                   <div class="text-3xl font-bold text-slate-800 tracking-tight leading-none">{{ displayedRate }}</div>
+                   <div class="font-bold text-slate-800 tracking-tight leading-none text-[clamp(22px,20cqw,36px)]">{{ displayedRate }}</div>
                    <div class="text-[9px] text-gray-400 mt-1 font-mono">{{ t('feeIncluded') }} • {{ lastRateUpdateLabel }}</div>
-               </div>
+           
+    </div>
             </div>
             
                        <div class="ios-card p-3 relative group overflow-hidden h-full flex flex-col justify-between">
