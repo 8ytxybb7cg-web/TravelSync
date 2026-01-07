@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v8.91</title>
+  <title>Travel Sync v8.9</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -465,9 +465,10 @@
                 <div class="absolute -left-[23px] top-1 w-3.5 h-3.5 rounded-full bg-white border-[3px] border-gray-300 group-hover:border-[#007AFF] transition-colors z-10 shadow-sm"></div>
                 <div class="bg-white/70 backdrop-blur-xl rounded-2xl p-3 border border-white/60 shadow-sm transition-all active:scale-[0.99] active:bg-white/90">
                     <div class="flex items-start gap-2">
-                                                <div class="drag-handle cursor-grab text-gray-300 hover:text-gray-500 p-1 mt-0.5 -ml-1 flex-shrink-0 touch-action-none">
-                                 <i class="ph ph-dots-three-vertical text-xl"></i>
+                                                                        <div class="drag-handle cursor-grab text-gray-400 hover:text-gray-600 p-1 flex-shrink-0 touch-action-none flex items-center justify-center">
+                             <i class="ph-bold ph-dots-three-vertical text-lg"></i>
                         </div>
+
                         <div class="flex-1 min-w-0">
                             <div class="flex justify-between items-center mb-1">
                                 <div class="flex items-center gap-2">
@@ -571,9 +572,9 @@
           
           <div v-else id="sortable-expenses" class="space-y-2">
              <div v-for="e in filteredExpenses" :key="e.id" :data-id="e.id" @click="openExpenseModal(e)" class="ios-list-item !items-start !flex-col !p-3 cursor-pointer">
-                                  <div class="w-full flex justify-between items-center mb-1.5">
+                                                   <div class="w-full flex justify-between items-center mb-1.5">
                      <div class="flex items-center gap-2">
-                         <div v-if="expenseFilter === 'all'" class="drag-handle text-gray-300 p-1 -ml-1"><i class="ph ph-dots-three-vertical"></i></div>
+                         <div v-if="expenseFilter === 'all'" class="drag-handle text-gray-400 hover:text-gray-600 p-1 -ml-1"><i class="ph-bold ph-dots-three-vertical"></i></div>
                      
      <span class="text-[10px] font-bold text-gray-400">{{ e.date }}</span>
 
@@ -600,10 +601,10 @@
               <button @click="openShoppingModal()" class="w-9 h-9 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center hover:bg-pink-200 transition-colors shadow-sm"><i class="ph-bold ph-plus text-lg"></i></button>
             </div>
            
-                        <ul class="space-y-3" id="sortable-shop-page">
+                                    <ul class="space-y-3" id="sortable-shop-page">
               <li v-for="(item, i) in shoppingList" :key="item.id" :data-id="item.id" class="ios-list-item !items-start">
                 
-                <div class="drag-handle text-gray-300 hover:text-gray-500 mr-2 p-1 mt-1.5"><i class="ph ph-dots-three-vertical text-xl"></i></div>
+                <div class="drag-handle text-gray-400 hover:text-gray-600 mr-2 p-1 mt-1.5"><i class="ph-bold ph-dots-three-vertical text-xl"></i></div>
                 
                 <div class="flex gap-3 flex-1 min-w-0 items-start">
                     <div class="cursor-pointer mt-1" @click.stop="item.isDone = !item.isDone; saveAll()">
@@ -942,7 +943,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260106-8.91');
+        const appVersion = ref('v260106-8.9');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
