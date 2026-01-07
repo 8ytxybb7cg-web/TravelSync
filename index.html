@@ -1622,11 +1622,11 @@
             Object.assign(editingSettings, settings);
             fetchCloud().then(() => {
                 fetchRate(); fetchWeather();
-                nextTick(() => { 
-                    initSortable('sortable-pre-home', preTripNotes.value); 
+                                nextTick(() => { 
+                    if(currentTab.value === '首頁' && isPreTrip.value) initSortable('sortable-pre-home', preTripNotes.value); 
                     initSortable('sortable-info', infoList.value);
                     if(currentTab.value === '購物') initSortable('sortable-shop-page', shoppingList.value);
-                    if(currentTab.value === '行程') initSortable('sortable-itinerary', itinerary[selectedDay.value]);
+                    if(currentTab.value === '行程' && selectedDay.value === 'prep') initSortable('sortable-pre-notes', preTripNotes.value);
                 });
             });
             setInterval(fetchRate, 600000);
