@@ -1523,7 +1523,15 @@
         }
         function removeItineraryItem(id) { if(!confirm('Delete event?')) return; itinerary[selectedDay.value] = itinerary[selectedDay.value].filter(x=>x.id!==id); saveAll(); }
         function addQuickItinerary() { itinerary[selectedDay.value].push({id: generateId(), time: quickItinerary.time, title: quickItinerary.title, address: '', note: ''}); itinerary[selectedDay.value].sort((a,b)=>(a.time||'').localeCompare(b.time||'')); quickItinerary.title=''; saveAll(); }
-        function selectDay(i) { selectedDay.value = i; selectedMapLocation.value = null; nextTick(()=> initSortable('sortable-itinerary', itinerary[i])); }
+                function selectDay(i) { 
+            selectedDay.value = i; 
+            selectedMapLocation.value = null;
+            // 如果切換到 'prep'，初始化準備清單拖曳；否則移除行程拖曳 (依需求自動排序)
+            if (i === 'prep') {
+                nextTick(() => initSortable('sortable-pre-notes', preTripNotes.value));
+            } 
+        }
+
 
         async function fetchCloud() {
             syncState.value = 'loading';
