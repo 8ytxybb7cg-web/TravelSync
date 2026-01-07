@@ -1096,7 +1096,8 @@
 
         const expenseFilter = ref('all');
         const selectedDay = ref(0);
-        const quickItinerary = reactive({ title: '', time: '' });
+                const newPreNoteInput = ref(''); // 5.09 準備清單快速新增變數
+        const quickItinerary = reactive({ time: '', title: '' });
         
         // Map Logic (New in 7.5)
                 const selectedMapLocation = ref(null);
