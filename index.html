@@ -1480,6 +1480,13 @@
         function saveFlight() { Object.assign(flights[currentFlightView.value], newFlight); flightModalOpen.value = false; saveAll(); }
         
         function addPreNote() { editingPreNote.id = null; editingPreNote.name = ''; preNoteModalOpen.value = true; }
+        function addPreNoteDirect() {
+            if(newPreNoteInput.value.trim()) {
+                preTripNotes.value.push({id: generateId(), name: newPreNoteInput.value, isDone: false});
+                newPreNoteInput.value='';
+                saveAll();
+            }
+        }
         function editPreNote(n) { Object.assign(editingPreNote, n); preNoteModalOpen.value = true; }
         function savePreNoteEdit() { if(!editingPreNote.id) preTripNotes.value.push({ ...editingPreNote, id: generateId(), isDone: false }); else { const idx = preTripNotes.value.findIndex(x=>x.id===editingPreNote.id); if(idx!==-1) preTripNotes.value[idx] = {...editingPreNote}; } preNoteModalOpen.value = false; saveAll(); }
         function removePreNote(id) { if(!confirm('Delete this task?')) return; preTripNotes.value = preTripNotes.value.filter(x=>x.id!==id); saveAll(); }
