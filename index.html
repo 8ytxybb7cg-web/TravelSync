@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v9.2</title>
+  <title>Travel Sync v9.3</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -153,8 +153,20 @@
     .fade-enter-active, .fade-leave-active { transition: opacity 0.3s, transform 0.3s; }
     .fade-enter-from, .fade-leave-to { opacity: 0; transform: translate(-50%, -10px); }
 
-    .day-tab { transition: all 0.3s; background: rgba(255,255,255,0.4); border: 1px solid transparent; }
-    .day-tab.active { background: #fff; border-color: #007AFF; box-shadow: 0 2px 8px rgba(0,122,255,0.15); }
+        /* 移植 5.09 Tab 樣式 */
+    .day-tab { transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      background: rgba(255, 255, 255, 0.5); border: 1px solid rgba(255,255,255,0.2); }
+    .day-tab.active { background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(255,255,255,0.5); box-shadow: 0 4px 15px rgba(0,0,0,0.05); transform: translateY(-2px); }
+    
+    /* 修正 Input 樣式以適應快速新增欄 */
+    .ios-input-bar {
+      background: rgba(118, 118, 128, 0.12);
+      border: none; border-radius: 12px; padding: 12px 16px;
+      font-size: 17px; color: #000; width: 100%; box-sizing: border-box;
+      transition: background 0.2s;
+    }
+    .ios-input-bar:focus { background: rgba(118, 118, 128, 0.2); outline: none; }
     
     .hkg-header { background: var(--hkg-navy); color: white; }
     .hkg-yellow-text { color: var(--hkg-yellow); }
@@ -969,7 +981,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260107-9.2');
+        const appVersion = ref('v260107-9.3');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
