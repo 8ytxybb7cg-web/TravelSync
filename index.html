@@ -1178,7 +1178,13 @@
             return `${fs}/${sy} ~ ${fe}/${ey}`;
         });
 
-        const sortedItinerary = computed(() => itinerary[selectedDay.value] || []);
+                const sortedItinerary = computed(() => {
+            if (selectedDay.value === 'prep') return [];
+            const list = itinerary[selectedDay.value] || [];
+            // 強制依時間排序
+            return list.sort((a, b) => (a.time || '23:59').localeCompare(b.time || '23:59'));
+        });
+
         
         const currentLiveRate = ref(4.0);
         const lastRateUpdateLabel = ref('--:--');
