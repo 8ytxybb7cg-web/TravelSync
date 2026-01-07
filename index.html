@@ -1224,16 +1224,18 @@
                 if (isOutbound || isReturn) {
                     isFlightMinimized.value = false;
                     currentFlightView.value = isReturn ? 'return' : 'outbound';
-                } else {
+                                } else {
                     isFlightMinimized.value = true;
                 }
             }
         }
 
-             let r = currentLiveRate.value; 
+        const displayedRate = computed(() => {
+             let r = currentLiveRate.value;
              if (rateDisplayMode.value === 1) r = 1 / r;
              return (r * 0.97).toFixed(5);
         });
+
 
         const totalExpense = computed(() => {
             let totalHome = 0;
@@ -1666,11 +1668,12 @@
             if(el) Sortable.create(el, { handle:'.drag-handle', animation:150, onEnd:(evt)=>{ const item = list.splice(evt.oldIndex, 1)[0]; list.splice(evt.newIndex, 0, item); saveAll(); }});
         }
 
-                onMounted(() => {
+                        onMounted(() => {
             Object.assign(editingSettings, settings);
             fetchCloud().then(() => {
                 fetchRate(); fetchWeather();
-                                nextTick(() => { 
+                autoToggleFlightCard(); // 初始化航班卡片狀態
+                nextTick(() => { 
                     if(currentTab.value === '首頁' && isPreTrip.value) initSortable('sortable-pre-home', preTripNotes.value); 
                     initSortable('sortable-info', infoList.value);
                     if(currentTab.value === '購物') initSortable('sortable-shop-page', shoppingList.value);
@@ -1680,13 +1683,12 @@
             setInterval(fetchRate, 600000);
         });
 
-                        watch(currentTab, (val) => {
-             // 行程頁只在 Prep tab 有拖曳，其他自動排序
+        watch(currentTab, (val) => {
              if(val === '行程' && selectedDay.value === 'prep') nextTick(() => initSortable('sortable-pre-notes', preTripNotes.value));
-             if(val === '首頁' && isPreTrip.value)                 autoToggleFlightCard(); // 初始化航班卡片狀態
-                nextTick(() => { 
+             if(val === '首頁' && isPreTrip.value) nextTick(() => { initSortable('sortable-pre-home', preTripNotes.value); });
              if(val === '購物') nextTick(() => { initSortable('sortable-shop-page', shoppingList.value); });
         });
+
         watch(selectedDay, (val) => {
             if(val === 'prep' && currentTab.value === '行程') nextTick(() => initSortable('sortable-pre-notes', preTripNotes.value));
         });
