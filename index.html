@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v9.3</title>
+  <title>Travel Sync v9.4</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -314,7 +314,7 @@
              </div>
         </div>
 
-                <section class="ios-card p-5 bg-blue-50/10 border-blue-100/30 relative group">
+                                <section v-if="settings.showInfoCard !== false" class="ios-card p-5 bg-blue-50/10 border-blue-100/30 relative group">
              <button @click="openInfoModal(null)" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-200 transition-colors"><i class="ph-bold ph-plus"></i></button>
 
                           <h2 class="text-sm font-bold text-blue-800 mb-2 flex items-center gap-2"><i class="ph-fill ph-info"></i> {{ t('info') }}</h2>
@@ -432,17 +432,17 @@
             </div>
         </section>
 
-                <div v-if="isPreTrip" class="ios-card p-5 relative group cursor-pointer" @click="selectedDay='prep'; currentTab='行程'">
-             <button class="absolute top-4 right-4 w-7 h-7 rounded-full bg-green-100 text-green-600 flex items-center justify-center hover:bg-green-200 transition-colors">
-                <i class="ph-bold ph-arrow-right"></i>
+                        <div v-if="isPreTrip" class="ios-card p-5 relative group cursor-pointer" @click="selectedDay='prep'; currentTab='行程'">
+             <button @click.stop="goToPrepInput()" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-green-100 text-green-600 flex items-center justify-center hover:bg-green-200 transition-colors">
+                <i class="ph-bold ph-plus"></i>
              </button>
 
              <h2 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
                 <i class="ph-fill ph-check-square text-green-500"></i> {{ t('prepList') }}
              </h2>
              
-             <ul v-if="preTripNotes.length > 0" class="space-y-2 mt-2">
-               <li v-for="item in preTripNotes" :key="item.id" class="text-xs text-slate-700 border-b border-gray-100 pb-1 last:border-0 flex justify-between items-center">
+             <ul v-if="preTripNotes.filter(i=>!i.isDone).length > 0" class="space-y-2 mt-2">
+               <li v-for="item in preTripNotes.filter(i=>!i.isDone).slice(0, 5)" :key="item.id" class="text-xs text-slate-700 border-b border-gray-100 pb-1 last:border-0 flex justify-between items-center">
                   <div class="flex items-center gap-2 overflow-hidden">
                      <i class="ph-fill text-sm" :class="item.isDone ? 'ph-check-circle text-green-500' : 'ph-circle text-gray-300'"></i>
                      <span class="font-bold truncate" :class="{'line-through text-gray-400': item.isDone}">{{ item.name }}</span>
@@ -521,13 +521,11 @@
             </div>
          </div>
 
-         <div v-if="selectedDay === 'prep'" class="rounded-3xl transition-all duration-300">
-            <h3 class="ml-2 mb-3 text-xs font-bold text-gray-500 uppercase tracking-widest">準備清單</h3>
+                  <div v-if="selectedDay === 'prep'" class="rounded-3xl transition-all duration-300">
+            <h3 class="ml-2 mb-3 text-xs font-bold text-gray-500 uppercase tracking-widest">{{ t('prepListHeader') }}</h3>
             <ul class="space-y-2.5" id="sortable-pre-notes">
                <li v-for="(note, i) in preTripNotes" :key="note.id" :data-id="note.id" class="ios-list-item">
-                 <div class="drag-handle text-gray-300 hover:text-gray-500 mr-2 p-2">
-                     <i class="ph ph-dots-six-vertical text-xl"></i>
-                 </div>
+                 <div class="drag-handle text-gray-400 hover:text-gray-600 mr-2 p-1"><i class="ph-bold ph-dots-three-vertical text-xl"></i></div>
                  <div class="flex items-center gap-3.5 flex-1 min-w-0">
                      <div class="relative cursor-pointer" @click="togglePreNoteDone(note.id)">
                       <i class="ph text-2xl transition-colors" :class="note.isDone ? 'ph-check-circle-fill text-[#007AFF]' : 'ph-circle text-gray-300 hover:text-gray-400'"></i>
@@ -546,9 +544,9 @@
                 <p class="text-sm text-gray-400">尚未建立準備清單</p>
             </div>
   
-             <div class="mt-6 ios-card !bg-white/60 p-3">
+                          <div class="mt-6 ios-card !bg-white/60 p-3">
                <div class="flex gap-3">
-                <input v-model="newPreNoteInput" @keyup.enter="addPreNoteDirect" class="ios-input-bar bg-white/70 shadow-sm" placeholder="快速新增項目...">
+                 <input id="prepInputBox" v-model="newPreNoteInput" @keyup.enter="addPreNoteDirect" class="ios-input-bar bg-white/70 shadow-sm" :placeholder="t('quickAddPlaceholder')">
                   <button @click="addPreNoteDirect" class="w-12 h-full flex items-center justify-center bg-[#007AFF] text-white rounded-xl shadow-lg active:scale-95 transition flex-shrink-0">
                     <i class="ph ph-plus text-xl"></i>
                 </button>
@@ -780,12 +778,20 @@
                  <div class="bg-gray-200/50 p-1 rounded-xl flex">
                                 <button v-for="app in ['Google', 'Apple', 'NAVER', 'Amap']" :key="app" @click="selectMapApp(app)" 
                         class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all"
-                        :class="mapApp === app ?
-'bg-white shadow-sm text-black' : 'text-gray-500'">
+                                                :class="mapApp === app ? 'bg-white shadow-sm text-black' : 'text-gray-500'">
                         {{ t('map_name_' + app) }}
                      </button>
                  </div>
              </div>
+
+             <div class="mt-4">
+                 <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('homeDataCard') }}</label>
+                 <div class="bg-gray-200/50 p-1 rounded-xl flex">
+                     <button @click="editingSettings.showInfoCard = true" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all" :class="editingSettings.showInfoCard !== false ? 'bg-white shadow-sm text-black' : 'text-gray-500'">{{ t('show') }}</button>
+                     <button @click="editingSettings.showInfoCard = false" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all" :class="editingSettings.showInfoCard === false ? 'bg-white shadow-sm text-black' : 'text-gray-500'">{{ t('hide') }}</button>
+                 </div>
+             </div>
+
              <div class="flex gap-3 mt-4">
                  <button @click="cancelSettings" class="btn-ios-cancel">{{ t('cancel') }}</button>
                  <button @click="saveSettings" class="btn-ios-primary">{{ t('save') }}</button>
@@ -1052,7 +1058,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260107-9.3');
+        const appVersion = ref('v260107-9.4');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1105,6 +1111,18 @@
                 // Map Settings (Patch)
         const mapApp = ref(localStorage.getItem('mapApp') || 'Google');
         const addressPlaceholder = computed(() => lang.value === 'zh' ? '香港九龍旺角亞皆老街8號' : '8 Argyle St, Mong Kok, Kowloon, Hong Kong');
+
+        function goToPrepInput() {
+            selectedDay.value = 'prep';
+            currentTab.value = '行程';
+            nextTick(() => {
+                const el = document.getElementById('prepInputBox');
+                if(el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.focus();
+                }
+            });
+        }
 
         function jumpToShoppingItem(id) {
             currentTab.value = '購物';
@@ -1314,6 +1332,12 @@
                 'save': { zh: '儲存', en: 'Save' },
                 'delete': { zh: '刪除', en: 'Delete' },
                 'done': { zh: '完成', en: 'Done' },
+
+                'show': { zh: '顯示', en: 'Show' },
+                'hide': { zh: '隱藏', en: 'Hide' },
+                'homeDataCard': { zh: '首頁資訊卡片', en: 'Home Info Card' },
+                'prepListHeader': { zh: '準備清單', en: 'Preparation List' },
+                'quickAddPlaceholder': { zh: '快速新增項目...', en: 'Quick add item...' },
                 'add': { zh: '新增', en: 'Add' },
                 'title': { zh: '標題', en: 'Title' },
                 'notes': { zh: '備註', en: 'Notes' },
