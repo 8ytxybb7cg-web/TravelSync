@@ -1067,9 +1067,10 @@
         const notification = ref(null);
 
         // Core Data
-                const settings = reactive({
-            route: 'HKG ✈️ TPE', startDate: '2026-03-22', endDate: '2026-03-27',
-            localCurrency: 'TWD', homeCurrency: 'HKD', weatherLoc: '台北', weatherLocEn: 'Taipei'
+                        const settings = reactive({
+            route: 'HKG ✈️ KIX', startDate: '2026-03-22', endDate: '2026-03-27',
+            localCurrency: 'TWD', homeCurrency: 'HKD', weatherLoc: '台北', weatherLocEn: 'Taipei',
+            showInfoCard: true
         });
 
         const editingSettings = reactive({});
@@ -1545,7 +1546,27 @@
             else { const idx = shoppingList.value.findIndex(x=>x.id===itemToSave.id); if(idx!==-1) shoppingList.value[idx] = {...itemToSave}; }
             shoppingModalOpen.value = false; saveAll();
         }
-        function removeShoppingItem(id) { if(!confirm('Delete this item?')) return; shoppingList.value = shoppingList.value.filter(x=>x.id!==id); saveAll(); }
+                async function removeShoppingItem(id) { 
+            if(!confirm('Delete this item?')) return; 
+            
+            // 找出要刪除的項目以獲取圖片 URL
+            const item = shoppingList.value.find(x => x.id === id);
+            if (item && item.imageURL) {
+                try {
+                    // 解析 URL 取得檔案路徑 (假設 bucket 名稱為 uploads)
+                    const urlPath = item.imageURL.split('/uploads/')[1];
+                    if (urlPath) {
+                        const { error } = await supabaseClient.storage.from('uploads').remove([urlPath]);
+                        if (error) console.error('Error removing image:', error);
+                    }
+                } catch (e) {
+                    console.error('Delete image failed:', e);
+                }
+            }
+
+            shoppingList.value = shoppingList.value.filter(x=>x.id!==id); 
+            saveAll();
+        }
 
         function openExpenseModal(item) { 
             Object.assign(newExpense, item || {
