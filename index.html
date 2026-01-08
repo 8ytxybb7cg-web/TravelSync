@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v9.4</title>
+  <title>Travel Sync v9.5</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -756,7 +756,7 @@
                     </div>
                 </div>
 
-                <div class="action-btn-group mt-1">
+                                <div class="action-btn-group !flex-col !gap-1 !ml-1">
                     <button @click.stop="openShoppingModal(item)" class="icon-btn edit"><i class="ph ph-pencil-simple text-lg"></i></button>
                     <button class="icon-btn delete" @click="removeShoppingItem(item.id)"><i class="ph ph-trash text-lg"></i></button>
                 </div>
@@ -1079,7 +1079,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260107-9.4');
+        const appVersion = ref('v260107-9.5');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
