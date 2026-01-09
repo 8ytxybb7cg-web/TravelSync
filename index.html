@@ -48,7 +48,7 @@
   height: 100%; 
   object-fit: cover; 
   /* 改動 1：移除圖片 blur */
-  filter: saturate(130%); 
+  filter: saturate(120%); 
   /* 改動 2：縮細 scale，避免過度模糊邊緣 */
   transform: scale(1.05); 
 }
@@ -57,9 +57,9 @@
   position: absolute; 
   inset: 0; 
   /* 改動 3：稍微加深遮罩 */
-  background: rgba(242, 242, 247, 0.45); 
+  background: rgba(242, 242, 247, 0.55); 
   /* 改動 4：保留但降低 blur */
-  backdrop-filter: blur(4px); 
+  backdrop-filter: blur(3px); 
 }
     #app { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; position: relative; }
 
