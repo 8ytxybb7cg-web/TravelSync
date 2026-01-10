@@ -1565,7 +1565,21 @@
         function syncModalToView() { Object.assign(newFlight, flights[currentFlightView.value]); }
         function saveFlight() { Object.assign(flights[currentFlightView.value], newFlight); flightModalOpen.value = false; saveAll(); }
         
-        function addPreNote() { editingPreNote.id = null; editingPreNote.name = ''; preNoteModalOpen.value = true; }
+                function scrollToTop() {
+            const main = document.querySelector('main');
+            if(main) main.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        function addPreNote() { 
+            editingPreNote.id = null;
+            editingPreNote.name = ''; 
+            editingPreNote.imageURL = ''; 
+            editingPreNote.linkURL = '';
+            tempUploadPreview.value = null; 
+            pendingUploadFile = null;
+            preNoteModalOpen.value = true; 
+        }
+        
         function addPreNoteDirect() {
             if(newPreNoteInput.value.trim()) {
                 preTripNotes.value.push({id: generateId(), name: newPreNoteInput.value, isDone: false});
@@ -1573,9 +1587,46 @@
                 saveAll();
             }
         }
-        function editPreNote(n) { Object.assign(editingPreNote, n); preNoteModalOpen.value = true; }
-        function savePreNoteEdit() { if(!editingPreNote.id) preTripNotes.value.push({ ...editingPreNote, id: generateId(), isDone: false }); else { const idx = preTripNotes.value.findIndex(x=>x.id===editingPreNote.id); if(idx!==-1) preTripNotes.value[idx] = {...editingPreNote}; } preNoteModalOpen.value = false; saveAll(); }
-        function removePreNote(id) { if(!confirm('Delete this task?')) return; preTripNotes.value = preTripNotes.value.filter(x=>x.id!==id); saveAll(); }
+        
+        function editPreNote(n) { 
+            Object.assign(editingPreNote, n);
+            tempUploadPreview.value = null; 
+            pendingUploadFile = null;
+            preNoteModalOpen.value = true; 
+        }
+        
+        async function savePreNoteEdit() {
+            if(!editingPreNote.name) return;
+            if(pendingUploadFile) {
+                const url = await uploadFileToSupabase(pendingUploadFile);
+                if(url) editingPreNote.imageURL = url;
+            }
+            const item = { ...editingPreNote, linkURL: editingPreNote.linkURL || '' };
+            
+            if(!item.id) preTripNotes.value.push({ ...item, id: generateId(), isDone: false });
+            else {
+                const idx = preTripNotes.value.findIndex(x=>x.id === item.id);
+                if(idx !== -1) preTripNotes.value[idx] = { ...item };
+            }
+            preNoteModalOpen.value = false; saveAll();
+        }
+
+        async function removePreNote(id) { 
+            if(!confirm('Delete this task?')) return; 
+            
+            // Delete Image from Supabase
+            const item = preTripNotes.value.find(x => x.id === id);
+            if (item && item.imageURL && item.imageURL.includes('/uploads/')) {
+                try {
+                    const urlPath = item.imageURL.split('/uploads/')[1];
+                    if (urlPath) await supabaseClient.storage.from('uploads').remove([urlPath]);
+                } catch (e) { console.error(e); }
+            }
+
+            preTripNotes.value = preTripNotes.value.filter(x=>x.id!==id); 
+            saveAll();
+        }
+
         function togglePreNoteDone(id) { const n = preTripNotes.value.find(x=>x.id===id); if(n) n.isDone = !n.isDone; saveAll(); }
 
         // Shopping with Image
