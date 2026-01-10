@@ -1061,11 +1061,34 @@
         </div>
     </div>
 
-    <div v-if="preNoteModalOpen" class="modal-backdrop" @click.self="preNoteModalOpen=false">
-                <div class="ios-modal-container">
+        <div v-if="preNoteModalOpen" class="modal-backdrop" @click.self="preNoteModalOpen=false">
+        <div class="ios-modal-container">
             <div class="ios-modal-header">{{ t('editItem') }}</div>
             <div class="ios-modal-body space-y-4">
-                <input v-model="editingPreNote.name" class="ios-input" :placeholder="t('taskName')">
+                <input v-model="editingPreNote.name" class="ios-input font-medium" :placeholder="t('taskName')">
+                
+                <div class="border-t border-gray-100 pt-4">
+                    <label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">{{ t('imgRef') }}</label>
+                    <label class="flex flex-col items-center justify-center w-full p-6 border border-dashed border-gray-300 rounded-2xl cursor-pointer hover:bg-gray-50 transition">
+                         <div class="text-center" v-if="!editingPreNote.imageURL && !tempUploadPreview">
+                            <i class="ph ph-image text-3xl text-gray-300 mb-2"></i>
+                            <div class="text-[#007AFF] text-sm font-medium">{{ t('uploadImg') }}</div>
+                         </div>
+                        <div v-else class="text-center text-[#007AFF] font-bold text-sm">{{ tempUploadPreview ? t('imgSelected') : t('changeImg') }}</div>
+                        <input type="file" accept="image/*" class="hidden" @change="handleFileUpload">
+                    </label>
+                    
+                    <input v-model="editingPreNote.imageURL" class="w-full mt-2 p-2 text-xs text-gray-400 bg-transparent text-center border-b border-gray-100 focus:outline-none rounded-none" placeholder="圖片網址 (Image URL)">
+                    
+                    <div class="relative mt-2">
+                        <i class="ph ph-link absolute left-2 top-2.5 text-gray-400"></i>
+                        <input v-model="editingPreNote.linkURL" class="w-full p-2 pl-7 text-xs text-gray-600 bg-gray-50 rounded-lg focus:outline-none focus:bg-white border border-transparent focus:border-blue-200 transition-all" placeholder="URL">
+                    </div>
+
+                    <div v-if="tempUploadPreview || editingPreNote.imageURL" class="mt-4 flex justify-center">
+                         <img :src="tempUploadPreview || editingPreNote.imageURL" class="h-24 w-24 object-cover rounded-2xl shadow-sm border border-gray-100">
+                    </div>
+                </div>
             </div>
             <div class="ios-modal-footer">
                 <button v-if="editingPreNote.id" @click="removePreNote(editingPreNote.id); preNoteModalOpen=false" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
