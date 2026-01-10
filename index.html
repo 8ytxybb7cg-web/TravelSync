@@ -1199,14 +1199,15 @@
             });
         }
 
-        function jumpToShoppingItem(id) {
+                function jumpToShoppingItem(id) {
             currentTab.value = '購物';
             nextTick(() => {
-                const el = document.querySelector(`li[data-id="${id}"]`);
+                // 相容 li (首頁) 與 div (購物頁新樣式)
+                const el = document.querySelector(`div[data-id="${id}"]`) || document.querySelector(`li[data-id="${id}"]`);
                 if(el) {
                     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    el.classList.add('bg-blue-50'); // Highlight effect
-                    setTimeout(() => el.classList.remove('bg-blue-50'), 1500);
+                    el.classList.add('ring-2', 'ring-pink-400'); 
+                    setTimeout(() => el.classList.remove('ring-2', 'ring-pink-400'), 1500);
                 }
             });
         }
