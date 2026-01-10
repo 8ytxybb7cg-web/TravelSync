@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v10.4</title>
+  <title>Travel Sync v10.5</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -236,6 +236,7 @@
     </div>
 
         <header @click="scrollToTop" class="cursor-pointer fixed top-0 left-0 right-0 z-50 pt-8 pb-3 px-6 flex justify-between items-end bg-white/10 backdrop-blur-xl border-b border-white/10 transition-all duration-300">
+
       <div>
         <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5 font-mono flex items-center gap-2">
            TRAVEL SYNC {{ appVersion }}
@@ -558,11 +559,11 @@
             </div>
 
             <div class="space-y-3" id="sortable-pre-notes">
-               <div v-for="(note, i) in preTripNotes" :key="note.id" :data-id="note.id"
+                              <div v-for="(note, i) in preTripNotes" :key="note.id" :data-id="note.id"
                     @click="editPreNote(note)" 
                     class="relative group cursor-pointer">
                  
-                 <div class="bg-white/70 backdrop-blur-xl rounded-2xl p-3 border border-white/60 shadow-sm transition-all active:scale-[0.99] active:bg-white/90 flex gap-3 items-start">
+                 <div class="bg-white/70 backdrop-blur-xl rounded-2xl p-3 border border-white/60 shadow-sm transition-all active:scale-[0.99] active:bg-white/90 flex gap-3 items-center relative pr-8">
                      
                      <div class="drag-handle text-gray-300 hover:text-gray-500 py-1"><i class="ph-bold ph-dots-three-vertical text-lg"></i></div>
 
@@ -572,18 +573,22 @@
 
                      <div class="flex-1 min-w-0">
                          <div class="font-bold text-[16px] leading-snug break-words" :class="{'task-done': note.isDone, 'text-gray-900': !note.isDone}">{{ note.name }}</div>
-                         
+                          
                          <div v-if="note.imageURL || note.linkURL" class="mt-2 flex items-center gap-3">
                              <div v-if="note.imageURL" class="relative group/img cursor-pointer w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 shadow-sm" @click.stop="openImageViewer(note.imageURL)">
                                  <img :src="note.imageURL" class="w-full h-full object-cover" alt="Thumbnail">
                              </div>
                              <a v-if="note.linkURL" :href="note.linkURL" target="_blank" @click.stop class="flex-shrink-0 text-xs font-semibold text-gray-600 bg-gray-100 border border-gray-200 px-3 py-2 rounded-lg inline-flex items-center gap-1.5 hover:bg-gray-200 transition">
                                 <i class="ph ph-link text-lg"></i> Open Link
-                             </a>
+                            </a>
                          </div>
                      </div>
+                     <button @click.stop="removePreNote(note.id)" class="absolute top-3 right-3 text-gray-400 hover:text-[#FF3B30] p-1 transition-colors rounded-full">
+                        <i class="ph-bold ph-trash text-lg"></i>
+                     </button>
                  </div>
-               </div>
+      </div>
+
             </div>
             
             <div v-if="preTripNotes.length === 0" class="py-12 text-center">
@@ -1115,7 +1120,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260110-10.4');
+        const appVersion = ref('v260110-10.5');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
