@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v10.1</title>
+  <title>Travel Sync v10.3</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1117,7 +1117,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260110-10.1');
+        const appVersion = ref('v260110-10.3');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1161,9 +1161,24 @@
         const imageViewer = reactive({ open: false, url: '' });
 
         const expenseFilter = ref('all');
-        const selectedDay = ref(0);
-                const newPreNoteInput = ref(''); // 5.09 準備清單快速新增變數
+                const selectedDay = ref(0);
+        const newPreNoteInput = ref('');
         const quickItinerary = reactive({ time: '', title: '' });
+        // 每日顏色陣列 (用於首頁行程區分)
+        const dayColors = ['border-blue-500', 'border-green-500', 'border-purple-500', 'border-orange-500', 'border-pink-500', 'border-teal-500'];
+
+        function jumpToPreNote(id) {
+             selectedDay.value = 'prep';
+             currentTab.value = '行程';
+             nextTick(() => {
+                 const el = document.querySelector(`li[data-id="${id}"]`) || document.querySelector(`div[data-id="${id}"]`);
+                 if(el) {
+                     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                     el.classList.add('ring-2', 'ring-blue-400');
+                     setTimeout(() => el.classList.remove('ring-2', 'ring-blue-400'), 1500);
+                 }
+             });
+        }
         
         // Map Logic (New in 7.5)
                 const selectedMapLocation = ref(null);
