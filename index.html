@@ -465,13 +465,15 @@
             </div>
         </section>
 
-                                <div v-if="isPreTrip" class="ios-card p-5 relative group cursor-pointer" @click="selectedDay='prep'; currentTab='行程'; scrollToTop()">
+                                        <div v-if="isPreTrip" class="ios-card p-5 relative group cursor-pointer" @click="selectedDay='prep'; currentTab='行程'; scrollToTop()">
              <h2 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
                 <i class="ph-fill ph-check-square text-green-500"></i> {{ t('prepList') }}
              </h2>
              
              <ul v-if="preTripNotes.filter(i=>!i.isDone).length > 0" class="space-y-2 mt-2">
-               <li v-for="item in preTripNotes.filter(i=>!i.isDone).slice(0, 5)" :key="item.id" class="text-xs text-slate-700 border-b border-gray-100 pb-1 last:border-0 flex justify-between items-center">
+               <li v-for="item in preTripNotes.filter(i=>!i.isDone).slice(0, 5)" :key="item.id" 
+                   @click.stop="jumpToPreNote(item.id)"
+                   class="text-xs text-slate-700 border-b border-gray-100 pb-1 last:border-0 flex justify-between items-center hover:bg-black/5 rounded px-1 -mx-1 transition-colors">
                   <div class="flex items-center gap-2 overflow-hidden">
                       <i class="ph-fill text-sm" :class="item.isDone ? 'ph-check-circle text-green-500' : 'ph-circle text-gray-300'"></i>
                      <span class="font-bold truncate" :class="{'line-through text-gray-400': item.isDone}">{{ item.name }}</span>
