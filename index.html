@@ -1709,7 +1709,13 @@
         function removeMember(m) { if(confirm('Remove member?')) { members.value = members.value.filter(x => x !== m); saveAll(); } }
 
         function openInfoModal(item) { Object.assign(newInfoItem, item || {id:null, title:'', note:''}); infoModalOpen.value = true; }
-        function saveInfoItem() { if(!newInfoItem.id) infoList.value.push({...newInfoItem, id:generateId()}); else { const idx = infoList.value.findIndex(x=>x.id===newInfoItem.id); if(idx!==-1) infoList.value[idx]={...newInfoItem}; } infoModalOpen.value=false; saveAll(); }
+                function saveInfoItem() { 
+            if(!newInfoItem.id) infoList.value.push({...newInfoItem, id:generateId()});
+            else { const idx = infoList.value.findIndex(x=>x.id===newInfoItem.id); if(idx!==-1) infoList.value[idx]={...newInfoItem}; } 
+            infoModalOpen.value=false; 
+            saveAll();
+            nextTick(() => initSortable('sortable-info', infoList.value));
+        }
         function removeInfo(id) { if(!confirm('Delete info?')) return; infoList.value = infoList.value.filter(x=>x.id!==id); saveAll(); }
 
         // Updated Itinerary Logic (Includes Address)
@@ -1861,9 +1867,9 @@
             memberModalOpen, members, newMemberName, openMemberModal, addMember, removeMember, toggleParticipant, toggleAllParticipants,
                         infoModalOpen, newInfoItem, openInfoModal, saveInfoItem, removeInfo,
                                     imageViewer, isSocialLink, getSocialIcon, formatNumber, expenseCats, getCategoryIcon, openImageViewer,
-                        selectedMapLocation, showLocationOnMap,  
+                                    selectedMapLocation, showLocationOnMap,  
             mapApp, selectMapApp, 
-            openMap, addressPlaceholder, jumpToShoppingItem,
+            openMap, addressPlaceholder, jumpToShoppingItem, scrollToTop,
             isPreTrip, currentTripDayIndex, newPreNoteInput, addPreNoteDirect
         };
       }
