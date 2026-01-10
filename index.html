@@ -1047,9 +1047,10 @@
     <div v-if="infoModalOpen" class="modal-backdrop" @click.self="infoModalOpen=false">
                 <div class="ios-modal-container">
             <div class="ios-modal-header">{{ t('editInfo') }}</div>
-            <div class="ios-modal-body space-y-3">
+                        <div class="ios-modal-body space-y-3">
                 <input v-model="newInfoItem.title" class="ios-input" :placeholder="t('title')">
-                <textarea v-model="newInfoItem.note" class="ios-input h-32" :placeholder="t('details')"></textarea>
+            </div>
+
             </div>
             <div class="ios-modal-footer">
                 <button v-if="newInfoItem.id" @click="removeInfo(newInfoItem.id); infoModalOpen=false" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
