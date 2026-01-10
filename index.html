@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v10.3</title>
+  <title>Travel Sync v10.4</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -246,7 +246,8 @@
            </div>
         </div>
                 <h1 class="font-bold text-black tracking-tight flex items-baseline gap-2 whitespace-nowrap overflow-hidden text-[clamp(18px,5vw,30px)]">
-          {{ settings.route || t('tripRoute') }}
+           <span v-if="(settings.route || '').startsWith('=')" v-html="(settings.route || '').substring(1)"></span>
+          <span v-else>{{ settings.route || t('tripRoute') }}</span>
           <span class="font-medium text-gray-500 font-mono tracking-normal text-[0.5em] opacity-80">{{ headerDateRange }}</span>
         </h1>
       </div>
@@ -1114,7 +1115,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260110-10.3');
+        const appVersion = ref('v260110-10.4');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
