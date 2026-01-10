@@ -456,9 +456,9 @@
                         <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">{{ dayItems.length }}</span>
                   </div>
                     <div class="flex flex-col gap-2 max-h-[150px] overflow-y-auto pr-1 pointer-events-none">
-                        <div v-for="item in dayItems" :key="item.id" class="text-sm border-l-2 border-blue-500 pl-2 py-0.5">
-                            <div class="font-bold text-slate-800 truncate">{{ item.time }} {{ item.title }}</div>
-                      </div>
+                                            <div v-for="item in dayItems" :key="item.id" class="text-sm border-l-2 pl-2 py-0.5" :class="dayColors[idx % dayColors.length]">
+                        <div class="font-bold text-slate-800 truncate">{{ item.time }} {{ item.title }}</div>
+                    </div>
                         <div v-if="dayItems.length===0" class="text-xs text-gray-400 italic">{{ t('noItems') }}</div>
                      </div>
                 </div>
