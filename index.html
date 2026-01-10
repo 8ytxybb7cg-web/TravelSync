@@ -483,16 +483,19 @@
              <p v-else class="text-xs text-gray-400 italic">{{ t('noItems') }}</p>
          </div>
 
-        <div class="ios-card p-5 relative group cursor-pointer" @click="currentTab='購物'; scrollToTop()">
+                <div class="ios-card p-5 relative group cursor-pointer" @click="currentTab='購物'; scrollToTop()">
             <h2 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2"><i class="ph-fill ph-shopping-bag text-pink-500"></i> {{ t('shopping') }}</h2>
              <ul v-if="shoppingList.filter(i=>!i.isDone).length > 0" class="space-y-2 mt-2">
-                 <li v-for="item in shoppingList.filter(i=>!i.isDone).slice(0, 5)" :key="item.id" class="text-xs text-slate-700 border-b border-gray-100 pb-1 last:border-0 flex justify-between items-center">
+                 <li v-for="item in shoppingList.filter(i=>!i.isDone).slice(0, 5)" :key="item.id" 
+                     @click.stop="jumpToShoppingItem(item.id)"
+                     class="text-xs text-slate-700 border-b border-gray-100 pb-1 last:border-0 flex justify-between items-center hover:bg-black/5 rounded px-1 -mx-1 transition-colors">
                      <div class="flex items-center gap-2 overflow-hidden">
                         <i class="ph-fill ph-circle text-[8px] text-gray-300"></i>
                         <span class="font-bold truncate">{{ item.name }}</span>
                       </div>
                      <i class="ph-bold ph-caret-right text-[10px] opacity-30"></i>
                  </li>
+
                  <li v-if="shoppingList.length > shoppingList.filter(i=>!i.isDone).slice(0, 5).length" class="text-[10px] text-center text-gray-400 pt-1">
                      {{ t('viewAll') }} ({{ shoppingList.length }})
                  </li>
