@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v10.5</title>
+  <title>Travel Sync v10.6</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -458,7 +458,7 @@
                         <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">{{ dayItems.length }}</span>
                   </div>
                     <div class="flex flex-col gap-2 max-h-[150px] overflow-y-auto pr-1 pointer-events-none">
-                                            <div v-for="item in dayItems" :key="item.id" class="text-sm border-l-2 pl-2 py-0.5" :class="dayColors[idx % dayColors.length]">
+                                                                <div v-for="item in dayItems" :key="item.id" class="text-sm border-l-2 pl-2 py-0.5" :class="item.colorClass || 'border-gray-300'">
                         <div class="font-bold text-slate-800 truncate">{{ item.time }} {{ item.title }}</div>
                     </div>
                         <div v-if="dayItems.length===0" class="text-xs text-gray-400 italic">{{ t('noItems') }}</div>
@@ -1133,7 +1133,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260110-10.5');
+        const appVersion = ref('v260110-10.6');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1755,8 +1755,24 @@
             Object.assign(newItineraryItem, item || {id:null, dayIndex: selectedDay.value, time:'', title:'', note:'', address:''});
             itineraryModalOpen.value = true; 
         }
-                function saveItineraryItem() { 
-            const item = { ...newItineraryItem, id: newItineraryItem.id || generateId() }; 
+                        function saveItineraryItem() { 
+            // Patch: Assign random color class from 8-color palette if not present
+            if (!newItineraryItem.colorClass) {
+                const colors = [
+                    'border-purple-500', // Ticket
+                    'border-[#007AFF]',  // Transport (Match UI Blue)
+                    'border-pink-500',   // Shopping (Match UI Pink)
+                    'border-orange-500', // Food
+                    'border-yellow-500', // Fun
+                    'border-teal-500',   // Hotel
+                    'border-slate-500',  // Service
+                    'border-gray-400'    // Other
+                ];
+                newItineraryItem.colorClass = colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            const item = { ...newItineraryItem, id: newItineraryItem.id ||
+generateId() }; 
             
             // Patch: Remove from old day if exists elsewhere
             if(item.id) {
