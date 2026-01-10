@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v9.5</title>
+  <title>Travel Sync v10.1</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -48,7 +48,7 @@
   height: 100%; 
   object-fit: cover; 
   /* 改動 1：移除圖片 blur */
-  filter: saturate(120%); 
+  filter: none; 
   /* 改動 2：縮細 scale，避免過度模糊邊緣 */
   transform: scale(1.05); 
 }
@@ -59,7 +59,7 @@
   /* 改動 3：稍微加深遮罩 */
   background: rgba(242, 242, 247, 0.55); 
   /* 改動 4：保留但降低 blur */
-  backdrop-filter: blur(3px); 
+  backdrop-filter: blur(4px); 
 }
     #app { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; position: relative; }
 
@@ -212,7 +212,19 @@
     .calc-btn:active { background: #E5E5EA; }
     .calc-btn.op { background: #FF9500; color: white; font-weight: 600; }
     .calc-btn.top-op { background: #D1D1D6; color: black; }
-    .calc-btn.done-btn { background: var(--ios-primary); color: white; font-size: 17px; font-weight: 600; }
+        .calc-btn.done-btn { background: var(--ios-primary); color: white; font-size: 17px; font-weight: 600; }
+
+    /* 新增懸浮按鈕樣式 */
+    .floating-add-btn {
+        position: fixed; bottom: 100px; right: 20px;
+        width: 56px; height: 56px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 40;
+        transition: all 0.2s; color: white;
+        backdrop-filter: blur(5px);
+    }
+    .floating-add-btn:active, .floating-add-btn:hover { transform: scale(1.05); filter: brightness(1.1); }
+    .floating-add-btn i { font-size: 28px; }
 
   </style>
 </head>
@@ -411,7 +423,7 @@
                  <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                     <i class="ph-fill ph-calendar-check text-blue-500"></i> {{ t('itinerary') }}
                  </h2>
-                <button @click="currentTab='行程'" class="text-blue-500 text-xs font-bold uppercase tracking-wide hover:bg-blue-50 px-2 py-1 rounded-lg">{{ t('viewAll') }}</button>
+                <button @click="currentTab='行程'; selectDay(currentTripDayIndex !== -1 ? currentTripDayIndex : 0)" class="text-blue-500 text-xs font-bold uppercase tracking-wide hover:bg-blue-50 px-2 py-1 rounded-lg">{{ t('viewAll') }}</button>
             </div>
 
             <div v-if="currentTripDayIndex !== -1" class="ios-card p-4 flex flex-col gap-3 cursor-pointer hover:bg-white/40 transition-colors"
@@ -453,11 +465,7 @@
             </div>
         </section>
 
-                        <div v-if="isPreTrip" class="ios-card p-5 relative group cursor-pointer" @click="selectedDay='prep'; currentTab='行程'">
-             <button @click.stop="goToPrepInput()" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-green-100 text-green-600 flex items-center justify-center hover:bg-green-200 transition-colors">
-                <i class="ph-bold ph-plus"></i>
-             </button>
-
+                                <div v-if="isPreTrip" class="ios-card p-5 relative group cursor-pointer" @click="selectedDay='prep'; currentTab='行程'; scrollToTop()">
              <h2 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
                 <i class="ph-fill ph-check-square text-green-500"></i> {{ t('prepList') }}
              </h2>
@@ -465,30 +473,26 @@
              <ul v-if="preTripNotes.filter(i=>!i.isDone).length > 0" class="space-y-2 mt-2">
                <li v-for="item in preTripNotes.filter(i=>!i.isDone).slice(0, 5)" :key="item.id" class="text-xs text-slate-700 border-b border-gray-100 pb-1 last:border-0 flex justify-between items-center">
                   <div class="flex items-center gap-2 overflow-hidden">
-                     <i class="ph-fill text-sm" :class="item.isDone ? 'ph-check-circle text-green-500' : 'ph-circle text-gray-300'"></i>
+                      <i class="ph-fill text-sm" :class="item.isDone ? 'ph-check-circle text-green-500' : 'ph-circle text-gray-300'"></i>
                      <span class="font-bold truncate" :class="{'line-through text-gray-400': item.isDone}">{{ item.name }}</span>
                   </div>
                </li>
              </ul>
              <p v-else class="text-xs text-gray-400 italic">{{ t('noItems') }}</p>
-        </div>
+         </div>
 
-                        <div class="ios-card p-5 relative group cursor-pointer" @click="currentTab='購物'">
-            <button @click.stop="currentTab='購物'; openShoppingModal()" class="absolute top-4 right-4 w-7 h-7 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center hover:bg-pink-200 transition-colors"><i class="ph-bold ph-plus"></i></button>
-
+        <div class="ios-card p-5 relative group cursor-pointer" @click="currentTab='購物'; scrollToTop()">
             <h2 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2"><i class="ph-fill ph-shopping-bag text-pink-500"></i> {{ t('shopping') }}</h2>
-             
              <ul v-if="shoppingList.filter(i=>!i.isDone).length > 0" class="space-y-2 mt-2">
-                 <li v-for="item in shoppingList.filter(i=>!i.isDone).slice(0, 5)" :key="item.id" @click="jumpToShoppingItem(item.id)" class="text-xs text-slate-700 border-b border-gray-100 pb-1 last:border-0 cursor-pointer hover:bg-gray-50/50 flex justify-between items-center transition-colors rounded px-1">
+                 <li v-for="item in shoppingList.filter(i=>!i.isDone).slice(0, 5)" :key="item.id" class="text-xs text-slate-700 border-b border-gray-100 pb-1 last:border-0 flex justify-between items-center">
                      <div class="flex items-center gap-2 overflow-hidden">
                         <i class="ph-fill ph-circle text-[8px] text-gray-300"></i>
                         <span class="font-bold truncate">{{ item.name }}</span>
-                     </div>
+                      </div>
                      <i class="ph-bold ph-caret-right text-[10px] opacity-30"></i>
                  </li>
-    
-                 <li v-if="shoppingList.length > shoppingList.filter(i=>!i.isDone).slice(0, 5).length" class="text-[10px] text-center text-gray-400 pt-1" @click="currentTab='購物'">
-                    {{ t('viewAll') }} ({{ shoppingList.length }})
+                 <li v-if="shoppingList.length > shoppingList.filter(i=>!i.isDone).slice(0, 5).length" class="text-[10px] text-center text-gray-400 pt-1">
+                     {{ t('viewAll') }} ({{ shoppingList.length }})
                  </li>
              </ul>
              <p v-else class="text-xs text-gray-400 italic">{{ t('noItems') }}</p>
@@ -1079,7 +1083,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260107-9.5');
+        const appVersion = ref('v260110-10.1');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
