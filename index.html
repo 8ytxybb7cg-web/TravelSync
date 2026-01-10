@@ -1044,22 +1044,19 @@
         </div>
     </div>
     
-            <div v-if="infoModalOpen" class="ios-modal-overlay" @click.self="infoModalOpen = false">
-            <div class="ios-modal w-full max-w-sm">
-                <div class="ios-modal-header">
-                    <h3 class="text-lg font-bold text-slate-800">{{ t('newInfo') }}</h3>
-                    <button @click="infoModalOpen = false" class="text-gray-400 hover:text-gray-600">
-                        <i class="ph-bold ph-x text-xl"></i>
-                    </button>
-                </div>
-                <div class="ios-modal-body space-y-3">
-                    <input v-model="newInfoItem.title" class="ios-input" :placeholder="t('title')">
-                </div>
-                <div class="ios-modal-footer">
-                     <button @click="saveInfoItem" class="ios-btn-primary w-full">{{ t('save') }}</button>
-                </div>
+                <div v-if="infoModalOpen" class="modal-backdrop" @click.self="infoModalOpen=false">
+        <div class="ios-modal-container">
+            <div class="ios-modal-header">{{ t('editInfo') }}</div>
+            <div class="ios-modal-body space-y-3">
+                <input v-model="newInfoItem.title" class="ios-input" :placeholder="t('title')">
+            </div>
+            <div class="ios-modal-footer">
+                <button v-if="newInfoItem.id" @click="removeInfo(newInfoItem.id); infoModalOpen=false" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
+                <button @click="infoModalOpen=false" class="btn-ios-cancel">{{ t('cancel') }}</button>
+                <button @click="saveInfoItem" class="btn-ios-primary">{{ t('save') }}</button>
             </div>
         </div>
+    </div>
 
         <div v-if="preNoteModalOpen" class="modal-backdrop" @click.self="preNoteModalOpen=false">
         <div class="ios-modal-container">
@@ -1884,9 +1881,10 @@
                         infoModalOpen, newInfoItem, openInfoModal, saveInfoItem, removeInfo,
                                     imageViewer, isSocialLink, getSocialIcon, formatNumber, expenseCats, getCategoryIcon, openImageViewer,
                                     selectedMapLocation, showLocationOnMap,  
-            mapApp, selectMapApp, 
+                        mapApp, selectMapApp, 
             openMap, addressPlaceholder, jumpToShoppingItem, scrollToTop,
-            isPreTrip, currentTripDayIndex, newPreNoteInput, addPreNoteDirect
+            isPreTrip, currentTripDayIndex, newPreNoteInput, addPreNoteDirect,
+            dayColors
         };
       }
     }).mount('#app');
