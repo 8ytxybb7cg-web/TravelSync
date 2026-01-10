@@ -722,18 +722,19 @@
           </div>
           
           <div v-else id="sortable-expenses" class="space-y-2">
-             <div v-for="e in filteredExpenses" :key="e.id" :data-id="e.id" @click="openExpenseModal(e)" class="ios-list-item !items-start !flex-col !p-3 cursor-pointer">
-                                                   <div class="w-full flex justify-between items-center mb-1.5">
+                          <div v-for="e in filteredExpenses" :key="e.id" :data-id="e.id" @click="openExpenseModal(e)" 
+                  class="bg-white/70 backdrop-blur-xl rounded-2xl p-3 border border-white/60 shadow-sm transition-all active:scale-[0.99] active:bg-white/90 cursor-pointer flex flex-col relative pr-8">
+                  
+                 <div class="w-full flex justify-between items-center mb-1.5">
                      <div class="flex items-center gap-2">
                          <div v-if="expenseFilter === 'all'" class="drag-handle text-gray-400 hover:text-gray-600 p-1 -ml-1"><i class="ph-bold ph-dots-three-vertical"></i></div>
-                     
-     <span class="text-[10px] font-bold text-gray-400">{{ e.date }}</span>
-
+                         <span class="text-[10px] font-bold text-gray-400">{{ e.date }}</span>
                          <span class="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded flex items-center gap-1">
-                                                      <i class="ph" :class="getCategoryIcon(e.category)"></i> {{ t(e.category) }}
+                                  <i class="ph" :class="getCategoryIcon(e.category)"></i> {{ t(e.category) }}
                          </span>
                      </div>
                  </div>
+                 
                  <div class="w-full flex justify-between items-end pl-6">
                      <div class="font-bold text-xl text-blue-600"><span class="text-[10px] text-gray-500 mr-1">{{ e.currency }}</span>{{ formatNumber(e.amount) }}</div>
                      <div class="text-right">
@@ -741,7 +742,12 @@
                          <div class="text-[10px] text-gray-400">{{ e.payer }} {{ lang === 'zh' ? '支付' : 'paid' }}</div>
                      </div>
                  </div>
+
+                 <button @click.stop="removeExpense(e.id)" class="absolute top-3 right-3 text-gray-400 hover:text-[#FF3B30] p-1 transition-colors rounded-full">
+                    <i class="ph-bold ph-trash text-lg"></i>
+                 </button>
              </div>
+
           </div>
       </div>
 
