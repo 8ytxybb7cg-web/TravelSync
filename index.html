@@ -603,36 +603,38 @@
 
          <div v-else>
              <div class="relative pl-4 border-l-2 border-gray-300/50 ml-3 space-y-3 py-2">
-                 <div v-for="it in sortedItinerary" :key="it.id"
+                    <div v-for="it in sortedItinerary" :key="it.id"
                       @click="showLocationOnMap(it)"
                       class="relative group cursor-pointer">
                     <div class="absolute -left-[23px] top-1 w-3.5 h-3.5 rounded-full bg-white border-[3px] border-gray-300 group-hover:border-[#007AFF] transition-colors z-10 shadow-sm"></div>
-                    <div class="bg-white/70 backdrop-blur-xl rounded-2xl p-3 border border-white/60 shadow-sm transition-all active:scale-[0.99] active:bg-white/90">
+               
+                    <div class="bg-white/70 backdrop-blur-xl rounded-2xl p-3 border border-white/60 shadow-sm transition-all active:scale-[0.99] active:bg-white/90 relative pr-16">
                         <div class="flex items-start gap-2">
                             <div class="flex-1 min-w-0">
                                 <div class="flex justify-between items-center mb-1">
                                     <div class="flex items-center gap-2">
                                         <span class="text-xs font-bold text-[#007AFF] font-mono bg-blue-50/80 px-1.5 rounded">{{ it.time || '--:--' }}</span>
                                     </div>
-                                    <button @click.stop="openItineraryModal(it)" class="text-gray-400 hover:text-[#007AFF] p-1 transition-colors rounded-full -mr-1">
-                                        <i class="ph ph-pencil-simple text-lg"></i>
-                                    </button>
                                 </div>
-                                <div class="flex justify-between items-start">
-                                    <div class="font-bold text-[16px] text-gray-900 leading-snug">{{ it.title }}</div>
-                                    <button @click.stop="removeItineraryItem(it.id)" class="text-gray-400 hover:text-[#FF3B30] p-1 transition-colors rounded-full -mr-1 ml-2">
-                                        <i class="ph ph-trash text-lg"></i>
-                                    </button>
-                                </div>
+                                <div class="font-bold text-[16px] text-gray-900 leading-snug">{{ it.title }}</div>
                                 <div v-if="it.note" class="text-xs text-gray-500 mt-0.5 leading-relaxed">{{ it.note }}</div>
                                 <div v-if="(it.address || '').trim() !== ''" class="mt-1 flex items-center gap-1.5 text-[10px] text-gray-400 group-hover:text-[#007AFF] transition-colors">
                                     <i class="ph ph-map-pin-line"></i>
                                     <span class="font-medium">查看地圖</span>
-                                </div>
+                                 </div>
                             </div>
                         </div>
+                        <div class="absolute top-3 right-3 flex items-center gap-1">
+                            <button @click.stop="openItineraryModal(it)" class="text-gray-400 hover:text-[#007AFF] p-1 transition-colors rounded-full">
+                                <i class="ph ph-pencil-simple text-lg"></i>
+                            </button>
+                            <button @click.stop="removeItineraryItem(it.id)" class="text-gray-400 hover:text-[#FF3B30] p-1 transition-colors rounded-full">
+                                <i class="ph ph-trash text-lg"></i>
+                            </button>
+                        </div>
                     </div>
-                  </div>
+       </div>
+
              </div>
              
              <p v-if="sortedItinerary.length === 0" class="py-12 text-center text-gray-400 text-sm">
