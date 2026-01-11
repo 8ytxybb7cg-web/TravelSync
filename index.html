@@ -438,7 +438,7 @@
                     <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">{{ itinerary[currentTripDayIndex]?.length || 0 }}</span>
                  </div>
                  <div class="flex flex-col gap-2 max-h-[200px] overflow-y-auto pr-1 pointer-events-none">
-                    <div v-for="item in itinerary[currentTripDayIndex]" :key="item.id" class="text-sm border-l-2 border-blue-500 pl-2 py-0.5">
+                                        <div v-for="item in itinerary[currentTripDayIndex]" :key="item.id" class="text-sm border-l-2 pl-2 py-0.5" :class="item.colorClass || 'border-blue-500'">
                         <div class="font-bold text-slate-800 truncate">{{ item.time }} {{ item.title }}</div>
                     </div>
                     <div v-if="(!itinerary[currentTripDayIndex] || itinerary[currentTripDayIndex].length===0)" class="text-xs text-gray-400 italic">{{ t('noItems') }}</div>
@@ -1180,8 +1180,8 @@
                 const selectedDay = ref(0);
         const newPreNoteInput = ref('');
         const quickItinerary = reactive({ time: '', title: '' });
-        // 每日顏色陣列 (用於首頁行程區分)
-        const dayColors = ['border-blue-500', 'border-green-500', 'border-purple-500', 'border-orange-500', 'border-pink-500', 'border-teal-500'];
+                // 每日顏色陣列 (Patch: 更新為 8 色視覺分類池)
+        const dayColors = ['border-purple-500', 'border-[#007AFF]', 'border-pink-500', 'border-orange-500', 'border-yellow-500', 'border-teal-500', 'border-slate-500', 'border-gray-400'];
 
         function jumpToPreNote(id) {
              selectedDay.value = 'prep';
@@ -1751,10 +1751,12 @@
         function removeInfo(id) { if(!confirm('Delete info?')) return; infoList.value = infoList.value.filter(x=>x.id!==id); saveAll(); }
 
         // Updated Itinerary Logic (Includes Address)
-        function openItineraryModal(item) { 
-            Object.assign(newItineraryItem, item || {id:null, dayIndex: selectedDay.value, time:'', title:'', note:'', address:''});
+                function openItineraryModal(item) { 
+            // Patch: 加入 colorClass: '' 以清除舊顏色，確保每次新增時觸發隨機分配
+            Object.assign(newItineraryItem, item || {id:null, dayIndex: selectedDay.value, time:'', title:'', note:'', address:'', colorClass: ''});
             itineraryModalOpen.value = true; 
         }
+
                         function saveItineraryItem() { 
             // Patch: Assign random color class from 8-color palette if not present
             if (!newItineraryItem.colorClass) {
