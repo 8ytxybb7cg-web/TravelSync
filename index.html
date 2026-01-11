@@ -683,7 +683,7 @@
       </div>
 
       <div v-if="currentTab === '記帳'" class="pb-20 animate-fade-in">
-          <div class="ios-card-dark-glass p-6 mb-4 relative group cursor-pointer" @click="currentTab='記帳'; scrollToTop()">
+          <div class="ios-card-dark-glass p-6 mb-4 relative">
              <div class="dark-glass-gradient"></div>
              <button @click="openMemberModal" class="absolute top-4 left-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-all z-20"><i class="ph-bold ph-gear text-lg"></i></button>
              <button @click="openExpenseModal(null)" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-all z-20"><i class="ph-bold ph-plus text-lg"></i></button>
