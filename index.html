@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v10.9</title>
+  <title>Travel Sync v11.0</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -512,10 +512,13 @@
              <p v-else class="text-xs text-gray-400 italic">{{ t('noItems') }}</p>
         </div>
 
-        <div class="ios-card-dark-glass p-6 mb-4 relative">
+                <div class="ios-card-dark-glass p-6 mb-4 relative cursor-pointer active:scale-[0.99] transition-transform" @click="goToExpenseList">
              <div class="dark-glass-gradient"></div>
-             <button @click="currentTab='記帳'; openMemberModal()" class="absolute top-4 left-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-all z-20"><i class="ph-bold ph-gear text-lg"></i></button>
-             <button @click="currentTab='記帳'; openExpenseModal(null)" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-all z-20"><i class="ph-bold ph-plus text-lg"></i></button>
+     
+             <button @click.stop="currentTab='記帳';
+ openMemberModal()" class="absolute top-4 left-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-all z-20"><i class="ph-bold ph-gear text-lg"></i></button>
+             <button @click.stop="currentTab='記帳';
+ openExpenseModal(null)" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-all z-20"><i class="ph-bold ph-plus text-lg"></i></button>
 
              <div class="relative z-10 flex flex-col items-center justify-center mt-2">
                  <div class="text-white/60 text-[11px] font-bold tracking-widest uppercase mb-1">{{ t('totalExpense') }} ({{ settings.homeCurrency }})</div>
@@ -709,7 +712,7 @@
              </div>
           </div>
        
-          <div class="bg-gray-200/50 p-1 rounded-xl flex mb-4 mx-1">
+                    <div id="expense-filters" class="bg-gray-200/50 p-1 rounded-xl flex mb-4 mx-1 scroll-mt-32">
               <button v-for="f in ['all', 'credit', 'cash', 'settlement']" :key="f" @click="expenseFilter = f" 
                  class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all"
                  :class="expenseFilter === f ? 'bg-white shadow-sm text-black' : 'text-gray-500'">
@@ -1140,7 +1143,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260110-10.9');
+        const appVersion = ref('v260110-11.0');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1569,8 +1572,17 @@
         }
 
         // Map Functions
-        function showLocationOnMap(item) {
-             selectedMapLocation.value = (item.address && item.address.trim() !== '') ? { title: item.title, address: item.address, id: item.id } : null;
+                function showLocationOnMap(item) {
+             selectedMapLocation.value = (item.address && item.address.trim() !== '') ?
+ { title: item.title, address: item.address, id: item.id } : null;
+ }
+
+        function goToExpenseList() {
+             currentTab.value = '記帳';
+             nextTick(() => {
+                 const el = document.getElementById('expense-filters');
+                 if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+             });
         }
 
         // Upload Helper (Supabase)
@@ -1935,9 +1947,9 @@ generateId() };
             memberModalOpen, members, newMemberName, openMemberModal, addMember, removeMember, toggleParticipant, toggleAllParticipants,
                         infoModalOpen, newInfoItem, openInfoModal, saveInfoItem, removeInfo,
                                     imageViewer, isSocialLink, getSocialIcon, formatNumber, expenseCats, getCategoryIcon, openImageViewer,
-                                    selectedMapLocation, showLocationOnMap,  
+                                           selectedMapLocation, showLocationOnMap,  
                         mapApp, selectMapApp, 
-            openMap, addressPlaceholder, jumpToShoppingItem, scrollToTop, jumpToPreNote,
+            openMap, addressPlaceholder, jumpToShoppingItem, scrollToTop, jumpToPreNote, goToExpenseList,
             isPreTrip, currentTripDayIndex, newPreNoteInput, addPreNoteDirect,
             dayColors
         };
