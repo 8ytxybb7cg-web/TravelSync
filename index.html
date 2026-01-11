@@ -1940,9 +1940,16 @@ generateId() };
                         infoModalOpen, newInfoItem, openInfoModal, saveInfoItem, removeInfo,
                                     imageViewer, isSocialLink, getSocialIcon, formatNumber, expenseCats, getCategoryIcon, openImageViewer,
                                     selectedMapLocation, showLocationOnMap,  
-                        mapApp, selectMapApp, 
-            openMap, addressPlaceholder, jumpToShoppingItem, scrollToTop,
+                                    openMap, addressPlaceholder, 
+            jumpToShoppingItem,
+            jumpToPreNoteItem(id) {
+                this.selectedDay = 'prep';
+                this.currentTab = '行程';
+                this.scrollToTop();
+            },
+            scrollToTop,
             isPreTrip, currentTripDayIndex, newPreNoteInput, addPreNoteDirect,
+
             dayColors
         };
       }
