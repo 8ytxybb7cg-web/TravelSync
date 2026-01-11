@@ -1190,15 +1190,15 @@
                 // 每日顏色陣列 (Patch: 更新為 8 色視覺分類池)
         const dayColors = ['border-purple-500', 'border-[#007AFF]', 'border-pink-500', 'border-orange-500', 'border-yellow-500', 'border-teal-500', 'border-slate-500', 'border-gray-400'];
 
-        function jumpToPreNote(id) {
+                function jumpToPreNote(id) {
              selectedDay.value = 'prep';
              currentTab.value = '行程';
              nextTick(() => {
                  const el = document.querySelector(`li[data-id="${id}"]`) || document.querySelector(`div[data-id="${id}"]`);
                  if(el) {
                      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                     el.classList.add('ring-2', 'ring-blue-400');
-                     setTimeout(() => el.classList.remove('ring-2', 'ring-blue-400'), 1500);
+                     el.classList.add('ring-2', 'ring-green-500');
+                     setTimeout(() => el.classList.remove('ring-2', 'ring-green-500'), 1500);
                  }
              });
         }
