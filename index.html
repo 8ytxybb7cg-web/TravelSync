@@ -368,11 +368,7 @@
                <div class="flex justify-between items-start mb-2">
                    <div class="flex items-center gap-2">
                        <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-lg"><i class="ph-bold ph-currency-circle-dollar"></i></div>
-                       <span
-  class="font-bold text-gray-500 block whitespace-nowrap
-         text-[clamp(11px,8cqw,14px)]">
-  {{ t('rate') }}
-</span>
+                       <span class="text-xs font-bold text-gray-500">{{ t('rate') }}</span>
                    </div>
                    <button @click="toggleRateOrder" class="text-gray-400 hover:text-blue-500 p-1"><i class="ph ph-arrows-left-right"></i></button>
                </div>
@@ -382,14 +378,7 @@
 (settings.localCurrency + ' / ' + settings.homeCurrency) : (settings.homeCurrency + ' / ' + settings.localCurrency) }}
                    </div>
                    <div class="font-bold text-slate-800 tracking-tight leading-none text-[clamp(22px,20cqw,36px)]">{{ displayedRate }}</div>
-                   <div class="mt-6 text-gray-400 font-mono leading-tight">
-  <div class="text-[10px]">
-    • {{ t('feeIncluded') }}
-  </div>
-  <div class="text-[10px]">
-    • {{ lastRateUpdateLabel }}
-  </div>
-</div>
+                   <div class="text-[9px] text-gray-400 mt-1 font-mono">{{ t('feeIncluded') }} • {{ lastRateUpdateLabel }}</div>
            
     </div>
             </div>
@@ -406,34 +395,20 @@
                 <div class="flex justify-between items-end mt-2">
                      <div class="flex flex-col gap-[2px] pb-[2px]">
                          <div class="flex items-center gap-1.5">
-                              <span
-  class="font-bold text-gray-400 uppercase text-right whitespace-nowrap
-         w-8 text-[clamp(10px,3.2cqw,12px)]">
-  {{ t('feelsLike') }}
-</span>
-                              <span
-  class="font-bold text-gray-700 whitespace-nowrap
-         text-[clamp(11px,3.6cqw,13px)]">
-  {{ weather.feelsLike }}°
-</span>
+                              <span class="text-[9px] font-bold text-gray-400 uppercase w-8 text-right">{{ t('feelsLike') }}</span>
+                              <span class="text-[10px] font-bold text-gray-700">{{ weather.feelsLike }}°</span>
                          </div>
                           <div class="flex items-center gap-1.5">
-                              <span class="font-bold text-gray-400 uppercase text-right whitespace-nowrap
-         w-8 text-[clamp(10px,3.2cqw,12px)]">{{ t('humidity') }}</span>
-                              <span class="font-bold text-gray-700 whitespace-nowrap
-         text-[clamp(11px,3.6cqw,13px)]">{{ weather.humidity }}%</span>
+                              <span class="text-[9px] font-bold text-gray-400 uppercase w-8 text-right">{{ t('humidity') }}</span>
+                              <span class="text-[10px] font-bold text-gray-700">{{ weather.humidity }}%</span>
                           </div>
                           <div class="flex items-center gap-1.5">
-                              <span class="font-bold text-gray-400 uppercase text-right whitespace-nowrap
-         w-8 text-[clamp(10px,3.2cqw,12px)]">UV</span>
-                              <span class="font-bold text-gray-700 whitespace-nowrap
-         text-[clamp(11px,3.6cqw,13px)]">{{ weather.uv }}</span>
+                              <span class="text-[9px] font-bold text-gray-400 uppercase w-8 text-right">UV</span>
+                              <span class="text-[10px] font-bold text-gray-700">{{ weather.uv }}</span>
                           </div>
                           <div class="flex items-center gap-1.5">
-                              <span class="font-bold text-gray-400 uppercase text-right whitespace-nowrap
-         w-8 text-[clamp(10px,3.2cqw,12px)]">{{ t('rain') }}</span>
-                              <span class="font-bold text-[#007AFF] whitespace-nowrap
-         text-[clamp(11px,3.6cqw,13px)]">{{ weather.rain }}%</span>
+                              <span class="text-[9px] font-bold text-gray-400 uppercase w-8 text-right">{{ t('rain') }}</span>
+                              <span class="text-[10px] font-bold text-[#007AFF]">{{ weather.rain }}%</span>
                               <i v-if="weather.warning" class="ph-fill ph-warning text-red-500 text-xs animate-pulse ml-0.5" :title="weather.warning"></i>
                          </div>
                      </div>
@@ -497,7 +472,7 @@
 
         <div v-if="isPreTrip" class="ios-card p-5 relative group cursor-pointer" @click="selectedDay='prep'; currentTab='行程'; scrollToTop()">
              <div class="flex justify-between items-center mb-2">
-                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
                     <i class="ph-fill ph-check-square text-green-500"></i> {{ t('prepList') }}
                 </h2>
                 <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">{{ preTripNotes.filter(i=>!i.isDone).length }}</span>
@@ -519,7 +494,7 @@
 
                                         <div class="ios-card p-5 relative group cursor-pointer" @click="currentTab='購物'; scrollToTop()">
             <div class="flex justify-between items-center mb-2">
-                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="ph-fill ph-shopping-bag text-pink-500"></i> {{ t('shopping') }}</h2>
+                <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i class="ph-fill ph-shopping-bag text-pink-500"></i> {{ t('shopping') }}</h2>
                 <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">{{ shoppingList.filter(i=>!i.isDone).length }}</span>
             </div>
              <ul v-if="shoppingList.filter(i=>!i.isDone).length > 0" class="space-y-2 mt-2 pr-1" :class="{'max-h-[200px] overflow-y-auto': shoppingList.filter(i=>!i.isDone).length > 5}">
@@ -1394,7 +1369,7 @@
         const displayedRate = computed(() => {
              let r = currentLiveRate.value;
              if (rateDisplayMode.value === 1) r = 1 / r;
-             return (r * 0.98).toFixed(5);
+             return (r * 0.97).toFixed(5);
         });
 
 
@@ -1497,7 +1472,7 @@
                 'estArr': { zh: '預計抵達', en: 'Est. Arr' },
                 'economy': { zh: '經濟艙', en: 'Economy' },
                 'rate': { zh: '即時匯率', en: 'Live Rate' },
-                'feeIncluded': { zh: '含2%手續費', en: '2% Fee Incl.' },
+                'feeIncluded': { zh: '含3%手續費', en: '3% Fee Incl.' },
                 'itinerary': { zh: '行程', en: 'Itinerary' },
                 'viewAll': { zh: '查看全部', en: 'View All' },
                 'prepList': { zh: '準備清單', en: 'Preparation' },
