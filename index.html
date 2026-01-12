@@ -671,12 +671,12 @@
                     </div>
                     <p class="text-sm text-gray-500 pl-[44px] leading-relaxed">{{ selectedMapLocation.address }}</p>
                </div>
-                                              <div class="flex gap-3 pl-[44px]">
+                                                             <div class="flex gap-3 pl-[44px]">
                    <button @click="openMap(selectedMapLocation.address, tempMapApp)"
-    class="flex-1 h-10 px-4 flex items-center justify-center gap-2 bg-gray-100 
-    text-gray-700 rounded-xl font-bold active:scale-95 transition text-sm border border-gray-200">
-    {{ t('openMaps') }}
-</button>
+                       class="h-10 px-4 flex items-center justify-center gap-2 bg-gray-100 
+                       text-gray-700 rounded-xl font-bold active:scale-95 transition text-sm border border-gray-200">
+                    {{ t('openMaps') }}
+                    </button>
                    <button @click="openMap(selectedMapLocation.address, tempMapApp)"
                        class="flex-1 h-10 flex items-center justify-center gap-2 bg-[#007AFF] text-white 
                        rounded-xl font-bold active:scale-95 transition text-sm shadow-sm shadow-blue-200">
@@ -686,10 +686,10 @@
                  
                  <div class="pl-[44px] mt-2.5">
                     <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1 text-center opacity-80 scale-90 origin-center">{{ lang === 'zh' ? '快速切換' : 'Quick Switch' }}</div>
-                    <div class="bg-gray-100 p-0.5 rounded-lg flex">
+                    <div class="bg-gray-200/50 p-1 rounded-xl flex">
                          <button v-for="app in ['Google', 'Apple', 'NAVER', 'Amap']" :key="app" @click="tempMapApp = app" 
-                            class="flex-1 py-1 text-[9px] font-bold rounded-md transition-all"
-                            :class="tempMapApp === app ? 'bg-white shadow-sm text-black scale-[1.02]' : 'text-gray-400'">
+                            class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all"
+                            :class="tempMapApp === app ? 'bg-white shadow-sm text-black' : 'text-gray-500'">
                             {{ t('map_name_' + app) }}
                          </button>
                     </div>
