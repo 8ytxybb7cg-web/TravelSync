@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v11.0</title>
+  <title>Travel Sync v11.4</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -676,11 +676,22 @@
                        class="flex-1 h-10 px-4 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 rounded-xl font-bold active:scale-95 transition text-sm border border-gray-200">
                     <i class="ph ph-map-pin-area"></i> {{ t('openMaps') }}
                     </button>
-                   <button @click="openMap(selectedMapLocation.address)"
-                       class="flex-1 h-10 px-4 flex items-center justify-center gap-2 bg-[#007AFF] text-white rounded-xl font-bold active:scale-95 transition text-sm shadow-sm shadow-blue-200">
+                                      <button @click="openMap(selectedMapLocation.address)"
+                       class="flex-1 h-10 px-4 flex 
+                       items-center justify-center gap-2 bg-[#007AFF] text-white rounded-xl font-bold active:scale-95 transition text-sm shadow-sm shadow-blue-200">
                     <i class="ph ph-navigation-arrow text-lg"></i> {{ t('navigate') }}
                     </button>
                  </div>
+
+                 <div class="mt-3 bg-gray-100/80 p-1 rounded-lg flex">
+                     <button v-for="app in ['Google', 'Apple', 'NAVER', 'Amap']" :key="app" 
+                        @click.stop="tempMapApp = app"
+                        class="flex-1 py-1 text-[10px] font-bold rounded-md transition-all text-center"
+                        :class="tempMapApp === app ? 'bg-white shadow-sm text-[#007AFF] ring-1 ring-black/5' : 'text-gray-400 hover:text-gray-600'">
+                        {{ t('map_name_' + app) }}
+                     </button>
+                 </div>
+
             </div>
         </transition>
       </div>
@@ -1143,7 +1154,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260110-11.0');
+        const appVersion = ref('v260112-11.4');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1207,10 +1218,11 @@
         }
         
         // Map Logic (New in 7.5)
-                const selectedMapLocation = ref(null);
-        
-                // Map Settings (Patch)
+                        const selectedMapLocation = ref(null);
+        const tempMapApp = ref(null); // Modal-scoped strict state
+        // Map Settings (Patch)
         const mapApp = ref(localStorage.getItem('mapApp') || 'Google');
+
         const addressPlaceholder = computed(() => lang.value === 'zh' ? '香港九龍旺角亞皆老街8號' : '8 Argyle St, Mong Kok, Kowloon, Hong Kong');
 
         function goToPrepInput() {
@@ -1243,17 +1255,21 @@
             localStorage.setItem('mapApp', app);
         }
 
-        function openMap(addr) {
+                function openMap(addr) {
             if(!addr) return;
+            // Patch: Strictly use tempMapApp (Modal Scope), No Fallback
+            const app = tempMapApp.value;
             const q = encodeURIComponent(addr);
             let url = '';
-            if(mapApp.value === 'Google') url = 'https://www.google.com/maps/search/?api=1&query=' + q;
-            else if(mapApp.value === 'Apple') url = 'maps://?q=' + q;
-            else if(mapApp.value === 'NAVER') url = 'nmap://search?query=' + q;
-            else if(mapApp.value === 'Amap') url = 'androidamap://keywordNavi?keyword=' + q;
+            
+            if(app === 'Google') url = 'https://www.google.com/maps/search/?api=1&query=' + q;
+            else if(app === 'Apple') url = 'maps://?q=' + q;
+            else if(app === 'NAVER') url = 'nmap://search?query=' + q;
+            else if(app === 'Amap') url = 'androidamap://keywordNavi?keyword=' + q;
             
             if(url) window.open(url, '_blank');
         }
+
         
         // Upload Logic
         const tempUploadPreview = ref(null);
@@ -1930,9 +1946,21 @@ generateId() };
              if(val === '購物') nextTick(() => { initSortable('sortable-shop-page', shoppingList.value); });
         });
 
-        watch(selectedDay, (val) => {
+                watch(selectedDay, (val) => {
             if(val === 'prep' && currentTab.value === '行程') nextTick(() => initSortable('sortable-pre-notes', preTripNotes.value));
         });
+
+        // Patch: Strict Lifecycle for tempMapApp
+        watch(selectedMapLocation, (val) => {
+            if (val) {
+                // Initialize from global setting when modal opens
+                tempMapApp.value = mapApp.value;
+            } else {
+                // Destroy immediately when modal closes
+                tempMapApp.value = null;
+            }
+        });
+
 
         return {
             appVersion, currentTab, syncState, syncStatusText, lang, t, toggleLang, showToast, notification,
@@ -1947,8 +1975,8 @@ generateId() };
             memberModalOpen, members, newMemberName, openMemberModal, addMember, removeMember, toggleParticipant, toggleAllParticipants,
                         infoModalOpen, newInfoItem, openInfoModal, saveInfoItem, removeInfo,
                                     imageViewer, isSocialLink, getSocialIcon, formatNumber, expenseCats, getCategoryIcon, openImageViewer,
-                                           selectedMapLocation, showLocationOnMap,  
-                        mapApp, selectMapApp, 
+                                                       selectedMapLocation, showLocationOnMap,  
+            mapApp, selectMapApp, tempMapApp, 
             openMap, addressPlaceholder, jumpToShoppingItem, scrollToTop, jumpToPreNote, goToExpenseList,
             isPreTrip, currentTripDayIndex, newPreNoteInput, addPreNoteDirect,
             dayColors
