@@ -368,7 +368,11 @@
                <div class="flex justify-between items-start mb-2">
                    <div class="flex items-center gap-2">
                        <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-lg"><i class="ph-bold ph-currency-circle-dollar"></i></div>
-                       <span class="text-xs font-bold text-gray-500">{{ t('rate') }}</span>
+                       <span
+  class="font-bold text-gray-500 block whitespace-nowrap
+         text-[clamp(11px,8cqw,14px)]">
+  {{ t('rate') }}
+</span>
                    </div>
                    <button @click="toggleRateOrder" class="text-gray-400 hover:text-blue-500 p-1"><i class="ph ph-arrows-left-right"></i></button>
                </div>
@@ -378,7 +382,7 @@
 (settings.localCurrency + ' / ' + settings.homeCurrency) : (settings.homeCurrency + ' / ' + settings.localCurrency) }}
                    </div>
                    <div class="font-bold text-slate-800 tracking-tight leading-none text-[clamp(22px,20cqw,36px)]">{{ displayedRate }}</div>
-                   <div class="text-[9px] text-gray-400 mt-1 font-mono">{{ t('feeIncluded') }} • {{ lastRateUpdateLabel }}</div>
+                   <div class="text-[9px] text-gray-400 mt-4 font-mono">{{ t('feeIncluded') }} • {{ lastRateUpdateLabel }}</div>
            
     </div>
             </div>
@@ -1369,7 +1373,7 @@
         const displayedRate = computed(() => {
              let r = currentLiveRate.value;
              if (rateDisplayMode.value === 1) r = 1 / r;
-             return (r * 0.97).toFixed(5);
+             return (r * 0.98).toFixed(5);
         });
 
 
@@ -1472,7 +1476,7 @@
                 'estArr': { zh: '預計抵達', en: 'Est. Arr' },
                 'economy': { zh: '經濟艙', en: 'Economy' },
                 'rate': { zh: '即時匯率', en: 'Live Rate' },
-                'feeIncluded': { zh: '含3%手續費', en: '3% Fee Incl.' },
+                'feeIncluded': { zh: '含2%手續費', en: '2% Fee Incl.' },
                 'itinerary': { zh: '行程', en: 'Itinerary' },
                 'viewAll': { zh: '查看全部', en: 'View All' },
                 'prepList': { zh: '準備清單', en: 'Preparation' },
