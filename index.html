@@ -1593,18 +1593,12 @@
         }
 
         // Map Functions
-                        import { nextTick } from 'vue';
-
-function showLocationOnMap(item) {
-    selectedMapLocation.value = (item.address && item.address.trim() !== '') ?
-        { title: item.title, address: item.address, id: item.id } : null;
-
-    if (selectedMapLocation.value) {
-        nextTick(() => {
-            tempMapApp.value = mapApp.value;
-        });
-    }
-}
+                        function showLocationOnMap(item) {
+             selectedMapLocation.value = (item.address && item.address.trim() !== '') ?
+             { title: item.title, address: item.address, id: item.id } : null;
+             // Modal 開啟時，將暫存選擇重置為使用者的預設設定
+             if(selectedMapLocation.value) tempMapApp.value = mapApp.value;
+        }
 
         function goToExpenseList() {
              currentTab.value = '記帳';
