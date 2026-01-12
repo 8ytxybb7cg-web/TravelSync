@@ -686,7 +686,7 @@
                  
                  <div class="pl-[44px] mt-2.5">
                     <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1 text-center opacity-80 scale-90 origin-center">{{ lang === 'zh' ? '快速切換' : 'Quick Switch' }}</div>
-                                        <div class="bg-gray-200 p-1 rounded-xl flex shadow-inner">
+                                        <div class="bg-gray-200/50 p-1 rounded-xl flex shadow-inner">
                          <button v-for="app in ['Google', 'Apple', 'NAVER', 'Amap']" :key="app" @click="tempMapApp = app" 
                             class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all"
                             :class="tempMapApp === app 
@@ -1593,12 +1593,18 @@
         }
 
         // Map Functions
-                        function showLocationOnMap(item) {
-             selectedMapLocation.value = (item.address && item.address.trim() !== '') ?
-             { title: item.title, address: item.address, id: item.id } : null;
-             // Modal 開啟時，將暫存選擇重置為使用者的預設設定
-             if(selectedMapLocation.value) tempMapApp.value = mapApp.value;
-        }
+                        import { nextTick } from 'vue';
+
+function showLocationOnMap(item) {
+    selectedMapLocation.value = (item.address && item.address.trim() !== '') ?
+        { title: item.title, address: item.address, id: item.id } : null;
+
+    if (selectedMapLocation.value) {
+        nextTick(() => {
+            tempMapApp.value = mapApp.value;
+        });
+    }
+}
 
         function goToExpenseList() {
              currentTab.value = '記帳';
