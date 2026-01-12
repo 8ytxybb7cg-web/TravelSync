@@ -687,13 +687,14 @@
                  <div class="pl-[44px] mt-2.5">
                     <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1 text-center opacity-80 scale-90 origin-center">{{ lang === 'zh' ? '快速切換' : 'Quick Switch' }}</div>
                                                                                 <div class="bg-gray-200/50 p-1 rounded-xl flex shadow-inner">
-                         <button v-for="app in ['Google', 'Apple', 'NAVER', 'Amap']" :key="app" @click.stop="tempMapApp = app" 
+                                        <button v-for="app in ['Google', 'Apple', 'NAVER', 'Amap']" :key="app" @click.stop="tempMapApp = app" 
                             class="flex-1 py-2 text-[10px] rounded-lg transition-all duration-200"
                             :class="tempMapApp === app 
-                            ? 'bg-white text-black font-extrabold shadow-md ring-1 ring-black/5 scale-100' 
-                            : 'text-gray-600 font-medium hover:bg-gray-200/50 scale-95'">
+                  ? 'bg-white text-black font-extrabold shadow-md ring-1 ring-black/5 scale-100 opacity-100' 
+                  : 'text-gray-500 font-medium scale-95 opacity-60'">
                             {{ t('map_name_' + app) }}
-                         </button>
+               </button>
+
                     </div>
 
                  </div>
@@ -1593,9 +1594,11 @@
         }
 
         // Map Functions
-                                function showLocationOnMap(item) {
-             // 修正：先重置地圖選擇，再開啟 Modal，確保白色框一出現就在正確位置
+                                        function showLocationOnMap(item) {
+             // 1. 強制同步：在 Modal 渲染前，將暫存變數重置為全域設定 (mapApp)
              tempMapApp.value = mapApp.value;
+             
+             // 2. 開啟 Modal：設定資料以觸發 v-if
              selectedMapLocation.value = (item.address && item.address.trim() !== '') ?
                 { title: item.title, address: item.address, id: item.id } : null;
         }
