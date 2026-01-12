@@ -685,16 +685,18 @@
                  </div>
                  
                  <div class="pl-[44px] mt-2.5">
-                    <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1 text-center opacity-80 scale-90 origin-center">{{ lang === 'zh' ? '快速切換' : 'Quick Switch' }}</div>
-                    <div class="bg-gray-200/50 p-1 rounded-xl flex">
+                                     <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1 text-center opacity-80 scale-90 origin-center">{{ lang === 'zh' ?
+'快速切換' : 'Quick Switch' }}</div>
+                    <div class="bg-gray-200 p-1 rounded-xl flex">
                          <button v-for="app in ['Google', 'Apple', 'NAVER', 'Amap']" :key="app" @click="tempMapApp = app" 
                             class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all"
                             :class="tempMapApp === app 
-  ? 'bg-white shadow-sm text-black ring-1 ring-gray-300' 
-  : 'text-gray-500'">
+                              ? 'bg-white shadow-sm text-black' 
+                              : 'text-gray-500'">
                             {{ t('map_name_' + app) }}
                          </button>
-                    </div>
+    
+                </div>
                  </div>
             </div>
         </transition>
