@@ -673,10 +673,10 @@
                </div>
                                               <div class="flex gap-3 pl-[44px]">
                    <button @click="openMap(selectedMapLocation.address, tempMapApp)"
-                       class="h-10 px-4 flex items-center justify-center gap-2 bg-gray-100 
-                       text-gray-700 rounded-xl font-bold active:scale-95 transition text-sm border border-gray-200">
-                    {{ t('openMaps') }}
-                    </button>
+    class="flex-1 h-10 px-4 flex items-center justify-center gap-2 bg-gray-100 
+    text-gray-700 rounded-xl font-bold active:scale-95 transition text-sm border border-gray-200">
+    {{ t('openMaps') }}
+</button>
                    <button @click="openMap(selectedMapLocation.address, tempMapApp)"
                        class="flex-1 h-10 flex items-center justify-center gap-2 bg-[#007AFF] text-white 
                        rounded-xl font-bold active:scale-95 transition text-sm shadow-sm shadow-blue-200">
@@ -1219,8 +1219,10 @@
              });
         }
         
-        // Map Logic (New in 7.5)
-                const selectedMapLocation = ref(null);
+        // Map Logic (revised at 11.1)
+                        const selectedMapLocation = ref(null);
+        const tempMapApp = ref('Google');
+
         
                 // Map Settings (Patch)
         const mapApp = ref(localStorage.getItem('mapApp') || 'Google');
@@ -1256,14 +1258,17 @@
             localStorage.setItem('mapApp', app);
         }
 
-        function openMap(addr) {
+                function openMap(addr, appOverride = null) {
             if(!addr) return;
             const q = encodeURIComponent(addr);
             let url = '';
-            if(mapApp.value === 'Google') url = 'https://www.google.com/maps/search/?api=1&query=' + q;
-            else if(mapApp.value === 'Apple') url = 'maps://?q=' + q;
-            else if(mapApp.value === 'NAVER') url = 'nmap://search?query=' + q;
-            else if(mapApp.value === 'Amap') url = 'androidamap://keywordNavi?keyword=' + q;
+            // 若有傳入 appOverride 則使用之，否則使用全域設定
+            const useApp = appOverride || mapApp.value;
+            
+            if(useApp === 'Google') url = 'https://www.google.com/maps/search/?api=1&query=' + q;
+            else if(useApp === 'Apple') url = 'maps://?q=' + q;
+            else if(useApp === 'NAVER') url = 'nmap://search?query=' + q;
+            else if(useApp === 'Amap') url = 'androidamap://keywordNavi?keyword=' + q;
             
             if(url) window.open(url, '_blank');
         }
@@ -1585,10 +1590,12 @@
         }
 
         // Map Functions
-                function showLocationOnMap(item) {
+                        function showLocationOnMap(item) {
              selectedMapLocation.value = (item.address && item.address.trim() !== '') ?
- { title: item.title, address: item.address, id: item.id } : null;
- }
+             { title: item.title, address: item.address, id: item.id } : null;
+             // Modal 開啟時，將暫存選擇重置為使用者的預設設定
+             if(selectedMapLocation.value) tempMapApp.value = mapApp.value;
+        }
 
         function goToExpenseList() {
              currentTab.value = '記帳';
