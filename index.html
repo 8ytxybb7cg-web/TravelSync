@@ -406,20 +406,34 @@
                 <div class="flex justify-between items-end mt-2">
                      <div class="flex flex-col gap-[2px] pb-[2px]">
                          <div class="flex items-center gap-1.5">
-                              <span class="text-[9px] font-bold text-gray-400 uppercase w-8 text-right">{{ t('feelsLike') }}</span>
-                              <span class="text-[10px] font-bold text-gray-700">{{ weather.feelsLike }}°</span>
+                              <span
+  class="font-bold text-gray-400 uppercase text-right whitespace-nowrap
+         w-8 text-[clamp(10px,3.2cqw,12px)]">
+  {{ t('feelsLike') }}
+</span>
+                              <span
+  class="font-bold text-gray-700 whitespace-nowrap
+         text-[clamp(11px,3.6cqw,13px)]">
+  {{ weather.feelsLike }}°
+</span>
                          </div>
                           <div class="flex items-center gap-1.5">
-                              <span class="text-[9px] font-bold text-gray-400 uppercase w-8 text-right">{{ t('humidity') }}</span>
-                              <span class="text-[10px] font-bold text-gray-700">{{ weather.humidity }}%</span>
+                              <span class="font-bold text-gray-400 uppercase text-right whitespace-nowrap
+         w-8 text-[clamp(10px,3.2cqw,12px)]">{{ t('humidity') }}</span>
+                              <span class="font-bold text-gray-700 whitespace-nowrap
+         text-[clamp(11px,3.6cqw,13px)]">{{ weather.humidity }}%</span>
                           </div>
                           <div class="flex items-center gap-1.5">
-                              <span class="text-[9px] font-bold text-gray-400 uppercase w-8 text-right">UV</span>
-                              <span class="text-[10px] font-bold text-gray-700">{{ weather.uv }}</span>
+                              <span class="font-bold text-gray-400 uppercase text-right whitespace-nowrap
+         w-8 text-[clamp(10px,3.2cqw,12px)]">UV</span>
+                              <span class="font-bold text-gray-700 whitespace-nowrap
+         text-[clamp(11px,3.6cqw,13px)]">{{ weather.uv }}</span>
                           </div>
                           <div class="flex items-center gap-1.5">
-                              <span class="text-[9px] font-bold text-gray-400 uppercase w-8 text-right">{{ t('rain') }}</span>
-                              <span class="text-[10px] font-bold text-[#007AFF]">{{ weather.rain }}%</span>
+                              <span class="font-bold text-gray-400 uppercase text-right whitespace-nowrap
+         w-8 text-[clamp(10px,3.2cqw,12px)]">{{ t('rain') }}</span>
+                              <span class="font-bold text-[#007AFF] whitespace-nowrap
+         text-[clamp(11px,3.6cqw,13px)]">{{ weather.rain }}%</span>
                               <i v-if="weather.warning" class="ph-fill ph-warning text-red-500 text-xs animate-pulse ml-0.5" :title="weather.warning"></i>
                          </div>
                      </div>
