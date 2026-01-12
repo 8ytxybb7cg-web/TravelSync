@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v11.1</title>
+  <title>Travel Sync v11.2</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -673,7 +673,7 @@
                </div>
                                                              <div class="flex gap-3 pl-[44px]">
                    <button @click="openMap(selectedMapLocation.address, tempMapApp)"
-                       class="h-10 px-4 flex items-center justify-center gap-2 bg-gray-100 
+                       class="flex-1 h-10 px-4 flex items-center justify-center gap-2 bg-gray-100 
                        text-gray-700 rounded-xl font-bold active:scale-95 transition text-sm border border-gray-200">
                     {{ t('openMaps') }}
                     </button>
@@ -687,11 +687,12 @@
                  <div class="pl-[44px] mt-2.5">
                     <div class="text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1 text-center opacity-80 scale-90 origin-center">{{ lang === 'zh' ? '快速切換' : 'Quick Switch' }}</div>
                                                                                 <div class="bg-gray-200/50 p-1 rounded-xl flex shadow-inner">
-                                        <button v-for="app in ['Google', 'Apple', 'NAVER', 'Amap']" :key="app" @click.stop="tempMapApp = app" 
-                            class="flex-1 py-2 text-[10px] rounded-lg transition-all duration-200"
+                                                       <button v-for="app in ['Google', 'Apple', 'NAVER', 'Amap']" :key="app" 
+                            @click.stop="tempMapApp = app" 
+                            class="flex-1 py-2 text-[10px] rounded-lg transition-all duration-200 border-none outline-none"
                             :class="tempMapApp === app 
-                  ? 'bg-white text-black font-extrabold shadow-md ring-1 ring-black/5 scale-100 opacity-100' 
-                  : 'text-gray-500 font-medium scale-95 opacity-60'">
+                                ? 'bg-white text-black font-extrabold shadow-md ring-1 ring-black/5 scale-100 opacity-100' 
+                                : 'bg-transparent text-gray-500 font-medium scale-95 opacity-60'">
                             {{ t('map_name_' + app) }}
                </button>
 
@@ -1160,7 +1161,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260112-11.1');
+        const appVersion = ref('v260112-11.2');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1274,7 +1275,10 @@
             else if(useApp === 'NAVER') url = 'nmap://search?query=' + q;
             else if(useApp === 'Amap') url = 'androidamap://keywordNavi?keyword=' + q;
             
-            if(url) window.open(url, '_blank');
+            if(url)             window.open(url, '_blank');
+            // 關閉後立即銷毀暫存狀態與位置，確保下次開啟必須觸發 showLocationOnMap 的重新賦值
+            selectedMapLocation.value = null;
+            tempMapApp.value = null;
         }
         
         // Upload Logic
@@ -1594,13 +1598,17 @@
         }
 
         // Map Functions
-                                        function showLocationOnMap(item) {
-             // 1. 強制同步：在 Modal 渲染前，將暫存變數重置為全域設定 (mapApp)
-             tempMapApp.value = mapApp.value;
+                                                function showLocationOnMap(item) {
+             // 1. 強制重置：不論上次狀態，開啟前先讀取永久設定到暫存變數
+             const currentPermanentApp = mapApp.value || 'Google';
+             tempMapApp.value = currentPermanentApp;
              
-             // 2. 開啟 Modal：設定資料以觸發 v-if
-             selectedMapLocation.value = (item.address && item.address.trim() !== '') ?
-                { title: item.title, address: item.address, id: item.id } : null;
+             // 2. 注入資料並渲染 Modal：確保 tempMapApp 已就緒
+             if (item && item.address && item.address.trim() !== '') {
+                 selectedMapLocation.value = { title: item.title, address: item.address, id: item.id };
+             } else {
+                 selectedMapLocation.value = null;
+             }
         }
 
         function goToExpenseList() {
