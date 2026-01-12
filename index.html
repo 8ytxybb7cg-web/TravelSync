@@ -497,7 +497,7 @@
 
         <div v-if="isPreTrip" class="ios-card p-5 relative group cursor-pointer" @click="selectedDay='prep'; currentTab='行程'; scrollToTop()">
              <div class="flex justify-between items-center mb-2">
-                <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                     <i class="ph-fill ph-check-square text-green-500"></i> {{ t('prepList') }}
                 </h2>
                 <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">{{ preTripNotes.filter(i=>!i.isDone).length }}</span>
@@ -519,7 +519,7 @@
 
                                         <div class="ios-card p-5 relative group cursor-pointer" @click="currentTab='購物'; scrollToTop()">
             <div class="flex justify-between items-center mb-2">
-                <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i class="ph-fill ph-shopping-bag text-pink-500"></i> {{ t('shopping') }}</h2>
+                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="ph-fill ph-shopping-bag text-pink-500"></i> {{ t('shopping') }}</h2>
                 <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">{{ shoppingList.filter(i=>!i.isDone).length }}</span>
             </div>
              <ul v-if="shoppingList.filter(i=>!i.isDone).length > 0" class="space-y-2 mt-2 pr-1" :class="{'max-h-[200px] overflow-y-auto': shoppingList.filter(i=>!i.isDone).length > 5}">
