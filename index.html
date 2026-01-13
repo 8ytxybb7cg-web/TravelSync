@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v11.5</title>
+  <title>Travel Sync v11.6</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -569,99 +569,123 @@
             </div>
          </div>
 
-                                   <div v-if="selectedDay === 'prep'" class="rounded-3xl transition-all duration-300 pb-24">
-            <div class="flex items-center justify-between mb-4 px-2">
-              <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i class="ph-fill ph-check-square text-[#34C759]"></i> {{ t('prepList') }}</h2>
-            </div>
+                                           <div ref="swipeContentVisual" :style="visualSwipeStyle" class="will-change-transform">
+            <div v-if="selectedDay === 'prep'" class="rounded-3xl transition-all duration-300 pb-24">
+                <div class="flex items-center justify-between mb-4 px-2">
+                  <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i class="ph-fill ph-check-square text-[#34C759]"></i> {{ t('prepList') }}</h2>
+                </div>
 
-            <div class="space-y-3" id="sortable-pre-notes">
-                              <div v-for="(note, i) in preTripNotes" :key="note.id" :data-id="note.id"
-                    @click="editPreNote(note)" 
-                    class="relative group cursor-pointer">
-                 
-                 <div class="bg-white/70 backdrop-blur-xl rounded-2xl p-3 border border-white/60 shadow-sm transition-all active:scale-[0.99] active:bg-white/90 flex gap-3 items-center relative pr-8">
+                <div class="space-y-3" id="sortable-pre-notes">
                      
-                     <div class="drag-handle text-gray-300 hover:text-gray-500 py-1"><i class="ph-bold ph-dots-three-vertical text-lg"></i></div>
+                  <div v-for="(note, i) in preTripNotes" :key="note.id" :data-id="note.id"
+                        @click="editPreNote(note)" 
+                        class="relative group cursor-pointer">
+                     
+                     <div class="bg-white/70 backdrop-blur-xl rounded-2xl 
+    p-3 border border-white/60 shadow-sm transition-all active:scale-[0.99] active:bg-white/90 flex gap-3 items-center relative pr-8">
+                         
+                         <div class="drag-handle text-gray-300 hover:text-gray-500 py-1"><i class="ph-bold ph-dots-three-vertical text-lg"></i></div>
 
-                     <div class="relative cursor-pointer mt-0.5" @click.stop="togglePreNoteDone(note.id)">
-                        <i class="ph text-2xl transition-colors" :class="note.isDone ? 'ph-check-circle-fill text-[#34C759]' : 'ph-circle text-gray-300 hover:text-gray-400'"></i>
-                     </div>
-
-                     <div class="flex-1 min-w-0">
-                         <div class="font-bold text-[16px] leading-snug break-words" :class="{'task-done': note.isDone, 'text-gray-900': !note.isDone}">{{ note.name }}</div>
-                          
-                         <div v-if="note.imageURL || note.linkURL" class="mt-2 flex items-center gap-3">
-                             <div v-if="note.imageURL" class="relative group/img cursor-pointer w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 shadow-sm" @click.stop="openImageViewer(note.imageURL)">
-                                 <img :src="note.imageURL" class="w-full h-full object-cover" alt="Thumbnail">
-                             </div>
-                             <a v-if="note.linkURL" :href="note.linkURL" target="_blank" @click.stop class="flex-shrink-0 text-xs font-semibold text-gray-600 bg-gray-100 border border-gray-200 px-3 py-2 rounded-lg inline-flex items-center gap-1.5 hover:bg-gray-200 transition">
-                                <i class="ph ph-link text-lg"></i> Open Link
-                            </a>
+                         <div class="relative cursor-pointer mt-0.5" @click.stop="togglePreNoteDone(note.id)">
+                   
+             <i class="ph text-2xl transition-colors" :class="note.isDone ?
+    'ph-check-circle-fill text-[#34C759]' : 'ph-circle text-gray-300 hover:text-gray-400'"></i>
                          </div>
-                     </div>
-                     <button @click.stop="removePreNote(note.id)" class="absolute top-3 right-3 text-gray-400 hover:text-[#FF3B30] p-1 transition-colors rounded-full">
-                        <i class="ph-bold ph-trash text-lg"></i>
-                     </button>
-                 </div>
-      </div>
 
-            </div>
-            
-            <div v-if="preTripNotes.length === 0" class="py-12 text-center">
-                <i class="ph ph-clipboard-text text-4xl text-gray-300 mb-2"></i>
-                <p class="text-sm text-gray-400"> {{ t('noItems') }} </p>
-            </div>
-  
-            <button @click="addPreNote" class="floating-add-btn bg-[#34C759]">
-                <i class="ph-bold ph-plus"></i>
-            </button>
-       </div>
-
-         <div v-else>
-             <div class="relative pl-4 border-l-2 border-gray-300/50 ml-3 space-y-3 py-2">
-                    <div v-for="it in sortedItinerary" :key="it.id"
-                      @click="showLocationOnMap(it)"
-                      class="relative group cursor-pointer">
-                    <div class="absolute -left-[23px] top-1 w-3.5 h-3.5 rounded-full bg-white border-[3px] border-gray-300 group-hover:border-[#007AFF] transition-colors z-10 shadow-sm"></div>
+                         <div class="flex-1 min-w-0">
+                             <div class="font-bold text-[16px] leading-snug break-words" :class="{'task-done': note.isDone, 'text-gray-900': !note.isDone}">{{ note.name }}</div>
+                    
                
-                    <div class="bg-white/70 backdrop-blur-xl rounded-2xl p-3 border border-white/60 shadow-sm transition-all active:scale-[0.99] active:bg-white/90 relative pr-16">
-                        <div class="flex items-start gap-2">
-                            <div class="flex-1 min-w-0">
-                                <div class="flex justify-between items-center mb-1">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-xs font-bold text-[#007AFF] font-mono bg-blue-50/80 px-1.5 rounded">{{ it.time || '--:--' }}</span>
+                             <div v-if="note.imageURL ||
+    note.linkURL" class="mt-2 flex items-center gap-3">
+                                 <div v-if="note.imageURL" class="relative group/img cursor-pointer w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 shadow-sm" @click.stop="openImageViewer(note.imageURL)">
+                                     <img :src="note.imageURL" class="w-full h-full object-cover" alt="Thumbnail">
+                    
+                  </div>
+                                 <a v-if="note.linkURL" :href="note.linkURL" target="_blank" @click.stop class="flex-shrink-0 text-xs font-semibold text-gray-600 bg-gray-100 border border-gray-200 px-3 py-2 rounded-lg inline-flex items-center gap-1.5 hover:bg-gray-200 transition">
+                                    <i class="ph ph-link text-lg"></i> Open Link
+      
+                               </a>
+                             </div>
+                         </div>
+                         <button @click.stop="removePreNote(note.id)" class="absolute top-3 right-3 text-gray-400 hover:text-[#FF3B30] 
+    p-1 transition-colors rounded-full">
+                            <i class="ph-bold ph-trash text-lg"></i>
+                         </button>
+                     </div>
+          </div>
+
+                </div>
+                
+       
+              <div v-if="preTripNotes.length === 0" class="py-12 text-center">
+                    <i class="ph ph-clipboard-text text-4xl text-gray-300 mb-2"></i>
+                    <p class="text-sm text-gray-400"> {{ t('noItems') }} </p>
+                </div>
+      
+                <button @click="addPreNote" class="floating-add-btn bg-[#34C759]">
+                  
+       <i class="ph-bold ph-plus"></i>
+                </button>
+           </div>
+
+             <div v-else>
+                 <div class="relative pl-4 border-l-2 border-gray-300/50 ml-3 space-y-3 py-2">
+                        <div v-for="it in sortedItinerary" :key="it.id"
+                          @click="showLocationOnMap(it)"
+     
+                          class="relative group cursor-pointer">
+                        <div class="absolute -left-[23px] top-1 w-3.5 h-3.5 rounded-full bg-white border-[3px] border-gray-300 group-hover:border-[#007AFF] transition-colors z-10 shadow-sm"></div>
+                   
+                        <div class="bg-white/70 backdrop-blur-xl rounded-2xl p-3 border border-white/60 shadow-sm transition-all 
+    active:scale-[0.99] active:bg-white/90 relative pr-16">
+                            <div class="flex items-start gap-2">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex justify-between items-center mb-1">
+        
+                                      <div class="flex items-center gap-2">
+                                            <span class="text-xs font-bold text-[#007AFF] font-mono bg-blue-50/80 px-1.5 rounded">{{ it.time ||
+    '--:--' }}</span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="font-bold text-[16px] text-gray-900 leading-snug">{{ it.title }}</div>
-                                <div v-if="it.note" class="text-xs text-gray-500 mt-0.5 leading-relaxed">{{ it.note }}</div>
-                                <div v-if="(it.address || '').trim() !== ''" class="mt-1 flex items-center gap-1.5 text-[10px] text-gray-400 group-hover:text-[#007AFF] transition-colors">
-                                    <i class="ph ph-map-pin-line"></i>
-                                    <span class="font-medium">查看地圖</span>
-                                 </div>
-                            </div>
-                        </div>
-                        <div class="absolute top-3 right-3 flex items-center gap-1">
-                            <button @click.stop="openItineraryModal(it)" class="text-gray-400 hover:text-[#007AFF] p-1 transition-colors rounded-full">
-                                <i class="ph ph-pencil-simple text-lg"></i>
-                            </button>
-                            <button @click.stop="removeItineraryItem(it.id)" class="text-gray-400 hover:text-[#FF3B30] p-1 transition-colors rounded-full">
-                                <i class="ph ph-trash text-lg"></i>
-                            </button>
-                        </div>
-                    </div>
-       </div>
-
-             </div>
+                                   
+      <div class="font-bold text-[16px] text-gray-900 leading-snug">{{ it.title }}</div>
+                                    <div v-if="it.note" class="text-xs text-gray-500 mt-0.5 leading-relaxed">{{ it.note }}</div>
+                                    <div v-if="(it.address || '').trim() !== ''" class="mt-1 flex items-center gap-1.5 text-[10px] text-gray-400 group-hover:text-[#007AFF] transition-colors">
              
-             <p v-if="sortedItinerary.length === 0" class="py-12 text-center text-gray-400 text-sm">
-                <i class="ph ph-coffee text-3xl mb-2 block text-gray-300"></i>
-                  今日無行程，享受自由時光
-             </p>
+                                <i class="ph ph-map-pin-line"></i>
+                                        <span class="font-medium">查看地圖</span>
+                                     </div>
+     
+                                </div>
+                            </div>
+                            <div class="absolute top-3 right-3 flex items-center gap-1">
+                       
+              <button @click.stop="openItineraryModal(it)" class="text-gray-400 hover:text-[#007AFF] p-1 transition-colors rounded-full">
+                                    <i class="ph ph-pencil-simple text-lg"></i>
+                                </button>
+                          
+           <button @click.stop="removeItineraryItem(it.id)" class="text-gray-400 hover:text-[#FF3B30] p-1 transition-colors rounded-full">
+                                    <i class="ph ph-trash text-lg"></i>
+                                </button>
+                            </div>
+     
+                        </div>
+           </div>
 
-                          <button @click="openItineraryModal(null)" class="floating-add-btn bg-[#007AFF]">
-                <i class="ph-bold ph-plus"></i>
-            </button>
-         </div>
+                 </div>
+                 
+                 <p v-if="sortedItinerary.length === 0" class="py-12 text-center text-gray-400 text-sm">
+                    <i class="ph ph-coffee text-3xl mb-2 block text-gray-300"></i>
+          
+                 今日無行程，享受自由時光
+                 </p>
+
+                              <button @click="openItineraryModal(null)" class="floating-add-btn bg-[#007AFF]">
+                    <i class="ph-bold ph-plus"></i>
+                </button>
+             </div>
+        </div>
 
          <transition name="fade">
             <div v-if="selectedMapLocation" class="fixed bottom-24 left-4 right-4 z-40 ios-card bg-white/90 p-4 border-2 border-[#007AFF]/10 shadow-2xl">
@@ -1160,7 +1184,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260113-11.5');
+        const appVersion = ref('v260113-11.6');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
