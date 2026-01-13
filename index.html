@@ -819,9 +819,15 @@
                     <div class="flex-1 min-w-0">
                         <div class="font-bold text-[16px] leading-snug break-words" :class="{'task-done': item.isDone, 'text-gray-900': !item.isDone}">{{ item.name }}</div>
                  
-                        <div v-if="item.imageURL || item.linkURL" class="mt-2 flex items-center gap-3">
-                             <div v-if="item.imageURL" class="relative group/img cursor-pointer w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 shadow-sm" @click.stop="openImageViewer(item.imageURL)">
-                                 <img :src="item.imageURL" class="w-full h-full object-cover" alt="Thumbnail">
+                                                <div v-if="(item.images && item.images.length > 0) || item.imageURL || item.linkURL" class="mt-2 flex items-center gap-3">
+                             <div v-if="(item.images && item.images.length > 0) || item.imageURL" 
+                                  class="relative cursor-pointer w-16 h-16 flex-shrink-0 z-0" 
+                                  @click.stop="openImageViewer(item.images || [item.imageURL], 0)">
+                                  <div v-if="(item.images && item.images.length > 1)" class="stack-card-layer"></div>
+                                  <img :src="(item.images && item.images.length > 0) ? item.images[0] : item.imageURL" class="w-full h-full object-cover rounded-lg border border-gray-200 shadow-sm bg-white">
+                                  <div v-if="item.images && item.images.length > 1" class="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center">
+                                      <span class="text-white text-xs font-bold">+{{ item.images.length - 1 }}</span>
+                                  </div>
                              </div>
                              
                              <a v-if="item.linkURL" :href="item.linkURL" target="_blank" @click.stop class="flex-shrink-0 text-2xl text-gray-400 hover:text-pink-500 transition-colors">
