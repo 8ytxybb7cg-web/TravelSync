@@ -1232,9 +1232,17 @@
         
         // --- Mobile Swipe Logic Start ---
         const swipeContainer = ref(null);
+        const swipeContentVisual = ref(null); // Level 2: Target for content animation
         const bounceClass = ref('');
         const touchStart = { x: 0, y: 0 };
-        
+        // Level 2 Visual States
+        const visualOffset = ref(0);
+        const isSwipeAnimating = ref(false);
+        const visualSwipeStyle = computed(() => ({
+            transform: `translateX(${visualOffset.value}px)`,
+            transition: isSwipeAnimating.value ? 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)' : 'none'
+        }));
+
         // Compute if any modal is active to freeze swipe
         const isAnyModalOpen = computed(() => 
             flightModalOpen.value || preNoteModalOpen.value || shoppingModalOpen.value || 
@@ -1243,8 +1251,21 @@
         );
 
         const handleTouchStart = (e) => {
+            isSwipeAnimating.value = false; // Disable transition for direct finger tracking
             touchStart.x = e.changedTouches[0].clientX;
             touchStart.y = e.changedTouches[0].clientY;
+        };
+
+        const handleTouchMove = (e) => {
+            const touchCurrent = e.changedTouches[0];
+            const diffX = touchCurrent.clientX - touchStart.x;
+            const diffY = touchCurrent.clientY - touchStart.y;
+            
+            // Simple visual follow if horizontal motion is detected
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                // e.preventDefault(); // Optional: prevent scroll if strictly horizontal needed
+                visualOffset.value = diffX;
+            }
         };
 
         const handleTouchEnd = (e) => {
@@ -1252,29 +1273,61 @@
             const diffX = touchEnd.clientX - touchStart.x;
             const diffY = touchEnd.clientY - touchStart.y;
             
-            // Threshold 50px & Horizontal > Vertical (prevent conflict with scrolling)
+            isSwipeAnimating.value = true; // Enable transition for result animation
+
+            // Threshold 50px & Horizontal > Vertical
             if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
+                const screenW = window.innerWidth;
+                
+                // Helper to perform visual exit -> update -> visual enter
+                const performSwitch = (newDayVal, exitDir) => {
+                    // 1. Slide Out
+                    visualOffset.value = exitDir * screenW; // Move completely off screen
+                    
+                    // 2. Wait for slide out, then switch data
+                    setTimeout(() => {
+                        selectedDay.value = newDayVal;
+                        
+                        // 3. Teleport to opposite side (No animation)
+                        isSwipeAnimating.value = false;
+                        visualOffset.value = -exitDir * screenW;
+                        
+                        // 4. Slide In (With animation)
+                        requestAnimationFrame(() => {
+                            requestAnimationFrame(() => {
+                                isSwipeAnimating.value = true;
+                                visualOffset.value = 0;
+                            });
+                        });
+                    }, 250); // Match transition duration approx
+                };
+
                 if (diffX < 0) {
                     // Swipe Left -> Next Day
                     if (selectedDay.value === 'prep') {
-                        selectedDay.value = 0;
+                        performSwitch(0, -1);
                     } else if (selectedDay.value < dayList.value.length - 1) {
-                        selectedDay.value++;
+                        performSwitch(selectedDay.value + 1, -1);
                     } else {
                         // Last day boundary
+                        visualOffset.value = 0; // Rebound logic
                         triggerBounce('bounce-left');
                     }
                 } else {
                     // Swipe Right -> Prev Day
                     if (selectedDay.value === 0) {
-                        selectedDay.value = 'prep';
+                        performSwitch('prep', 1);
                     } else if (selectedDay.value === 'prep') {
                         // First day boundary
+                        visualOffset.value = 0; // Rebound logic
                         triggerBounce('bounce-right');
                     } else {
-                        selectedDay.value--;
+                        performSwitch(selectedDay.value - 1, 1);
                     }
                 }
+            } else {
+                // Rebound if threshold not met
+                visualOffset.value = 0;
             }
         };
 
@@ -1286,17 +1339,17 @@
         const addSwipeListener = () => {
             if (swipeContainer.value) {
                 swipeContainer.value.addEventListener('touchstart', handleTouchStart, { passive: true });
+                swipeContainer.value.addEventListener('touchmove', handleTouchMove, { passive: false });
                 swipeContainer.value.addEventListener('touchend', handleTouchEnd, { passive: true });
             }
         };
-
         const removeSwipeListener = () => {
             if (swipeContainer.value) {
                 swipeContainer.value.removeEventListener('touchstart', handleTouchStart);
+                swipeContainer.value.removeEventListener('touchmove', handleTouchMove);
                 swipeContainer.value.removeEventListener('touchend', handleTouchEnd);
             }
         };
-
         // Sync Listener with Tab and Modal state
         watch([currentTab, isAnyModalOpen], async ([tab, modalOpen]) => {
             await nextTick(); // Wait for DOM update
@@ -2073,7 +2126,7 @@ generateId() };
         });
 
         return {
-            swipeContainer, bounceClass, // Export for template binding
+            swipeContainer, swipeContentVisual, visualSwipeStyle, bounceClass, // Export for template binding
             appVersion, currentTab, syncState, syncStatusText, lang, t, toggleLang, showToast, notification,
             settings, editingSettings, saveSettings, cancelSettings, headerDateRange, dayList, getDayHeader,
                         itinerary, preTripNotes, shoppingList, expenses, totalExpense, expensesBreakdown, infoList,
