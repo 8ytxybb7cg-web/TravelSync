@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v11.9</title>
+  <title>Travel Sync v12.0</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -596,12 +596,17 @@
                              <div class="font-bold text-[16px] leading-snug break-words" :class="{'task-done': note.isDone, 'text-gray-900': !note.isDone}">{{ note.name }}</div>
                     
                
-                             <div v-if="note.imageURL ||
-    note.linkURL" class="mt-2 flex items-center gap-3">
-                                 <div v-if="note.imageURL" class="relative group/img cursor-pointer w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 shadow-sm" @click.stop="openImageViewer(note.imageURL)">
-                                     <img :src="note.imageURL" class="w-full h-full object-cover" alt="Thumbnail">
-                    
-                  </div>
+                                                          <div v-if="(note.images && note.images.length > 0) || note.imageURL || note.linkURL" class="mt-2 flex items-center gap-3">
+                                 <div v-if="(note.images && note.images.length > 0) || note.imageURL" 
+                                      class="relative cursor-pointer w-16 h-16 flex-shrink-0 z-0" 
+                                      @click.stop="openImageViewer(note.images || [note.imageURL], 0)">
+                                      <div v-if="(note.images && note.images.length > 1)" class="stack-card-layer"></div>
+                                      <img :src="(note.images && note.images.length > 0) ? note.images[0] : note.imageURL" class="w-full h-full object-cover rounded-lg border border-gray-200 shadow-sm bg-white">
+                                      <div v-if="note.images && note.images.length > 1" class="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center">
+                                          <span class="text-white text-xs font-bold">+{{ note.images.length - 1 }}</span>
+                                      </div>
+                                 </div>
+
                                  <a v-if="note.linkURL" :href="note.linkURL" target="_blank" @click.stop class="flex-shrink-0 text-xs font-semibold text-gray-600 bg-gray-100 border border-gray-200 px-3 py-2 rounded-lg inline-flex items-center gap-1.5 hover:bg-gray-200 transition">
                                     <i class="ph ph-link text-lg"></i> Open Link
       
@@ -1184,7 +1189,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260113-11.9');
+        const appVersion = ref('v260113-12.0');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
