@@ -1255,7 +1255,8 @@
         const handleTouchStart = (e) => {
             isSwipeAnimating.value = false; // Disable transition for direct finger tracking
             touchStart.x = e.changedTouches[0].clientX;
-            touchStart.y = e.changedTouches[0].clientY;
+                        touchStart.y = e.changedTouches[0].clientY;
+            startTime = Date.now();
         };
 
         const handleTouchMove = (e) => {
