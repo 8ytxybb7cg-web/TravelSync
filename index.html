@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v12.0</title>
+  <title>Travel Sync v11.9</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -428,7 +428,7 @@
 
                 <section>
             <div class="flex items-center justify-between mb-3 px-1">
-                 <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                 <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                     <i class="ph-fill ph-calendar-check text-blue-500"></i> {{ t('itinerary') }}
                  </h2>
                 <button @click="currentTab='行程'; selectDay(currentTripDayIndex !== -1 ? currentTripDayIndex : 0)" class="text-blue-500 text-xs font-bold uppercase tracking-wide hover:bg-blue-50 px-2 py-1 rounded-lg">{{ t('viewAll') }}</button>
@@ -1184,7 +1184,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260113-12.0');
+        const appVersion = ref('v260113-11.9');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1225,85 +1225,7 @@
         const itineraryModalOpen = ref(false); const newItineraryItem = reactive({});
         const memberModalOpen = ref(false); const newMemberName = ref('');
         const infoModalOpen = ref(false); const newInfoItem = reactive({});
-                const imageViewer = reactive({ 
-            show: false, 
-            urls: [], 
-            currentIndex: 0,
-            startX: 0, 
-            startY: 0, 
-            currentX: 0, 
-            currentY: 0, 
-            isDragging: false,
-            isSwipingX: false,
-            isSwipingY: false,
-            bounce: ''
-        });
-
-        const openImageViewer = (urls, index = 0) => {
-            if (!urls) return;
-            if (typeof urls === 'string') {
-                imageViewer.urls = urls.split(',').filter(u => u.trim());
-            } else {
-                imageViewer.urls = Array.isArray(urls) ? urls : [urls];
-            }
-            imageViewer.currentIndex = index;
-            imageViewer.show = true;
-            imageViewer.currentX = 0;
-            imageViewer.currentY = 0;
-            imageViewer.bounce = '';
-        };
-
-        const getImgList = (val) => {
-            if (!val) return [];
-            if (Array.isArray(val)) return val;
-            return val.split(',').filter(x => x.trim());
-        };
-
-        const handleImageTouchStart = (e) => {
-            imageViewer.startX = e.touches[0].clientX;
-            imageViewer.startY = e.touches[0].clientY;
-            imageViewer.isDragging = true;
-            imageViewer.isSwipingX = false;
-            imageViewer.isSwipingY = false;
-            imageViewer.bounce = '';
-        };
-
-        const handleImageTouchMove = (e) => {
-            if (!imageViewer.isDragging) return;
-            const deltaX = e.touches[0].clientX - imageViewer.startX;
-            const deltaY = e.touches[0].clientY - imageViewer.startY;
-            if (!imageViewer.isSwipingX && !imageViewer.isSwipingY) {
-                if (Math.abs(deltaX) > Math.abs(deltaY)) imageViewer.isSwipingX = true;
-                else imageViewer.isSwipingY = true;
-            }
-            if (imageViewer.isSwipingY) {
-                imageViewer.currentY = deltaY;
-            } else {
-                const isFirst = imageViewer.currentIndex === 0;
-                const isLast = imageViewer.currentIndex === imageViewer.urls.length - 1;
-                if ((isFirst && deltaX > 0) || (isLast && deltaX < 0)) imageViewer.currentX = deltaX * 0.2;
-                else imageViewer.currentX = deltaX;
-            }
-        };
-
-        const handleImageTouchEnd = () => {
-            imageViewer.isDragging = false;
-            const thresholdX = 80;
-            const thresholdY = 150;
-            if (imageViewer.isSwipingY) {
-                if (Math.abs(imageViewer.currentY) > thresholdY) imageViewer.show = false;
-                else imageViewer.currentY = 0;
-            } else if (imageViewer.isSwipingX) {
-                if (imageViewer.currentX > thresholdX && imageViewer.currentIndex > 0) imageViewer.currentIndex--;
-                else if (imageViewer.currentX < -thresholdX && imageViewer.currentIndex < imageViewer.urls.length - 1) imageViewer.currentIndex++;
-                else if (imageViewer.currentX > 20 && imageViewer.currentIndex === 0) imageViewer.bounce = 'bounce-right';
-                else if (imageViewer.currentX < -20 && imageViewer.currentIndex === imageViewer.urls.length - 1) imageViewer.bounce = 'bounce-left';
-                imageViewer.currentX = 0;
-            }
-            imageViewer.isSwipingX = false;
-            imageViewer.isSwipingY = false;
-        };
-
+        const imageViewer = reactive({ open: false, url: '' });
         // Moved up for Swipe Logic access
         const selectedMapLocation = ref(null);
         const tempMapApp = ref(null);
