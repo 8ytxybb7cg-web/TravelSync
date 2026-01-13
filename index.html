@@ -1205,6 +1205,89 @@
 
         const expenseFilter = ref('all');
                 const selectedDay = ref(0);
+        
+        // --- Mobile Swipe Logic Start ---
+        const swipeContainer = ref(null);
+        const bounceClass = ref('');
+        const touchStart = { x: 0, y: 0 };
+        
+        // Compute if any modal is active to freeze swipe
+        const isAnyModalOpen = computed(() => 
+            flightModalOpen.value || preNoteModalOpen.value || shoppingModalOpen.value || 
+            expenseModalOpen.value || itineraryModalOpen.value || memberModalOpen.value || 
+            infoModalOpen.value || imageViewer.open
+        );
+
+        const handleTouchStart = (e) => {
+            touchStart.x = e.changedTouches[0].clientX;
+            touchStart.y = e.changedTouches[0].clientY;
+        };
+
+        const handleTouchEnd = (e) => {
+            const touchEnd = e.changedTouches[0];
+            const diffX = touchEnd.clientX - touchStart.x;
+            const diffY = touchEnd.clientY - touchStart.y;
+            
+            // Threshold 50px & Horizontal > Vertical (prevent conflict with scrolling)
+            if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX < 0) {
+                    // Swipe Left -> Next Day
+                    if (selectedDay.value === 'prep') {
+                        selectedDay.value = 0;
+                    } else if (selectedDay.value < dayList.value.length - 1) {
+                        selectedDay.value++;
+                    } else {
+                        // Last day boundary
+                        triggerBounce('bounce-left');
+                    }
+                } else {
+                    // Swipe Right -> Prev Day
+                    if (selectedDay.value === 0) {
+                        selectedDay.value = 'prep';
+                    } else if (selectedDay.value === 'prep') {
+                        // First day boundary
+                        triggerBounce('bounce-right');
+                    } else {
+                        selectedDay.value--;
+                    }
+                }
+            }
+        };
+
+        const triggerBounce = (cls) => {
+            bounceClass.value = cls;
+            setTimeout(() => bounceClass.value = '', 300);
+        };
+
+        const addSwipeListener = () => {
+            if (swipeContainer.value) {
+                swipeContainer.value.addEventListener('touchstart', handleTouchStart, { passive: true });
+                swipeContainer.value.addEventListener('touchend', handleTouchEnd, { passive: true });
+            }
+        };
+
+        const removeSwipeListener = () => {
+            if (swipeContainer.value) {
+                swipeContainer.value.removeEventListener('touchstart', handleTouchStart);
+                swipeContainer.value.removeEventListener('touchend', handleTouchEnd);
+            }
+        };
+
+        // Sync Listener with Tab and Modal state
+        watch([currentTab, isAnyModalOpen], async ([tab, modalOpen]) => {
+            await nextTick(); // Wait for DOM update
+            // Cleanup first to ensure no duplicates
+            removeSwipeListener();
+            
+            // Only attach if in Itinerary tab AND no modals are open
+            if (tab === '行程' && !modalOpen) {
+                addSwipeListener();
+            }
+        }, { immediate: true });
+        // --- Mobile Swipe Logic End ---
+
+        const newPreNoteInput = ref('');
+
         const newPreNoteInput = ref('');
         const quickItinerary = reactive({ time: '', title: '' });
                 // 每日顏色陣列 (Patch: 更新為 8 色視覺分類池)
