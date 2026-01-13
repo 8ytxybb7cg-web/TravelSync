@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v12.6</title>
+  <title>Travel Sync v12.7</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1267,7 +1267,17 @@
         const itineraryModalOpen = ref(false); const newItineraryItem = reactive({});
         const memberModalOpen = ref(false); const newMemberName = ref('');
         const infoModalOpen = ref(false); const newInfoItem = reactive({});
-        const imageViewer = reactive({ open: false, url: '' });
+                const imageViewer = reactive({ 
+            open: false, 
+            list: [], 
+            index: 0,
+            touch: { startX: 0, startY: 0, diffX: 0, diffY: 0, dragging: false }
+        });
+        
+        // Multi-image upload state
+        const tempImages = ref([]); // For display
+        const uploadQueue = ref([]); // { file: File, blob: String }
+
         // Moved up for Swipe Logic access
         const selectedMapLocation = ref(null);
         const tempMapApp = ref(null);
