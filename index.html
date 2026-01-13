@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v11.4</title>
+  <title>Travel Sync v11.5</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -225,6 +225,12 @@
     }
     .floating-add-btn:active, .floating-add-btn:hover { transform: scale(1.05); filter: brightness(1.1); }
     .floating-add-btn i { font-size: 28px; }
+
+    /* Swipe Boundary Bounce Animation */
+    @keyframes bounce-limit-left { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-30px); } }
+    @keyframes bounce-limit-right { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(30px); } }
+    .bounce-left { animation: bounce-limit-left 0.3s cubic-bezier(0.25, 0.8, 0.5, 1); }
+    .bounce-right { animation: bounce-limit-right 0.3s cubic-bezier(0.25, 0.8, 0.5, 1); }
 
   </style>
 </head>
@@ -1154,7 +1160,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260112-11.4');
+        const appVersion = ref('v260113-11.5');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
