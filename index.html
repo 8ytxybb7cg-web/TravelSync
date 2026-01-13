@@ -1226,6 +1226,9 @@
         const memberModalOpen = ref(false); const newMemberName = ref('');
         const infoModalOpen = ref(false); const newInfoItem = reactive({});
         const imageViewer = reactive({ open: false, url: '' });
+        // Moved up for Swipe Logic access
+        const selectedMapLocation = ref(null);
+        const tempMapApp = ref(null);
 
         const expenseFilter = ref('all');
                 const selectedDay = ref(0);
@@ -1246,10 +1249,10 @@
         }));
 
         // Compute if any modal is active to freeze swipe
-        const isAnyModalOpen = computed(() => 
+                const isAnyModalOpen = computed(() => 
             flightModalOpen.value || preNoteModalOpen.value || shoppingModalOpen.value || 
             expenseModalOpen.value || itineraryModalOpen.value || memberModalOpen.value || 
-            infoModalOpen.value || imageViewer.open
+            infoModalOpen.value || imageViewer.open || selectedMapLocation.value
         );
 
         const handleTouchStart = (e) => {
@@ -1384,10 +1387,9 @@
              });
         }
         
-        // Map Logic (New in 7.5)
-                        const selectedMapLocation = ref(null);
-        const tempMapApp = ref(null); // Modal-scoped strict state
+                // Map Logic (New in 7.5)
         // Map Settings (Patch)
+
         const mapApp = ref(localStorage.getItem('mapApp') || 'Google');
 
         const addressPlaceholder = computed(() => lang.value === 'zh' ? '香港九龍旺角亞皆老街8號' : '8 Argyle St, Mong Kok, Kowloon, Hong Kong');
