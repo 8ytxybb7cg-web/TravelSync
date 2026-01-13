@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v12.0</title>
+  <title>Travel Sync v12.5</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1095,25 +1095,28 @@
             <div class="ios-modal-body space-y-4">
                 <input v-model="newShoppingItem.name" class="ios-input font-medium" :placeholder="t('itemName')">
                 <div class="border-t border-gray-100 pt-4">
-                    <label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">{{ t('imgRef') }}</label>
-                    <label class="flex flex-col items-center justify-center w-full p-6 border border-dashed border-gray-300 rounded-2xl cursor-pointer hover:bg-gray-50 transition">
-                         <div class="text-center" v-if="!newShoppingItem.imageURL && !tempUploadPreview">
-                            <i class="ph ph-image text-3xl text-gray-300 mb-2"></i>
-                            <div class="text-[#007AFF] text-sm font-medium">{{ t('uploadImg') }}</div>
-                         </div>
-                        <div v-else class="text-center text-[#007AFF] font-bold text-sm">{{ tempUploadPreview ? t('imgSelected') : t('changeImg') }}</div>
-                                                <input type="file" accept="image/*" class="hidden" @change="handleFileUpload">
-                    </label>
+                                        <label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">{{ t('imgRef') }} ({{ tempImages.length }}/5)</label>
                     
-                    <input v-model="newShoppingItem.imageURL" class="w-full mt-2 p-2 text-xs text-gray-400 bg-transparent text-center border-b border-gray-100 focus:outline-none rounded-none" placeholder="圖片網址 (Image URL)">
-                    
-                    <div class="relative mt-2">
-                        <i class="ph ph-link absolute left-2 top-2.5 text-gray-400"></i>
-                        <input v-model="newShoppingItem.linkURL" class="w-full p-2 pl-7 text-xs text-gray-600 bg-gray-50 rounded-lg focus:outline-none focus:bg-white border border-transparent focus:border-blue-200 transition-all" placeholder="Instagram / Threads URL">
+                    <div v-if="tempImages.length > 0" class="grid grid-cols-4 gap-2 mb-3">
+                        <div v-for="(img, idx) in tempImages" :key="idx" class="relative aspect-square rounded-xl overflow-hidden border border-gray-200">
+                            <img :src="img" class="w-full h-full object-cover">
+                            <button @click.stop="removeTempImage(idx)" class="absolute top-0.5 right-0.5 bg-black/50 text-white rounded-full p-0.5 hover:bg-red-500 transition">
+                                <i class="ph-bold ph-x text-xs"></i>
+                            </button>
+                        </div>
                     </div>
 
-                    <div v-if="tempUploadPreview || newShoppingItem.imageURL" class="mt-4 flex justify-center">
-                        <img :src="tempUploadPreview || newShoppingItem.imageURL" class="h-24 w-24 object-cover rounded-2xl shadow-sm border border-gray-100">
+                    <label v-if="tempImages.length < 5" class="flex flex-col items-center justify-center w-full p-4 border border-dashed border-gray-300 rounded-2xl cursor-pointer hover:bg-gray-50 transition">
+                         <div class="text-center">
+                            <i class="ph ph-image text-2xl text-gray-300 mb-1"></i>
+                            <div class="text-[#007AFF] text-xs font-medium">{{ t('uploadImg') }}</div>
+                         </div>
+                         <input type="file" accept="image/*" multiple class="hidden" @change="handleMultiFileUpload">
+                    </label>
+                    
+                    <div class="relative mt-4">
+                        <i class="ph ph-link absolute left-2 top-2.5 text-gray-400"></i>
+                        <input v-model="editingPreNote.linkURL" class="w-full p-2 pl-7 text-xs text-gray-600 bg-gray-50 rounded-lg focus:outline-none focus:bg-white border border-transparent focus:border-blue-200 transition-all" placeholder="URL">
                     </div>
                 </div>
             </div>
@@ -1146,25 +1149,28 @@
                 <input v-model="editingPreNote.name" class="ios-input font-medium" :placeholder="t('taskName')">
                 
                 <div class="border-t border-gray-100 pt-4">
-                    <label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">{{ t('imgRef') }}</label>
-                    <label class="flex flex-col items-center justify-center w-full p-6 border border-dashed border-gray-300 rounded-2xl cursor-pointer hover:bg-gray-50 transition">
-                         <div class="text-center" v-if="!editingPreNote.imageURL && !tempUploadPreview">
-                            <i class="ph ph-image text-3xl text-gray-300 mb-2"></i>
-                            <div class="text-[#007AFF] text-sm font-medium">{{ t('uploadImg') }}</div>
-                         </div>
-                        <div v-else class="text-center text-[#007AFF] font-bold text-sm">{{ tempUploadPreview ? t('imgSelected') : t('changeImg') }}</div>
-                        <input type="file" accept="image/*" class="hidden" @change="handleFileUpload">
-                    </label>
+                                        <label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">{{ t('imgRef') }} ({{ tempImages.length }}/5)</label>
                     
-                    <input v-model="editingPreNote.imageURL" class="w-full mt-2 p-2 text-xs text-gray-400 bg-transparent text-center border-b border-gray-100 focus:outline-none rounded-none" placeholder="圖片網址 (Image URL)">
-                    
-                    <div class="relative mt-2">
-                        <i class="ph ph-link absolute left-2 top-2.5 text-gray-400"></i>
-                        <input v-model="editingPreNote.linkURL" class="w-full p-2 pl-7 text-xs text-gray-600 bg-gray-50 rounded-lg focus:outline-none focus:bg-white border border-transparent focus:border-blue-200 transition-all" placeholder="URL">
+                    <div v-if="tempImages.length > 0" class="grid grid-cols-4 gap-2 mb-3">
+                        <div v-for="(img, idx) in tempImages" :key="idx" class="relative aspect-square rounded-xl overflow-hidden border border-gray-200">
+                            <img :src="img" class="w-full h-full object-cover">
+                            <button @click.stop="removeTempImage(idx)" class="absolute top-0.5 right-0.5 bg-black/50 text-white rounded-full p-0.5 hover:bg-red-500 transition">
+                                <i class="ph-bold ph-x text-xs"></i>
+                            </button>
+                        </div>
                     </div>
 
-                    <div v-if="tempUploadPreview || editingPreNote.imageURL" class="mt-4 flex justify-center">
-                         <img :src="tempUploadPreview || editingPreNote.imageURL" class="h-24 w-24 object-cover rounded-2xl shadow-sm border border-gray-100">
+                    <label v-if="tempImages.length < 5" class="flex flex-col items-center justify-center w-full p-4 border border-dashed border-gray-300 rounded-2xl cursor-pointer hover:bg-gray-50 transition">
+                         <div class="text-center">
+                            <i class="ph ph-image text-2xl text-gray-300 mb-1"></i>
+                            <div class="text-[#007AFF] text-xs font-medium">{{ t('uploadImg') }}</div>
+                         </div>
+                         <input type="file" accept="image/*" multiple class="hidden" @change="handleMultiFileUpload">
+                    </label>
+
+                    <div class="relative mt-4">
+                        <i class="ph ph-link absolute left-2 top-2.5 text-gray-400"></i>
+                        <input v-model="newShoppingItem.linkURL" class="w-full p-2 pl-7 text-xs text-gray-600 bg-gray-50 rounded-lg focus:outline-none focus:bg-white border border-transparent focus:border-blue-200 transition-all" placeholder="Instagram / Threads URL">
                     </div>
                 </div>
             </div>
