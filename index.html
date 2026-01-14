@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v12.10</title>
+  <title>Travel Sync v12.11</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1967,14 +1967,15 @@
             if(main) main.scrollTo({top: 0, behavior: 'smooth'});
         }
 
-        function addPreNote() { 
+                function addPreNote() { 
             editingPreNote.id = null;
             editingPreNote.name = ''; 
+            editingPreNote.images = [];
             editingPreNote.imageURL = ''; 
             editingPreNote.linkURL = '';
-            tempUploadPreview.value = null; 
-            pendingUploadFile = null;
-            preNoteModalOpen.value = true; 
+            tempImages.value = []; 
+            uploadQueue.value = [];
+            preNoteModalOpen.value = true;
         }
         
         function addPreNoteDirect() {
@@ -1987,40 +1988,53 @@
         
         function editPreNote(n) { 
             Object.assign(editingPreNote, n);
-            tempUploadPreview.value = null; 
-            pendingUploadFile = null;
+            if (n.images && Array.isArray(n.images)) {
+                tempImages.value = [...n.images];
+            } else if (n.imageURL) {
+                tempImages.value = [n.imageURL];
+            } else {
+                tempImages.value = [];
+            }
+            uploadQueue.value = [];
             preNoteModalOpen.value = true; 
         }
         
         async function savePreNoteEdit() {
             if(!editingPreNote.name) return;
-            if(pendingUploadFile) {
-                const url = await uploadFileToSupabase(pendingUploadFile);
-                if(url) editingPreNote.imageURL = url;
-            }
-            const item = { ...editingPreNote, linkURL: editingPreNote.linkURL || '' };
+            
+            const finalImages = await processUploadQueue();
+            
+            const item = { 
+                ...editingPreNote, 
+                images: finalImages,
+                imageURL: finalImages.length > 0 ? finalImages[0] : '',
+                linkURL: editingPreNote.linkURL || '' 
+            };
             
             if(!item.id) preTripNotes.value.push({ ...item, id: generateId(), isDone: false });
             else {
                 const idx = preTripNotes.value.findIndex(x=>x.id === item.id);
                 if(idx !== -1) preTripNotes.value[idx] = { ...item };
             }
-            preNoteModalOpen.value = false; saveAll();
+            preNoteModalOpen.value = false;
+            saveAll();
         }
 
         async function removePreNote(id) { 
-            if(!confirm('Delete this task?')) return; 
-            
-            // Delete Image from Supabase
+            if(!confirm('Delete this task?')) return;
             const item = preTripNotes.value.find(x => x.id === id);
-            if (item && item.imageURL && item.imageURL.includes('/uploads/')) {
-                try {
-                    const urlPath = item.imageURL.split('/uploads/')[1];
-                    if (urlPath) await supabaseClient.storage.from('uploads').remove([urlPath]);
-                } catch (e) { console.error(e); }
+            const imgs = item.images || (item.imageURL ? [item.imageURL] : []);
+            
+            for (const url of imgs) {
+                 if (url && url.includes('/uploads/')) {
+                    try {
+                        const urlPath = url.split('/uploads/')[1];
+                        if (urlPath) await supabaseClient.storage.from('uploads').remove([urlPath]);
+                    } catch (e) {}
+                }
             }
-
-            preTripNotes.value = preTripNotes.value.filter(x=>x.id!==id); 
+            
+            preTripNotes.value = preTripNotes.value.filter(x=>x.id!==id);
             saveAll();
         }
 
