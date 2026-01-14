@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v12.8</title>
+  <title>Travel Sync v12.9</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1564,10 +1564,47 @@
         }
 
         
-        // Upload Logic
-        const tempUploadPreview = ref(null);
-        let pendingUploadFile = null;
+                // Upload Logic (Multi)
         const isUploading = ref(false);
+        
+        function handleMultiFileUpload(e) {
+            const files = Array.from(e.target.files);
+            const remainingSlots = 5 - tempImages.value.length;
+            const toAdd = files.slice(0, remainingSlots);
+            
+            toAdd.forEach(file => {
+                const blobUrl = URL.createObjectURL(file);
+                tempImages.value.push(blobUrl);
+                uploadQueue.value.push({ file: file, blob: blobUrl });
+            });
+            // Reset input
+            e.target.value = '';
+        }
+
+        function removeTempImage(idx) {
+            const imgUrl = tempImages.value[idx];
+            // Remove from display
+            tempImages.value.splice(idx, 1);
+            // Remove from upload queue if it's a new file
+            const qIdx = uploadQueue.value.findIndex(x => x.blob === imgUrl);
+            if (qIdx !== -1) {
+                uploadQueue.value.splice(qIdx, 1);
+            }
+        }
+        
+        async function processUploadQueue() {
+            const finalImages = [...tempImages.value];
+            
+            for (const item of uploadQueue.value) {
+                const url = await uploadFileToSupabase(item.file);
+                if (url) {
+                    // Replace blob url with real url in final list
+                    const idx = finalImages.indexOf(item.blob);
+                    if (idx !== -1) finalImages[idx] = url;
+                }
+            }
+            return finalImages;
+        }
 
         const expenseCats = [
             {name: '門票', icon: 'ph-ticket'}, {name: '交通', icon: 'ph-train'},
