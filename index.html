@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v12.7</title>
+  <title>Travel Sync v12.8</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1285,6 +1285,78 @@
         const expenseFilter = ref('all');
                 const selectedDay = ref(0);
         
+                // --- Photo Viewer Logic ---
+        function openImageViewer(sources, startIndex = 0) {
+            if (!sources) return;
+            const list = Array.isArray(sources) ? sources : [sources];
+            if (list.length === 0) return;
+            
+            imageViewer.list = list;
+            imageViewer.index = startIndex;
+            imageViewer.touch = { startX: 0, startY: 0, diffX: 0, diffY: 0, dragging: false };
+            imageViewer.open = true;
+        }
+
+        function closeImageViewer() {
+            imageViewer.open = false;
+            setTimeout(() => {
+                 imageViewer.list = [];
+                 imageViewer.touch = { startX: 0, startY: 0, diffX: 0, diffY: 0, dragging: false };
+            }, 300);
+        }
+
+        function handleViewerTouchStart(e) {
+            imageViewer.touch.startX = e.touches[0].clientX;
+            imageViewer.touch.startY = e.touches[0].clientY;
+            imageViewer.touch.dragging = true;
+        }
+
+        function handleViewerTouchMove(e) {
+            if (!imageViewer.touch.dragging) return;
+            const currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
+            const diffX = currentX - imageViewer.touch.startX;
+            const diffY = currentY - imageViewer.touch.startY;
+
+            // Horizontal Swipe (Nav) vs Vertical (Close)
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                // Resistance at edges
+                if ((imageViewer.index === 0 && diffX > 0) || (imageViewer.index === imageViewer.list.length - 1 && diffX < 0)) {
+                    imageViewer.touch.diffX = diffX * 0.3;
+                } else {
+                    imageViewer.touch.diffX = diffX;
+                }
+                imageViewer.touch.diffY = 0;
+            } else {
+                // Vertical Swipe (Close)
+                imageViewer.touch.diffY = diffY;
+                imageViewer.touch.diffX = 0;
+            }
+        }
+
+        function handleViewerTouchEnd() {
+            imageViewer.touch.dragging = false;
+            const { diffX, diffY } = imageViewer.touch;
+            const threshold = 80;
+
+            // Vertical Close
+            if (Math.abs(diffY) > 100) {
+                closeImageViewer();
+            } 
+            // Horizontal Nav
+            else if (Math.abs(diffX) > threshold) {
+                if (diffX > 0 && imageViewer.index > 0) {
+                    imageViewer.index--;
+                } else if (diffX < 0 && imageViewer.index < imageViewer.list.length - 1) {
+                    imageViewer.index++;
+                }
+            }
+            
+            // Reset
+            imageViewer.touch.diffX = 0;
+            imageViewer.touch.diffY = 0;
+        }
+
         // --- Mobile Swipe Logic Start ---
         const swipeContainer = ref(null);
         const swipeContentVisual = ref(null); // Level 2: Target for content animation
