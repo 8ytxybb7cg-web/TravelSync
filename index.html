@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v12.9</title>
+  <title>Travel Sync v12.10</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -2026,52 +2026,62 @@
 
         function togglePreNoteDone(id) { const n = preTripNotes.value.find(x=>x.id===id); if(n) n.isDone = !n.isDone; saveAll(); }
 
-        // Shopping with Image
-        function openShoppingModal(item) { 
-            Object.assign(newShoppingItem, item || {id:null, name:'', imageURL:'', linkURL:'', isDone:false});
-            tempUploadPreview.value = null; pendingUploadFile = null;
+                // Shopping with Image (Multi)
+        function openShoppingModal(item) {
+            const base = item || {id:null, name:'', imageURL:'', images:[], linkURL:'', isDone:false};
+            Object.assign(newShoppingItem, base);
+            
+            // Init images: Use 'images' array, fallback to 'imageURL', or empty
+            if (base.images && Array.isArray(base.images)) {
+                tempImages.value = [...base.images];
+            } else if (base.imageURL) {
+                tempImages.value = [base.imageURL];
+            } else {
+                tempImages.value = [];
+            }
+            
+            uploadQueue.value = [];
             shoppingModalOpen.value = true; 
         }
-        function handleFileUpload(e) {
-            const file = e.target.files[0];
-            if(file) {
-                pendingUploadFile = file;
-                tempUploadPreview.value = URL.createObjectURL(file);
-            }
-        }
-        function openImageViewer(url) { imageViewer.url = url; imageViewer.open = true; }
+
         async function saveShoppingItem() {
             if(!newShoppingItem.name) return;
-            if(pendingUploadFile) {
-                const url = await uploadFileToSupabase(pendingUploadFile);
-                if(url) newShoppingItem.imageURL = url;
-            }
-            // Ensure linkURL is saved properly
-            const itemToSave = { ...newShoppingItem, linkURL: newShoppingItem.linkURL || '' };
+            
+            // Upload pending files
+            const finalImages = await processUploadQueue();
+            
+            const itemToSave = { 
+                ...newShoppingItem, 
+                images: finalImages,
+                // Legacy support / cover image
+                imageURL: finalImages.length > 0 ? finalImages[0] : '', 
+                linkURL: newShoppingItem.linkURL || '' 
+            };
             
             if(!itemToSave.id) shoppingList.value.push({ ...itemToSave, id: generateId() });
-            else { const idx = shoppingList.value.findIndex(x=>x.id===itemToSave.id); if(idx!==-1) shoppingList.value[idx] = {...itemToSave}; }
-            shoppingModalOpen.value = false; saveAll();
+            else { 
+                const idx = shoppingList.value.findIndex(x=>x.id===itemToSave.id); 
+                if(idx!==-1) shoppingList.value[idx] = {...itemToSave};
+            }
+            shoppingModalOpen.value = false; 
+            saveAll();
         }
-                async function removeShoppingItem(id) { 
-            if(!confirm('Delete this item?')) return; 
-            
-            // 找出要刪除的項目以獲取圖片 URL
+
+        async function removeShoppingItem(id) { 
+            if(!confirm('Delete this item?')) return;
+            // Clean up all images
             const item = shoppingList.value.find(x => x.id === id);
-            if (item && item.imageURL) {
-                try {
-                    // 解析 URL 取得檔案路徑 (假設 bucket 名稱為 uploads)
-                    const urlPath = item.imageURL.split('/uploads/')[1];
-                    if (urlPath) {
-                        const { error } = await supabaseClient.storage.from('uploads').remove([urlPath]);
-                        if (error) console.error('Error removing image:', error);
-                    }
-                } catch (e) {
-                    console.error('Delete image failed:', e);
+            const imgs = item.images || (item.imageURL ? [item.imageURL] : []);
+            
+            for (const url of imgs) {
+                if (url && url.includes('/uploads/')) {
+                    try {
+                        const urlPath = url.split('/uploads/')[1];
+                        if (urlPath) await supabaseClient.storage.from('uploads').remove([urlPath]);
+                    } catch (e) {}
                 }
             }
-
-            shoppingList.value = shoppingList.value.filter(x=>x.id!==id); 
+            shoppingList.value = shoppingList.value.filter(x=>x.id!==id);
             saveAll();
         }
 
