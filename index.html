@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.1</title>
+  <title>Travel Sync v13.2</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1260,7 +1260,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260113-13.1');
+        const appVersion = ref('v260113-13.2');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1405,8 +1405,9 @@
         const bounceClass = ref('');
                 const touchStart = { x: 0, y: 0 };
         let startTime = 0;
+        let isSwipeValid = false; // [Patch] Flag to restrict swipe area
 
-        // Level 2 Visual States
+// Level 2 Visual States
         const visualOffset = ref(0);
         const isSwipeAnimating = ref(false);
         const visualSwipeStyle = computed(() => ({
@@ -1422,15 +1423,26 @@
         );
 
         const handleTouchStart = (e) => {
-            isSwipeAnimating.value = false; // Disable transition for direct finger tracking
+            // [Patch] Check if touch target is within the itinerary body container
+            if (!swipeContentVisual.value || !swipeContentVisual.value.contains(e.target)) {
+                isSwipeValid = false;
+                return;
+            }
+            isSwipeValid = true;
+
+            isSwipeAnimating.value = false;
+// Disable transition for direct finger tracking
             touchStart.x = e.changedTouches[0].clientX;
-                        touchStart.y = e.changedTouches[0].clientY;
+            touchStart.y = e.changedTouches[0].clientY;
             startTime = Date.now();
         };
 
         const handleTouchMove = (e) => {
+            if (!isSwipeValid) return; // [Patch] Ignore if start was invalid
+
             const touchCurrent = e.changedTouches[0];
             const diffX = touchCurrent.clientX - touchStart.x;
+
             const diffY = touchCurrent.clientY - touchStart.y;
             
             // Simple visual follow if horizontal motion is detected
@@ -1441,8 +1453,11 @@
         };
 
         const handleTouchEnd = (e) => {
+            if (!isSwipeValid) return; // [Patch] Ignore if start was invalid
+
             const touchEnd = e.changedTouches[0];
             const diffX = touchEnd.clientX - touchStart.x;
+
             const diffY = touchEnd.clientY - touchStart.y;
             
             isSwipeAnimating.value = true; // Enable transition for result animation
