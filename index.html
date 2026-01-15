@@ -2504,18 +2504,22 @@ generateId() };
             if(el) Sortable.create(el, { handle:'.drag-handle', animation:150, onEnd:(evt)=>{ const item = list.splice(evt.oldIndex, 1)[0]; list.splice(evt.newIndex, 0, item); saveAll(); }});
         }
 
-                                        function runIntroSequence() {
-            // Phase 1: 0% -> 75% (700ms)
-            setTimeout(() => { introProgress.value = 75; }, 50);
+                                                function runIntroSequence() {
+            // Phase 1: 0% -> 60% (保持第一句文案「收拾行李中」顯示約 800ms)
+            setTimeout(() => { introProgress.value = 60; }, 50);
 
-            // Phase 2: 75% -> 90% (After 700ms, take 400ms)
-            setTimeout(() => { introProgress.value = 90; }, 750);
+            // Phase 2: 60% -> 75% (切換第二句文案「檢查地圖...」)
+            setTimeout(() => { introProgress.value = 75; }, 900);
 
-            // Phase 3: Wait for App Ready logic
+            // Phase 3: 75% -> 90% (切換第三句文案，並進入等待狀態)
+            setTimeout(() => { introProgress.value = 90; }, 1500);
+
+            // Phase 4: Wait for App Ready logic
             const checkReadyInterval = setInterval(() => {
                 // 當時間到了 (90%) 且 App 資料已載入 (introAppReady)
                 if (introProgress.value >= 90 && introAppReady.value) {
                     clearInterval(checkReadyInterval);
+            
                     finishIntro();
                 }
             }, 100);
