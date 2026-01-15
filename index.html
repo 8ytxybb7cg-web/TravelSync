@@ -244,11 +244,12 @@
     }
     .intro-layer.fade-out { opacity: 0; pointer-events: none; }
     
-    .sketch-box {
-        width: 280px; max-width: 80%;
+        .sketch-box {
+        width: 280px;
+        max-width: 80%;
         display: flex; flex-direction: column; align-items: center; gap: 20px;
-        /* 手繪微微歪斜感 */
-        transform: rotate(-1deg);
+        /* 修正：移除旋轉，確保進度條水平 */
+        transform: none;
     }
 
     .sketch-track {
