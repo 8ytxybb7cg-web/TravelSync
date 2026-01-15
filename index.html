@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.2</title>
+  <title>Travel Sync v13.3</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -228,14 +228,95 @@
 
     /* Swipe Boundary Bounce Animation */
     @keyframes bounce-limit-left { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-30px); } }
-    @keyframes bounce-limit-right { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(30px); } }
-    .bounce-left { animation: bounce-limit-left 0.3s cubic-bezier(0.25, 0.8, 0.5, 1); }
-    .bounce-right { animation: bounce-limit-right 0.3s cubic-bezier(0.25, 0.8, 0.5, 1); }
+        @keyframes bounce-limit-right { 0%, 100% { transform: translateX(0);
+} 50% { transform: translateX(30px); } }
+    .bounce-left { animation: bounce-limit-left 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+}
+    .bounce-right { animation: bounce-limit-right 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+}
+
+    /* --- Intro Loading Layer (Sketch Style) --- */
+    .intro-layer {
+        position: fixed; inset: 0; z-index: 9999;
+        background: #F2F2F7; /* 配合 iOS 背景色 */
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        transition: opacity 0.2s ease-out;
+    }
+    .intro-layer.fade-out { opacity: 0; pointer-events: none; }
+    
+    .sketch-box {
+        width: 280px; max-width: 80%;
+        display: flex; flex-direction: column; align-items: center; gap: 20px;
+        /* 手繪微微歪斜感 */
+        transform: rotate(-1deg);
+    }
+
+    .sketch-track {
+        width: 100%; height: 24px;
+        background: white;
+        /* 手繪不規則邊框技巧 */
+        border: 2px solid #353E53;
+        border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+        padding: 3px;
+        position: relative;
+        box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+    }
+
+    .sketch-fill {
+        height: 100%;
+        background: #353E53;
+        /* 內部填充也要稍微不規則 */
+        border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+        width: 0%;
+        transition: width 0.3s ease-out;
+        position: relative;
+    }
+    
+    /* 填充條上的紋理 (鉛筆塗抹感) */
+    .sketch-fill::after {
+        content: ''; position: absolute; inset: 0;
+        background: repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 2px,
+            rgba(255,255,255,0.1) 2px,
+            rgba(255,255,255,0.1) 4px
+        );
+    }
+
+    .sketch-text {
+        font-weight: 700; color: #353E53; font-size: 15px;
+        text-align: center; letter-spacing: 0.5px;
+        min-height: 24px;
+        display: flex; align-items: center; gap: 6px;
+    }
+
+    /* 簡單的圖示彈跳動畫 */
+    .icon-bounce { animation: icon-bounce 1s infinite alternate ease-in-out; }
+    @keyframes icon-bounce { from { transform: translateY(0); } to { transform: translateY(-3px); } }
 
   </style>
 </head>
+
 <body>
   <div id="app">
+    <div v-if="introVisible" class="intro-layer" :class="{ 'fade-out': introFading }">
+        <div class="sketch-box">
+            <div class="sketch-text">
+                <span>{{ introText }}</span>
+                <i v-if="introStep === 0" class="ph-fill ph-suitcase-rolling icon-bounce"></i>
+                <i v-if="introStep === 1" class="ph-fill ph-map-pin-area icon-bounce"></i>
+                <i v-if="introStep === 2" class="ph-fill ph-airplane-tilt icon-bounce" style="animation-duration: 0.5s;"></i>
+            </div>
+            <div class="sketch-track">
+                <div class="sketch-fill" :style="{ width: introProgress + '%' }"></div>
+            </div>
+        </div>
+        <div class="absolute bottom-10 text-gray-400/50 text-xs font-mono font-bold tracking-widest uppercase transform rotate-1">
+            Travel Sync Starting...
+        </div>
+    </div>
+
     <div class="bg-fixed-layer">
         <img src="./IMG_1641.jpeg" alt="Background">
         <div class="bg-overlay"></div>
@@ -1260,10 +1341,26 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260113-13.2');
+        const appVersion = ref('v260113-13.3');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
-        const isInitialized = ref(false);
+                const isInitialized = ref(false);
+        // Intro State
+        const introVisible = ref(true);
+        const introFading = ref(false);
+        const introProgress = ref(0); // 0-100
+        const introAppReady = ref(false); // Signal from App logic
+        const introStep = computed(() => {
+            if (introProgress.value < 75) return 0;
+            if (introProgress.value < 90) return 1;
+            return 2;
+        });
+        const introText = computed(() => {
+            if (introStep.value === 0) return '收拾行李中';
+            if (introStep.value === 1) return '檢查地圖同車程';
+            return '準備出發～就快得啦';
+        });
+
                 const lang = ref(localStorage.getItem('app_lang') || 'zh');
         const rateDisplayMode = ref(Number(localStorage.getItem('rate_mode') || 0));
         const notification = ref(null);
@@ -2406,9 +2503,48 @@ generateId() };
             if(el) Sortable.create(el, { handle:'.drag-handle', animation:150, onEnd:(evt)=>{ const item = list.splice(evt.oldIndex, 1)[0]; list.splice(evt.newIndex, 0, item); saveAll(); }});
         }
 
-                                onMounted(() => {
+                                        function runIntroSequence() {
+            // Phase 1: 0% -> 75% (700ms)
+            setTimeout(() => { introProgress.value = 75; }, 50);
+
+            // Phase 2: 75% -> 90% (After 700ms, take 400ms)
+            setTimeout(() => { introProgress.value = 90; }, 750);
+
+            // Phase 3: Wait for App Ready logic
+            const checkReadyInterval = setInterval(() => {
+                // 當時間到了 (90%) 且 App 資料已載入 (introAppReady)
+                if (introProgress.value >= 90 && introAppReady.value) {
+                    clearInterval(checkReadyInterval);
+                    finishIntro();
+                }
+            }, 100);
+        }
+
+        function finishIntro() {
+            // Phase 4: 90% -> 100% (Fast sprint)
+            introProgress.value = 100;
+            
+            // Fade out after a short moment seeing 100%
+            setTimeout(() => {
+                introFading.value = true; // Trigger CSS Opacity 0
+                
+                // Remove from DOM
+                setTimeout(() => {
+                    introVisible.value = false;
+                }, 200); // CSS transition time
+            }, 250);
+        }
+
+        onMounted(() => {
+            // 1. Start UI Intro Animation immediately
+            runIntroSequence();
+
             Object.assign(editingSettings, settings);
+            // 2. Start Data Loading
             initApp().then(() => {
+                // Signal Intro that data is ready
+                introAppReady.value = true;
+                
                 fetchRate(); fetchWeather();
                 autoToggleFlightCard(); // 初始化航班卡片狀態
 
@@ -2444,6 +2580,9 @@ generateId() };
         });
 
         return {
+            // Intro Exports
+            introVisible, introFading, introProgress, introText, introStep,
+            
             swipeContainer, swipeContentVisual, visualSwipeStyle, bounceClass, // Export for template binding
             appVersion, currentTab, syncState, syncStatusText, lang, t, toggleLang, showToast, notification,
             settings, editingSettings, saveSettings, cancelSettings, headerDateRange, dayList, getDayHeader,
