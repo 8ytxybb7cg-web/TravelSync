@@ -2575,8 +2575,9 @@
     // Patch End
 
     const item = { ...newExpense, id: newExpense.id || generateId(), created_at: Date.now() }; 
-    const idx = expenses.value.findIndex(e => e.id === item.id);
+        const idx = expenses.value.findIndex(e => e.id === item.id);
     if(idx !== -1) expenses.value[idx] = item; else expenses.value.push(item);
+    feedback.success();
     expenseModalOpen.value = false; saveAll();
 }
 
@@ -2645,7 +2646,8 @@ generateId() };
             } else {
                 target.push(item);
             }
-            target.sort((a,b) => (a.time||'').localeCompare(b.time||'')); 
+                        target.sort((a,b) => (a.time||'').localeCompare(b.time||'')); 
+            feedback.success();
             itineraryModalOpen.value = false; saveAll();
             if(selectedMapLocation.value?.id === item.id) showLocationOnMap(item);
         }
