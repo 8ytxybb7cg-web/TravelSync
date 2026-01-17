@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.7</title>
+  <title>Travel Sync v13.8</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -928,7 +928,8 @@
                                   </div>
                              </div>
                              
-                             <a v-if="item.linkURL" :href="item.linkURL" target="_blank" @click.stop class="flex-shrink-0 text-2xl text-gray-400 hover:text-pink-500 transition-colors">
+                                                          
+                      <a v-if="item.linkURL" href="#" @click.prevent.stop="openExternalLink(item.linkURL)" class="flex-shrink-0 text-2xl text-gray-400 hover:text-pink-500 transition-colors">
                                   <i class="ph-fill" :class="getSocialIcon(item.linkURL)"></i>
                            </a>
                         </div>
@@ -1218,8 +1219,9 @@
                     </label>
                     
                     <div class="relative mt-4">
-                        <i class="ph ph-link absolute left-2 top-2.5 text-gray-400"></i>
-                        <input v-model="editingPreNote.linkURL" class="w-full p-2 pl-7 text-xs text-gray-600 bg-gray-50 rounded-lg focus:outline-none focus:bg-white border border-transparent focus:border-blue-200 transition-all" placeholder="URL">
+                                                <i class="ph ph-link absolute left-2 top-2.5 text-gray-400"></i>
+                        <input v-model="newShoppingItem.linkURL" class="w-full p-2 pl-7 text-xs text-gray-600 bg-gray-50 rounded-lg focus:outline-none 
+focus:bg-white border border-transparent focus:border-blue-200 transition-all" placeholder="URL">
                     </div>
                 </div>
             </div>
@@ -1358,7 +1360,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260117-13.7');
+        const appVersion = ref('v260117-13.8');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
                 const isInitialized = ref(false);
@@ -1917,7 +1919,13 @@
             localStorage.setItem('mapApp', app);
         }
 
-                function openMap(addr) {
+                        // FIX: 新增外部連結開啟函式，統一處理開窗行為
+        function openExternalLink(url) {
+            if (!url) return;
+            window.open(url, '_blank');
+        }
+
+        function openMap(addr) {
             if(!addr) return;
             // Patch: Strictly use tempMapApp (Modal Scope), No Fallback
             const app = tempMapApp.value;
@@ -2827,7 +2835,8 @@ generateId() };
             infoModalOpen, newInfoItem, openInfoModal, saveInfoItem, removeInfo,
             imageViewer, isSocialLink, getSocialIcon, formatNumber, expenseCats, getCategoryIcon, openImageViewer,
             selectedMapLocation, showLocationOnMap, mapApp, selectMapApp, tempMapApp, 
-            openMap, addressPlaceholder, jumpToShoppingItem, scrollToTop, jumpToPreNote, goToExpenseList,
+                        selectedMapLocation, showLocationOnMap, mapApp, selectMapApp, tempMapApp, 
+            openMap, openExternalLink, addressPlaceholder, jumpToShoppingItem, scrollToTop, jumpToPreNote, goToExpenseList,
                         isPreTrip, currentTripDayIndex, newPreNoteInput, addPreNoteDirect,
             tempImages, handleMultiFileUpload, removeTempImage, closeImageViewer,
             handleViewerTouchStart, handleViewerTouchMove, handleViewerTouchEnd,
