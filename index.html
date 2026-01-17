@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.5</title>
+  <title>Travel Sync v13.6</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -874,9 +874,15 @@
                      </div>
                  </div>
                  
-                 <div class="w-full flex justify-between items-end pl-6">
-                     <div class="font-bold text-xl text-blue-600"><span class="text-[10px] text-gray-500 mr-1">{{ e.currency }}</span>{{ formatNumber(e.amount) }}</div>
+                                  <div class="w-full flex justify-between items-end pl-6">
+                     <div class="flex flex-col">
+                         <div class="font-bold text-xl text-blue-600"><span class="text-[10px] text-gray-500 mr-1">{{ e.currency }}</span>{{ formatNumber(e.amount) }}</div>
+                         <div v-if="e.exchange_rate_at_save" class="text-[9px] text-gray-400 font-mono mt-0.5 leading-none">
+                            {{ lang === 'zh' ? '匯率' : 'Rate' }} {{ Number(e.exchange_rate_at_save).toLocaleString('en-US', { maximumFractionDigits: 4 }) }}
+                         </div>
+                     </div>
                      <div class="text-right">
+
                          <div class="font-bold text-gray-900">{{ e.name }}</div>
                          <div class="text-[10px] text-gray-400">{{ e.payer }} {{ lang === 'zh' ? '支付' : 'paid' }}</div>
                      </div>
@@ -1352,7 +1358,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260117-13.5');
+        const appVersion = ref('v260117-13.6');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
                 const isInitialized = ref(false);
