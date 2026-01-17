@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.8</title>
+  <title>Travel Sync v13.9</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -659,8 +659,8 @@
 
                 <div class="space-y-3" id="sortable-pre-notes">
                      
-                  <div v-for="(note, i) in preTripNotes" :key="note.id" :data-id="note.id"
-                        @click="editPreNote(note)" 
+                                    <div v-for="(note, i) in preTripNotes" :key="note.id" :data-id="note.id"
+                        @click="openPreNoteModal(note)"  
                         class="relative group cursor-pointer">
                      
                      <div class="bg-white/70 backdrop-blur-xl rounded-2xl 
@@ -1008,8 +1008,8 @@
           </div>
       </div>
 
-      <div v-if="currentTab === '行程'">
-          <button v-if="selectedDay === 'prep'" @click="addPreNote" class="floating-add-btn bg-[#34C759]">
+            <div v-if="currentTab === '行程'">
+          <button v-if="selectedDay === 'prep'" @click="openPreNoteModal()" class="floating-add-btn bg-[#34C759]">
               <i class="ph-bold ph-plus"></i>
           </button>
           <button v-else @click="openItineraryModal(null)" class="floating-add-btn bg-[#007AFF]">
@@ -1246,40 +1246,48 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         </div>
     </div>
 
-        <div v-if="preNoteModalOpen" class="modal-backdrop" @click.self="preNoteModalOpen=false">
-        <div class="ios-modal-container">
+            <div v-if="preNoteModalOpen" class="modal-backdrop" @click.self="preNoteModalOpen=false">
+            <div class="ios-modal-container">
             <div class="ios-modal-header">{{ t('editItem') }}</div>
             <div class="ios-modal-body space-y-4">
                 <input v-model="editingPreNote.name" class="ios-input font-medium" :placeholder="t('taskName')">
-                
                 <div class="border-t border-gray-100 pt-4">
-                                        <label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">{{ t('imgRef') }} ({{ tempImages.length }}/5)</label>
+                    
+                    <label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">{{ t('imgRef') }} ({{ tempImages.length }}/5)</label>
                     
                     <div v-if="tempImages.length > 0" class="grid grid-cols-4 gap-2 mb-3">
-                        <div v-for="(img, idx) in tempImages" :key="idx" class="relative aspect-square rounded-xl overflow-hidden border border-gray-200">
+                     
+   <div v-for="(img, idx) in tempImages" :key="idx" class="relative aspect-square rounded-xl overflow-hidden border border-gray-200">
                             <img :src="img" class="w-full h-full object-cover">
                             <button @click.stop="removeTempImage(idx)" class="absolute top-0.5 right-0.5 bg-black/50 text-white rounded-full p-0.5 hover:bg-red-500 transition">
-                                <i class="ph-bold ph-x text-xs"></i>
+                
+                 <i class="ph-bold ph-x text-xs"></i>
                             </button>
                         </div>
                     </div>
 
-                    <label v-if="tempImages.length < 5" class="flex flex-col items-center justify-center w-full p-4 border border-dashed border-gray-300 rounded-2xl cursor-pointer hover:bg-gray-50 transition">
+         
+            <label v-if="tempImages.length < 5" class="flex flex-col items-center justify-center w-full p-4 border border-dashed border-gray-300 rounded-2xl cursor-pointer hover:bg-gray-50 transition">
                          <div class="text-center">
                             <i class="ph ph-image text-2xl text-gray-300 mb-1"></i>
-                            <div class="text-[#007AFF] text-xs font-medium">{{ t('uploadImg') }}</div>
+              
+               <div class="text-[#007AFF] text-xs font-medium">{{ t('uploadImg') }}</div>
                          </div>
                          <input type="file" accept="image/*" multiple class="hidden" @change="handleMultiFileUpload">
                     </label>
-
+      
+               
                     <div class="relative mt-4">
-                        <i class="ph ph-link absolute left-2 top-2.5 text-gray-400"></i>
-                            <input v-model="editingPreNote.linkURL" class="w-full p-2 pl-7 text-xs text-gray-600 bg-gray-50 rounded-lg focus:outline-none focus:bg-white border border-transparent focus:border-blue-200 transition-all" placeholder="Instagram / Threads URL">
+                                                <i class="ph ph-link absolute left-2 top-2.5 text-gray-400"></i>
+          
+               <input v-model="editingPreNote.linkURL" class="w-full p-2 pl-7 text-xs text-gray-600 bg-gray-50 rounded-lg focus:outline-none 
+focus:bg-white border border-transparent focus:border-blue-200 transition-all" placeholder="Instagram / Threads URL">
                     </div>
                 </div>
             </div>
             <div class="ios-modal-footer">
-                <button v-if="editingPreNote.id" @click="removePreNote(editingPreNote.id); preNoteModalOpen=false" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
+          
+       <button v-if="editingPreNote.id" @click="removePreNote(editingPreNote.id); preNoteModalOpen=false" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
                 <button @click="preNoteModalOpen=false" class="btn-ios-cancel">{{ t('cancel') }}</button>
                 <button @click="savePreNoteEdit" class="btn-ios-primary">{{ t('save') }}</button>
             </div>
@@ -1359,7 +1367,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
 
     createApp({
       setup() {
-        const appVersion = ref('v260117-13.8');
+        const appVersion = ref('v260117-13.9');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
                 const isInitialized = ref(false);
@@ -2369,56 +2377,38 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             if(main) main.scrollTo({top: 0, behavior: 'smooth'});
         }
 
-                function addPreNote() { 
-            editingPreNote.id = null;
-            editingPreNote.name = ''; 
-            editingPreNote.images = [];
-            editingPreNote.imageURL = ''; 
-            editingPreNote.linkURL = '';
-            tempImages.value = []; 
-            uploadQueue.value = [];
-            preNoteModalOpen.value = true;
-        }
-        
-        function addPreNoteDirect() {
-            if(newPreNoteInput.value.trim()) {
-                preTripNotes.value.push({id: generateId(), name: newPreNoteInput.value, isDone: false});
-                newPreNoteInput.value='';
-                saveAll();
-            }
-        }
-        
-        function editPreNote(n) { 
-            Object.assign(editingPreNote, n);
-            if (n.images && Array.isArray(n.images)) {
-                tempImages.value = [...n.images];
-            } else if (n.imageURL) {
-                tempImages.value = [n.imageURL];
+                        function openPreNoteModal(item) {
+            const base = item || {id:null, name:'', isDone:false, imageURL:'', images:[], linkURL:''};
+            Object.assign(editingPreNote, base);
+            
+            if (base.images && Array.isArray(base.images)) {
+                tempImages.value = [...base.images];
+            } else if (base.imageURL) {
+                tempImages.value = [base.imageURL];
             } else {
                 tempImages.value = [];
             }
+            
             uploadQueue.value = [];
             preNoteModalOpen.value = true; 
         }
-        
+
         async function savePreNoteEdit() {
             if(!editingPreNote.name) return;
-            
             const finalImages = await processUploadQueue();
-            
-            const item = { 
+            const itemToSave = { 
                 ...editingPreNote, 
                 images: finalImages,
-                imageURL: finalImages.length > 0 ? finalImages[0] : '',
+                imageURL: finalImages.length > 0 ? finalImages[0] : '', 
                 linkURL: editingPreNote.linkURL || '' 
             };
             
-            if(!item.id) preTripNotes.value.push({ ...item, id: generateId(), isDone: false });
-            else {
-                const idx = preTripNotes.value.findIndex(x=>x.id === item.id);
-                if(idx !== -1) preTripNotes.value[idx] = { ...item };
+            if(!itemToSave.id) preTripNotes.value.push({ ...itemToSave, id: generateId() });
+            else { 
+                const idx = preTripNotes.value.findIndex(x=>x.id===itemToSave.id);
+                if(idx!==-1) preTripNotes.value[idx] = {...itemToSave};
             }
-            preNoteModalOpen.value = false;
+            preNoteModalOpen.value = false; 
             saveAll();
         }
 
@@ -2426,16 +2416,14 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             if(!confirm('Delete this task?')) return;
             const item = preTripNotes.value.find(x => x.id === id);
             const imgs = item.images || (item.imageURL ? [item.imageURL] : []);
-            
             for (const url of imgs) {
-                 if (url && url.includes('/uploads/')) {
+                if (url && url.includes('/uploads/')) {
                     try {
                         const urlPath = url.split('/uploads/')[1];
                         if (urlPath) await supabaseClient.storage.from('uploads').remove([urlPath]);
                     } catch (e) {}
                 }
             }
-            
             preTripNotes.value = preTripNotes.value.filter(x=>x.id!==id);
             saveAll();
         }
@@ -2827,7 +2815,7 @@ generateId() };
             currentFlightView, isFlightMinimized, displayedFlight, openFlightModal, flightModalOpen, newFlight, saveFlight, syncModalToView,
             rateDisplayMode, toggleRateOrder, displayedRate, lastRateUpdateLabel, weather, weatherIconClass,
             selectedDay, selectDay, sortedItinerary, openItineraryModal, itineraryModalOpen, newItineraryItem, saveItineraryItem, removeItineraryItem, quickItinerary, addQuickItinerary,
-                       preNoteModalOpen, editingPreNote, addPreNote, editPreNote, savePreNoteEdit, removePreNote, togglePreNoteDone,
+                                   preNoteModalOpen, editingPreNote, openPreNoteModal, savePreNoteEdit, removePreNote, togglePreNoteDone,
             shoppingModalOpen, newShoppingItem, openShoppingModal, saveShoppingItem, removeShoppingItem,
             expenseModalOpen, newExpense, expenseFilter, filteredExpenses, settlementList, openExpenseModal, handleCalcInput, saveExpense, removeExpense,
             memberModalOpen, members, newMemberName, openMemberModal, addMember, removeMember, toggleParticipant, toggleAllParticipants,
