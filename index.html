@@ -1465,9 +1465,11 @@
             expenses.value.forEach(e => {
                 let amt = parseFloat(e.amount) || 0;
                 let homeAmt = 0;
-                if(e.currency === settings.homeCurrency) homeAmt = amt;
+                                if(e.currency === settings.homeCurrency) homeAmt = amt;
                 else if(e.currency === settings.localCurrency) {
-                    const rate = e.exchange_rate_at_save || (currentLiveRate.value * 0.97);
+             
+                    // 修正：使用統一的 effectiveRate
+                    const rate = e.exchange_rate_at_save || effectiveRate.value;
                     homeAmt = amt / rate;
                 } else if(e.currency === 'USD') homeAmt = amt * 7.8;
                 else if(e.currency === 'JPY') homeAmt = amt * 0.052;
@@ -2017,10 +2019,12 @@
             // 強制依時間排序
             return list.sort((a, b) => (a.time || '23:59').localeCompare(b.time || '23:59'));
         });
-
         
         const currentLiveRate = ref(4.0);
+        // 核心修正：定義全域唯一的「有效匯率」，包含 3% 手續費
+        const effectiveRate = computed(() => currentLiveRate.value * 0.97);
         const lastRateUpdateLabel = ref('--:--');
+
                 // 判斷是否為旅程前 (用於顯示準備清單)
         const isPreTrip = computed(() => {
             if(!settings.startDate) return false;
@@ -2064,9 +2068,10 @@
         }
 
         const displayedRate = computed(() => {
-             let r = currentLiveRate.value;
-             if (rateDisplayMode.value === 1) r = 1 / r;
-             return (r * 0.97).toFixed(5);
+             // 修正：基於 effectiveRate 進行顯示轉換，嚴禁再次套用手續費運算
+             const r = effectiveRate.value;
+             if (rateDisplayMode.value === 1) return (1 / r).toFixed(5);
+             return r.toFixed(5);
         });
 
         const totalExpense = computed(() => {
@@ -2077,9 +2082,12 @@
         if(e.currency === settings.homeCurrency) homeAmt = amt;
         // Patch Start: 使用匯率快照或即時匯率(含3%手續費)
         else if(e.currency === settings.localCurrency) {
-             const rate = e.exchange_rate_at_save || (currentLiveRate.value * 0.97);
-             homeAmt = amt / rate;
+             // 修正：使用統一的 effectiveRate
+             const rate = e.exchange_rate_at_save || effectiveRate.value;
+  
+           homeAmt = amt / rate;
         }
+
         // Patch End
         else if(e.currency === 'USD') homeAmt = amt * 7.8; 
         else if(e.currency === 'JPY') homeAmt = amt * 0.052;
@@ -2095,9 +2103,11 @@
     expenses.value.forEach(e => {
         let amt = parseFloat(e.amount) || 0;
         // Patch Start: 使用匯率快照或即時匯率(含3%手續費)
-        let rate = e.exchange_rate_at_save || (currentLiveRate.value * 0.97);
+        // 修正：使用統一的 effectiveRate
+        let rate = e.exchange_rate_at_save || effectiveRate.value;
         let homeAmt = (e.currency === settings.homeCurrency) ? amt : (amt / rate);
         // Patch End
+
         if(e.paymentMethod === 'credit_card') cardHkd += homeAmt; else cashHkd += homeAmt;
     });
     return {
@@ -2123,7 +2133,9 @@
         if(e.currency === settings.homeCurrency) homeAmt = amt;
         // Patch Start: 使用匯率快照或即時匯率(含3%手續費)
         else if(e.currency === settings.localCurrency) {
-            const rate = e.exchange_rate_at_save || (currentLiveRate.value * 0.97);
+            
+            // 修正：使用統一的 effectiveRate
+            const rate = e.exchange_rate_at_save || effectiveRate.value;
             homeAmt = amt / rate;
         }
         // Patch End
@@ -2503,11 +2515,12 @@
     } catch{}
     if(!newExpense.name) newExpense.name = newExpense.category;
 
-    // Patch Start: 寫入匯率快照 (僅針對當地貨幣)
+        // Patch Start: 寫入匯率快照 (僅針對當地貨幣)
     // 若是新增資料(無快照)或編輯舊資料(無快照)，則寫入當前匯率
     // 若編輯已有快照的資料，則保留原值 (!newExpense.exchange_rate_at_save 判斷)
     if (newExpense.currency === settings.localCurrency && !newExpense.exchange_rate_at_save) {
-        newExpense.exchange_rate_at_save = currentLiveRate.value * 0.97;
+        // 修正：寫入統一的 effectiveRate
+        newExpense.exchange_rate_at_save = effectiveRate.value;
     }
     // Patch End
 
