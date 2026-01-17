@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.4</title>
+  <title>Travel Sync v13.5</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -832,10 +832,13 @@
                  </div>
              </div>
 
-             <div v-show="expenseFilter === 'settlement'" class="relative z-10 flex flex-col items-center justify-center pt-2 pb-1 animate-fade-in" style="min-height: 180px;">
-                <canvas ref="settlementCanvas" width="400" height="400" style="width: 200px; height: 200px;"></canvas>
+                          <div v-show="expenseFilter === 'settlement'" class="relative z-10 flex flex-col items-center justify-center pt-2 pb-1 animate-fade-in" style="min-height: 180px;">
+                <canvas ref="settlementCanvas" width="400" height="400" style="width: 200px; height: 200px;" @click="handleChartClick"></canvas>
+                <div v-if="activeCategory" class="absolute top-2 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full shadow-sm border border-black/5 pointer-events-none transition-all animate-fade-in z-20 flex items-center gap-2">
+                     <div class="w-2 h-2 rounded-full shadow-[0_0_2px_rgba(0,0,0,0.2)]" :style="{background: catColors[activeCategory]}"></div>
+                     <span class="text-xs font-bold text-gray-700">{{ t(activeCategory) }}</span>
+                </div>
              </div>
-
           </div>
        
                     <div id="expense-filters" class="bg-gray-200/50 p-1 rounded-xl flex mb-4 mx-1 scroll-mt-32">
@@ -1349,7 +1352,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260117-13.4');
+        const appVersion = ref('v260117-13.5');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
                 const isInitialized = ref(false);
@@ -1432,12 +1435,15 @@
                 const expenseFilter = ref('all');
         const settlementCanvas = ref(null);
 
-        // --- Doughnut Chart Logic (Native Canvas) ---
+                // --- Doughnut Chart Logic (Native Canvas) ---
         const catColors = {
             '餐飲': '#FF9500', '交通': '#007AFF', '購物': '#FF2D55',
             '住宿': '#5AC8FA', '娛樂': '#FFCC00', '門票': '#AF52DE',
             '服務': '#8E8E93', '其他': '#E5E5EA'
         };
+        
+        const activeCategory = ref(null);
+        let chartSegments = []; // Store angles for hit detection
 
         function drawSettlementChart() {
             const cvs = settlementCanvas.value;
@@ -1445,14 +1451,14 @@
             const ctx = cvs.getContext('2d');
             const w = cvs.width; const h = cvs.height;
             ctx.clearRect(0, 0, w, h);
+            chartSegments = []; // Reset
 
-            // 1. Data Aggregation (Using existing expenses)
+            // 1. Data Aggregation
             const dataMap = {};
             let total = 0;
             expenses.value.forEach(e => {
                 let amt = parseFloat(e.amount) || 0;
                 let homeAmt = 0;
-                // Replicate totalExpense logic strictly
                 if(e.currency === settings.homeCurrency) homeAmt = amt;
                 else if(e.currency === settings.localCurrency) {
                     const rate = e.exchange_rate_at_save || (currentLiveRate.value * 0.97);
@@ -1472,8 +1478,10 @@
             // 3. Draw Doughnut
             const centerX = w / 2;
             const centerY = h / 2;
-            const radius = (w / 2) - 25; // Padding
-            let startAngle = -0.5 * Math.PI; // Start from top
+            const radius = (w / 2) - 25; 
+            const lineWidth = 30;
+            let currentSweep = 0; // 0 to 2PI
+            const baseAngle = -0.5 * Math.PI; // Top
 
             // Empty State
             if (total === 0) {
@@ -1494,43 +1502,97 @@
             // Draw Segments
             sortedCats.forEach(([cat, amt]) => {
                 const sliceAngle = (amt / total) * 2 * Math.PI;
+                const startAngle = baseAngle + currentSweep;
+                const endAngle = startAngle + sliceAngle;
                 const color = catColors[cat] || '#8E8E93';
 
                 ctx.beginPath();
-                ctx.lineWidth = 30; // Thickness
+                ctx.lineWidth = lineWidth;
                 ctx.strokeStyle = color;
-                ctx.lineCap = 'butt'; 
-                // Adjust arc slightly to avoid visual gaps or overlapping artifacts
-                ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+                ctx.lineCap = 'butt';
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
                 ctx.stroke();
+                
+                // Store segment for hit detection (normalize to 0-2PI relative to top)
+                chartSegments.push({
+                    category: cat,
+                    start: currentSweep,
+                    end: currentSweep + sliceAngle
+                });
 
-                startAngle += sliceAngle;
+                currentSweep += sliceAngle;
             });
 
-            // 4. Center Text
-            ctx.fillStyle = 'white';
+            // 4. Center Text (Semantic & Localized)
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             
-            // Total Amount
-            ctx.font = '300 48px -apple-system, sans-serif'; // Light font
-            ctx.fillText(formatNumber(total), centerX, centerY - 5);
+            const isZh = lang.value === 'zh';
+            const topLabel = isZh ? '總支出' : 'Total';
+            const bottomLabel = isZh ? 'HKD' : '(HKD)';
             
-            // Label
+            // Label Top
             ctx.font = '700 13px -apple-system, sans-serif';
-            ctx.fillStyle = 'rgba(255,255,255,0.5)';
-            ctx.fillText('TOTAL (' + settings.homeCurrency + ')', centerX, centerY + 35);
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.fillText(topLabel, centerX, centerY - 32);
+
+            // Amount Middle
+            ctx.font = '300 48px -apple-system, sans-serif';
+            ctx.fillStyle = 'white';
+            ctx.fillText(formatNumber(total), centerX, centerY + 5);
+            
+            // Currency Bottom
+            ctx.font = '700 13px -apple-system, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.fillText(bottomLabel, centerX, centerY + 40);
+        }
+        
+        function handleChartClick(e) {
+            if (!chartSegments.length || !settlementCanvas.value) return;
+            const rect = e.target.getBoundingClientRect();
+            
+            // Scale coords (Canvas is 2x visual size)
+            const scaleX = e.target.width / rect.width; 
+            const scaleY = e.target.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+            
+            const cx = e.target.width / 2;
+            const cy = e.target.height / 2;
+            const dx = x - cx;
+            const dy = y - cy;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            
+            // Ring hit detection (Radius ~175, Width 30 => 160-190). generous: 140-210
+            if (dist < 140 || dist > 210) {
+                activeCategory.value = null;
+                return;
+            }
+            
+            // Calculate Angle
+            let angle = Math.atan2(dy, dx);
+            // Normalize to [0, 2PI) starting from -0.5PI (Top)
+            const base = -0.5 * Math.PI;
+            let clickAngle = angle - base;
+            if (clickAngle < 0) clickAngle += 2 * Math.PI;
+            
+            const found = chartSegments.find(s => clickAngle >= s.start && clickAngle < s.end);
+            
+            if (found) {
+                activeCategory.value = (activeCategory.value === found.category) ? null : found.category;
+            } else {
+                activeCategory.value = null;
+            }
         }
 
-        // Watch for filter change to trigger chart
         watch(expenseFilter, (val) => {
             if (val === 'settlement') {
+                activeCategory.value = null;
                 nextTick(drawSettlementChart);
             }
         });
         
-        // Watch for data changes while in settlement view
-        watch(expenses, () => {
+        watch([expenses, lang], () => {
              if (expenseFilter.value === 'settlement') {
                  nextTick(drawSettlementChart);
              }
@@ -2719,7 +2781,7 @@ generateId() };
                         isPreTrip, currentTripDayIndex, newPreNoteInput, addPreNoteDirect,
             tempImages, handleMultiFileUpload, removeTempImage, closeImageViewer,
             handleViewerTouchStart, handleViewerTouchMove, handleViewerTouchEnd,
-                        dayColors, settlementCanvas,
+                                    dayColors, settlementCanvas, activeCategory, handleChartClick, catColors,
             // Admin Exports
             isAdminLoggedIn, adminLoginOpen, adminEditOpen, adminCreds, attemptAdminLogin, saveActiveTripId, newTripIdInput
         };
