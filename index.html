@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.7</title>
+  <title>Travel Sync v13.6</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1358,65 +1358,10 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260117-13.7');
+        const appVersion = ref('v260117-13.6');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
-                        const isInitialized = ref(false);
-
-        // --- Feedback Manager (Haptic & Sound) ---
-        const feedback = {
-            // iOS UI Sounds (Base64 encoded for lightweight, single-file portability)
-            _s: {
-                // Short, crisp high-pitch tick (System-like)
-                tap: new Audio('data:audio/wav;base64,UklGRi4AAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAEA//8AAP//AAABAAAA//8BAA=='), 
-                // Soft whoosh for swipe
-                swipe: new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASW5mbQAAAA8AAAAEAAAJ2wADCAgMDAwQEBAUFBQYGBgcHBwgICAkJCQoKCgsLCwwMDA0NDQ4ODg8PDxAQEBERERISEhMTExQUFBUVFRYWFhcXFxgYGBkZGRoaGhsbGxwcHB0dHR4eHh8fHyAgICEhISIiIiMjIyQEBA='),
-                // Light chime for success
-                success: new Audio('data:audio/wav;base64,UklGRjQBAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQABAO3/7f/t/+3/7f/t/+3/7f/t/+3/7f/t/+3/7f/t/+3/7f/u//D/8//2//r//P/+//7//v/9//z/+f/2//P/7//s/+r/6f/o/+f/5v/m/+b/5v/m/+b/5v/m/+b/5v/m/+f/6P/q/+z/7//y//b/+f/8//7//v/9//z/+v/4//T/8P/u/+z/6v/o/+f/5f/k/+P/4//j/+P/4//j/+P/4//j/+P/5P/l/+f/6P/r/+3/8P/z//f/+v/9//7//v/9//r/+P/1//H/7//s/+r/6P/n/+X/5P/i/+H/4P/g/+D/4P/g/+D/4P/g/+H/4v/k/+X/5//q/+z/7v/x//T/9//6//z//v/9//v/+f/2//P/8P/t/+v/6f/n/+X/5P/i/+H/4P/f/9//3//f/9//3//f/9//3//g/+H/4v/k/+b/6P/r/+3/8P/z//b/+f/8//3//v/8//r/+P/1//H/7v/s/+r/6P/m/+X/5P/i/+H/4P/g/+D/4P/g/w=='),
-                // Low thud for danger
-                danger: new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAAA////AAAAAA==')
-            },
-            init() {
-                // Unlock AudioContext on first touch for iOS
-                const unlock = () => {
-                    Object.values(this._s).forEach(a => { a.volume = 0.05; a.muted = true; a.play().catch(()=>{}); a.muted = false; });
-                    document.removeEventListener('touchstart', unlock);
-                    document.removeEventListener('click', unlock);
-                };
-                document.addEventListener('touchstart', unlock, {passive: true, once: true});
-                document.addEventListener('click', unlock, {passive: true, once: true});
-            },
-            // A. Tap: Sound Only, No Vibrate
-            tap() { 
-                this._s.tap.volume = 0.15;
-                this._s.tap.currentTime = 0;
-                this._s.tap.play().catch(()=>{});
-            },
-            // B. Swipe: Sound Only, No Vibrate
-            swipe() {
-                this._s.swipe.volume = 0.1;
-                this._s.swipe.currentTime = 0;
-                this._s.swipe.play().catch(()=>{});
-            },
-            // C. Danger: Vibrate + Sound
-            danger() {
-                if(navigator.vibrate) navigator.vibrate(15);
-                this._s.danger.volume = 0.2; 
-                this._s.danger.currentTime = 0; 
-                this._s.danger.play().catch(()=>{});
-            },
-            // D. Success: Sound Only (or very light vibe if preferred, here Sound Only per req)
-            success() {
-                this._s.success.volume = 0.15;
-                this._s.success.currentTime = 0;
-                this._s.success.play().catch(()=>{});
-            },
-            // Drag End: Vibrate Only
-            dragEnd() {
-                if(navigator.vibrate) navigator.vibrate(10);
-            }
-        };
-
+                const isInitialized = ref(false);
         // Intro State
         const introVisible = ref(true);
         const introFading = ref(false);
@@ -1827,9 +1772,8 @@
             
             isSwipeAnimating.value = true; // Enable transition for result animation
 
-                            // Threshold 50px & Horizontal > Vertical
+            // Threshold 50px & Horizontal > Vertical
                         if ((Math.abs(diffX) > 50 || Math.abs(diffX / (Date.now() - startTime)) > 0.5) && Math.abs(diffX) > Math.abs(diffY)) {
-                feedback.swipe(); // Swipe Success Feedback
                 const screenW = window.innerWidth;
                 
                 // Helper to perform visual exit -> update -> visual enter
@@ -2399,10 +2343,7 @@
 
         function openFlightModal() { Object.assign(newFlight, flights[currentFlightView.value]); flightModalOpen.value = true; }
         function syncModalToView() { Object.assign(newFlight, flights[currentFlightView.value]); }
-                function saveFlight() { 
-            feedback.success();
-            Object.assign(flights[currentFlightView.value], newFlight); flightModalOpen.value = false; saveAll();
-        }
+        function saveFlight() { Object.assign(flights[currentFlightView.value], newFlight); flightModalOpen.value = false; saveAll(); }
         
                 function scrollToTop() {
             const main = document.querySelector('main');
@@ -2462,10 +2403,8 @@
             saveAll();
         }
 
-                async function removePreNote(id) { 
-            feedback.danger();
+        async function removePreNote(id) { 
             if(!confirm('Delete this task?')) return;
-            feedback.dragEnd(); // Light confirm vibe
             const item = preTripNotes.value.find(x => x.id === id);
             const imgs = item.images || (item.imageURL ? [item.imageURL] : []);
             
@@ -2519,17 +2458,14 @@
             if(!itemToSave.id) shoppingList.value.push({ ...itemToSave, id: generateId() });
             else { 
                 const idx = shoppingList.value.findIndex(x=>x.id===itemToSave.id); 
-                            if(idx!==-1) shoppingList.value[idx] = {...itemToSave};
+                if(idx!==-1) shoppingList.value[idx] = {...itemToSave};
             }
-            feedback.success();
             shoppingModalOpen.value = false; 
             saveAll();
         }
 
-                async function removeShoppingItem(id) { 
-            feedback.danger();
+        async function removeShoppingItem(id) { 
             if(!confirm('Delete this item?')) return;
-            feedback.dragEnd();
             // Clean up all images
             const item = shoppingList.value.find(x => x.id === id);
             const imgs = item.images || (item.imageURL ? [item.imageURL] : []);
@@ -2576,18 +2512,13 @@
     // Patch End
 
     const item = { ...newExpense, id: newExpense.id || generateId(), created_at: Date.now() }; 
-        const idx = expenses.value.findIndex(e => e.id === item.id);
+    const idx = expenses.value.findIndex(e => e.id === item.id);
     if(idx !== -1) expenses.value[idx] = item; else expenses.value.push(item);
-    feedback.success();
     expenseModalOpen.value = false; saveAll();
 }
 
-                function removeExpense(id) { 
-            feedback.danger();
-            if(!confirm('Delete expense?')) return;
-            feedback.dragEnd();
-            expenses.value = expenses.value.filter(x=>x.id!==id); saveAll(); 
-        }
+        function removeExpense(id) { if(!confirm('Delete expense?')) return; expenses.value = expenses.value.filter(x=>x.id!==id); saveAll(); }
+
         function openMemberModal() { memberModalOpen.value = true; }
         function addMember() { if(newMemberName.value && !members.value.includes(newMemberName.value)) { members.value.push(newMemberName.value); newMemberName.value = ''; saveAll(); } }
         function removeMember(m) { if(confirm('Remove member?')) { members.value = members.value.filter(x => x !== m); saveAll(); } }
@@ -2647,17 +2578,11 @@ generateId() };
             } else {
                 target.push(item);
             }
-                        target.sort((a,b) => (a.time||'').localeCompare(b.time||'')); 
-            feedback.success();
+            target.sort((a,b) => (a.time||'').localeCompare(b.time||'')); 
             itineraryModalOpen.value = false; saveAll();
             if(selectedMapLocation.value?.id === item.id) showLocationOnMap(item);
         }
-                function removeItineraryItem(id) { 
-            feedback.danger();
-            if(!confirm('Delete event?')) return;
-            feedback.dragEnd();
-            itinerary[selectedDay.value] = itinerary[selectedDay.value].filter(x=>x.id!==id); saveAll(); 
-        }
+        function removeItineraryItem(id) { if(!confirm('Delete event?')) return; itinerary[selectedDay.value] = itinerary[selectedDay.value].filter(x=>x.id!==id); saveAll(); }
         function addQuickItinerary() { itinerary[selectedDay.value].push({id: generateId(), time: quickItinerary.time, title: quickItinerary.title, address: '', note: ''}); itinerary[selectedDay.value].sort((a,b)=>(a.time||'').localeCompare(b.time||'')); quickItinerary.title=''; saveAll(); }
                 function selectDay(i) { 
             selectedDay.value = i; 
@@ -2786,13 +2711,11 @@ generateId() };
              } catch {}
         }
 
-                function initSortable(id, list) {
+        function initSortable(id, list) {
             const el = document.getElementById(id);
-            if(el) Sortable.create(el, { handle:'.drag-handle', animation:150, onEnd:(evt)=>{ 
-                feedback.dragEnd(); // Vibrate on drop
-                const item = list.splice(evt.oldIndex, 1)[0]; list.splice(evt.newIndex, 0, item); saveAll(); 
-            }});
+            if(el) Sortable.create(el, { handle:'.drag-handle', animation:150, onEnd:(evt)=>{ const item = list.splice(evt.oldIndex, 1)[0]; list.splice(evt.newIndex, 0, item); saveAll(); }});
         }
+
                                                 function runIntroSequence() {
             // Phase 1: 0% -> 60% (保持第一句文案「收拾行李中」顯示約 800ms)
             setTimeout(() => { introProgress.value = 60; }, 50);
@@ -2829,16 +2752,7 @@ generateId() };
             }, 250);
         }
 
-                onMounted(() => {
-            feedback.init();
-            
-            // Global Tap Feedback Listener (Event Delegation)
-            window.addEventListener('click', (e) => {
-                // Check if target is interactive
-                const el = e.target.closest('button, .ios-card, .day-tab, .action-btn-group, .nav-item, a');
-                if (el) feedback.tap();
-            }, { passive: true });
-
+        onMounted(() => {
             // 1. Start UI Intro Animation immediately
             runIntroSequence();
 
