@@ -2519,8 +2519,9 @@
             if(!itemToSave.id) shoppingList.value.push({ ...itemToSave, id: generateId() });
             else { 
                 const idx = shoppingList.value.findIndex(x=>x.id===itemToSave.id); 
-                if(idx!==-1) shoppingList.value[idx] = {...itemToSave};
+                            if(idx!==-1) shoppingList.value[idx] = {...itemToSave};
             }
+            feedback.success();
             shoppingModalOpen.value = false; 
             saveAll();
         }
