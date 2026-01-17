@@ -1523,28 +1523,59 @@
                 currentSweep += sliceAngle;
             });
 
-            // 4. Center Text (Semantic & Localized)
+                        // 4. Center Text (Semantic & Localized) - Optimized for Readability
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             
             const isZh = lang.value === 'zh';
             const topLabel = isZh ? '總支出' : 'Total';
             const bottomLabel = isZh ? 'HKD' : '(HKD)';
-            
-            // Label Top
-            ctx.font = '700 13px -apple-system, sans-serif';
-            ctx.fillStyle = 'rgba(255,255,255,0.6)';
-            ctx.fillText(topLabel, centerX, centerY - 32);
+            const amountStr = formatNumber(total);
 
-            // Amount Middle
-            ctx.font = '300 48px -apple-system, sans-serif';
+            // Dynamic Font Scaling
+            // Calculate available width inside the doughnut
+            // Canvas is 400px wide but displayed at 200px.
+            // We target ~13px screen size for labels (26px canvas)
+            // and ~32px screen size for numbers (64px canvas).
+            const innerDiameter = (radius - lineWidth/2) * 2;
+            const maxTextWidth = innerDiameter * 0.85; // 85% safety margin to avoid edge touching
+
+            // Helper: Find max font size that fits width
+            const getFitFontSize = (text, startSize, minSize, fontWeight) => {
+                ctx.font = `${fontWeight} ${startSize}px -apple-system, sans-serif`;
+                let width = ctx.measureText(text).width;
+                let size = startSize;
+                while (width > maxTextWidth && size > minSize) {
+                    size -= 2;
+                    ctx.font = `${fontWeight} ${size}px -apple-system, sans-serif`;
+                    width = ctx.measureText(text).width;
+                }
+                return size;
+            };
+
+            // 1. Calculate Amount Size (Primary)
+            // Start large (64px) for visibility, scale down if number is long
+            const amountFontSize = getFitFontSize(amountStr, 64, 36, 300);
+
+            // 2. Calculate Label Size (Secondary)
+            // Fixed legible size (26px), scale down only if extremely constrained
+            const labelFontSize = getFitFontSize(topLabel, 26, 20, 700);
+
+            // Draw Top Label
+            ctx.font = `700 ${labelFontSize}px -apple-system, sans-serif`;
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            // Dynamic offset based on amount size to keep grouping tight
+            ctx.fillText(topLabel, centerX, centerY - (amountFontSize * 0.65));
+
+            // Draw Amount
+            ctx.font = `300 ${amountFontSize}px -apple-system, sans-serif`;
             ctx.fillStyle = 'white';
-            ctx.fillText(formatNumber(total), centerX, centerY + 5);
+            ctx.fillText(amountStr, centerX, centerY + (amountFontSize * 0.05));
             
-            // Currency Bottom
-            ctx.font = '700 13px -apple-system, sans-serif';
+            // Draw Currency
+            ctx.font = `700 ${labelFontSize}px -apple-system, sans-serif`;
             ctx.fillStyle = 'rgba(255,255,255,0.4)';
-            ctx.fillText(bottomLabel, centerX, centerY + 40);
+            ctx.fillText(bottomLabel, centerX, centerY + (amountFontSize * 0.75));
         }
         
         function handleChartClick(e) {
