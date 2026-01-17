@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.3</title>
+  <title>Travel Sync v13.4</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -810,25 +810,32 @@
              <button @click="openMemberModal" class="absolute top-4 left-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-all z-20"><i class="ph-bold ph-gear text-lg"></i></button>
              <button @click="openExpenseModal(null)" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-all z-20"><i class="ph-bold ph-plus text-lg"></i></button>
 
-             <div class="relative z-10 flex flex-col items-center justify-center mt-2">
-                 <div class="text-white/60 text-[11px] font-bold tracking-widest uppercase mb-1">{{ t('totalExpense') }} ({{ settings.homeCurrency }})</div>
-                 <div class="text-4xl font-light tracking-tight text-white flex items-baseline">
-                    <span class="text-2xl opacity-60 mr-1">$</span>{{ formatNumber(totalExpense.hkd) }}
+                          <div v-show="expenseFilter !== 'settlement'">
+                 <div class="relative z-10 flex flex-col items-center justify-center mt-2">
+                     <div class="text-white/60 text-[11px] font-bold tracking-widest uppercase mb-1">{{ t('totalExpense') }} ({{ settings.homeCurrency }})</div>
+                     <div class="text-4xl font-light tracking-tight text-white flex items-baseline">
+                        <span class="text-2xl opacity-60 mr-1">$</span>{{ formatNumber(totalExpense.hkd) }}
+                     </div>
+                     <div class="text-white/40 text-xs font-medium mt-1">≈ {{ settings.localCurrency }} {{ formatNumber(totalExpense.twd) }}</div>
                  </div>
-                 <div class="text-white/40 text-xs font-medium mt-1">≈ {{ settings.localCurrency }} {{ formatNumber(totalExpense.twd) }}</div>
+                 <div class="grid grid-cols-2 gap-4 mt-6 relative z-10">
+                    <div class="bg-white/5 rounded-2xl p-3 backdrop-blur-sm border border-white/5 flex flex-col items-center justify-center text-center">
+                         <div class="text-white/50 text-[10px] uppercase tracking-wider mb-1"><i class="ph-fill ph-credit-card mr-1"></i>{{ t('creditCard') }}</div>
+                         <div class="text-lg font-bold text-white mb-0.5">${{ formatNumber(expensesBreakdown.card.hkd) }}</div>
+                         <div class="text-[9px] text-white/40">≈ {{ settings.localCurrency }} {{ formatNumber(expensesBreakdown.card.twd) }}</div>
+                    </div>
+                    <div class="bg-white/5 rounded-2xl p-3 backdrop-blur-sm border border-white/5 flex flex-col items-center justify-center text-center">
+                        <div class="text-white/50 text-[10px] uppercase tracking-wider mb-1"><i class="ph-fill ph-coins mr-1"></i>{{ t('cash') }}</div>
+                        <div class="text-lg font-bold text-white mb-0.5">${{ formatNumber(expensesBreakdown.cash.hkd) }}</div>
+                        <div class="text-[9px] text-white/40">≈ {{ settings.localCurrency }} {{ formatNumber(expensesBreakdown.cash.twd) }}</div>
+                    </div>
+                 </div>
              </div>
-             <div class="grid grid-cols-2 gap-4 mt-6 relative z-10">
-                <div class="bg-white/5 rounded-2xl p-3 backdrop-blur-sm border border-white/5 flex flex-col items-center justify-center text-center">
-                     <div class="text-white/50 text-[10px] uppercase tracking-wider mb-1"><i class="ph-fill ph-credit-card mr-1"></i>{{ t('creditCard') }}</div>
-                     <div class="text-lg font-bold text-white mb-0.5">${{ formatNumber(expensesBreakdown.card.hkd) }}</div>
-                     <div class="text-[9px] text-white/40">≈ {{ settings.localCurrency }} {{ formatNumber(expensesBreakdown.card.twd) }}</div>
-                </div>
-                <div class="bg-white/5 rounded-2xl p-3 backdrop-blur-sm border border-white/5 flex flex-col items-center justify-center text-center">
-                    <div class="text-white/50 text-[10px] uppercase tracking-wider mb-1"><i class="ph-fill ph-coins mr-1"></i>{{ t('cash') }}</div>
-                    <div class="text-lg font-bold text-white mb-0.5">${{ formatNumber(expensesBreakdown.cash.hkd) }}</div>
-                    <div class="text-[9px] text-white/40">≈ {{ settings.localCurrency }} {{ formatNumber(expensesBreakdown.cash.twd) }}</div>
-                </div>
+
+             <div v-show="expenseFilter === 'settlement'" class="relative z-10 flex flex-col items-center justify-center pt-2 pb-1 animate-fade-in" style="min-height: 180px;">
+                <canvas ref="settlementCanvas" width="400" height="400" style="width: 200px; height: 200px;"></canvas>
              </div>
+
           </div>
        
                     <div id="expense-filters" class="bg-gray-200/50 p-1 rounded-xl flex mb-4 mx-1 scroll-mt-32">
@@ -1342,7 +1349,7 @@
 
     createApp({
       setup() {
-        const appVersion = ref('v260113-13.3');
+        const appVersion = ref('v260117-13.4');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
                 const isInitialized = ref(false);
@@ -1422,7 +1429,113 @@
         const selectedMapLocation = ref(null);
         const tempMapApp = ref(null);
 
-        const expenseFilter = ref('all');
+                const expenseFilter = ref('all');
+        const settlementCanvas = ref(null);
+
+        // --- Doughnut Chart Logic (Native Canvas) ---
+        const catColors = {
+            '餐飲': '#FF9500', '交通': '#007AFF', '購物': '#FF2D55',
+            '住宿': '#5AC8FA', '娛樂': '#FFCC00', '門票': '#AF52DE',
+            '服務': '#8E8E93', '其他': '#E5E5EA'
+        };
+
+        function drawSettlementChart() {
+            const cvs = settlementCanvas.value;
+            if (!cvs) return;
+            const ctx = cvs.getContext('2d');
+            const w = cvs.width; const h = cvs.height;
+            ctx.clearRect(0, 0, w, h);
+
+            // 1. Data Aggregation (Using existing expenses)
+            const dataMap = {};
+            let total = 0;
+            expenses.value.forEach(e => {
+                let amt = parseFloat(e.amount) || 0;
+                let homeAmt = 0;
+                // Replicate totalExpense logic strictly
+                if(e.currency === settings.homeCurrency) homeAmt = amt;
+                else if(e.currency === settings.localCurrency) {
+                    const rate = e.exchange_rate_at_save || (currentLiveRate.value * 0.97);
+                    homeAmt = amt / rate;
+                } else if(e.currency === 'USD') homeAmt = amt * 7.8;
+                else if(e.currency === 'JPY') homeAmt = amt * 0.052;
+                else homeAmt = amt;
+
+                if (!dataMap[e.category]) dataMap[e.category] = 0;
+                dataMap[e.category] += homeAmt;
+                total += homeAmt;
+            });
+
+            // 2. Sort Data (Desc)
+            const sortedCats = Object.entries(dataMap).sort((a, b) => b[1] - a[1]);
+
+            // 3. Draw Doughnut
+            const centerX = w / 2;
+            const centerY = h / 2;
+            const radius = (w / 2) - 25; // Padding
+            let startAngle = -0.5 * Math.PI; // Start from top
+
+            // Empty State
+            if (total === 0) {
+                ctx.beginPath();
+                ctx.lineWidth = 25;
+                ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                ctx.stroke();
+                
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = 'bold 24px -apple-system, sans-serif';
+                ctx.fillText('No Data', centerX, centerY);
+                return;
+            }
+
+            // Draw Segments
+            sortedCats.forEach(([cat, amt]) => {
+                const sliceAngle = (amt / total) * 2 * Math.PI;
+                const color = catColors[cat] || '#8E8E93';
+
+                ctx.beginPath();
+                ctx.lineWidth = 30; // Thickness
+                ctx.strokeStyle = color;
+                ctx.lineCap = 'butt'; 
+                // Adjust arc slightly to avoid visual gaps or overlapping artifacts
+                ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+                ctx.stroke();
+
+                startAngle += sliceAngle;
+            });
+
+            // 4. Center Text
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Total Amount
+            ctx.font = '300 48px -apple-system, sans-serif'; // Light font
+            ctx.fillText(formatNumber(total), centerX, centerY - 5);
+            
+            // Label
+            ctx.font = '700 13px -apple-system, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.fillText('TOTAL (' + settings.homeCurrency + ')', centerX, centerY + 35);
+        }
+
+        // Watch for filter change to trigger chart
+        watch(expenseFilter, (val) => {
+            if (val === 'settlement') {
+                nextTick(drawSettlementChart);
+            }
+        });
+        
+        // Watch for data changes while in settlement view
+        watch(expenses, () => {
+             if (expenseFilter.value === 'settlement') {
+                 nextTick(drawSettlementChart);
+             }
+        }, { deep: true });
+
                 const selectedDay = ref(0);
         
                 // --- Photo Viewer Logic ---
@@ -2606,7 +2719,7 @@ generateId() };
                         isPreTrip, currentTripDayIndex, newPreNoteInput, addPreNoteDirect,
             tempImages, handleMultiFileUpload, removeTempImage, closeImageViewer,
             handleViewerTouchStart, handleViewerTouchMove, handleViewerTouchEnd,
-            dayColors,
+                        dayColors, settlementCanvas,
             // Admin Exports
             isAdminLoggedIn, adminLoginOpen, adminEditOpen, adminCreds, attemptAdminLogin, saveActiveTripId, newTripIdInput
         };
