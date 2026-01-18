@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.92</title>
+  <title>Travel Sync v13.93</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1357,25 +1357,37 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
 
   </div>
 </body>
-
 <script>
     const { createApp, ref, reactive, computed, onMounted, nextTick, watch } = Vue;
-        const SUPABASE_URL = 'https://myrhatzdypiwwgmmfbuw.supabase.co';
+
+    // Supabase Config
+    const SUPABASE_URL = 'https://myrhatzdypiwwgmmfbuw.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_bnnah-2fsCaQnKZDoKNJQw_NuYQVvKi';
-    // const TRIP_ID = 'seoul2026'; // REMOVED
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     createApp({
       setup() {
-        const appVersion = ref('v260117-13.92');
+        // --- 1. App State & Core Config ---
+        const appVersion = ref('v260118-13.93');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
-                const isInitialized = ref(false);
-        // Intro State
+        const isInitialized = ref(false);
+        const notification = ref(null);
+        const lang = ref(localStorage.getItem('app_lang') || 'zh');
+        
+        // Admin State
+        const tripId = ref(null);
+        const isAdminLoggedIn = ref(false);
+        const adminLoginOpen = ref(false);
+        const adminEditOpen = ref(false);
+        const adminCreds = reactive({ u: '', p: '' });
+        const newTripIdInput = ref('');
+
+        // Intro Loading State
         const introVisible = ref(true);
         const introFading = ref(false);
-        const introProgress = ref(0); // 0-100
-        const introAppReady = ref(false); // Signal from App logic
+        const introProgress = ref(0);
+        const introAppReady = ref(false);
         const introStep = computed(() => {
             if (introProgress.value < 75) return 0;
             if (introProgress.value < 90) return 1;
@@ -1387,27 +1399,13 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             return '準備出發～就快得啦';
         });
 
-                const lang = ref(localStorage.getItem('app_lang') || 'zh');
-        const rateDisplayMode = ref(Number(localStorage.getItem('rate_mode') || 0));
-        const notification = ref(null);
-
-        // Trip ID & Admin State
-        const tripId = ref(null);
-        const isAdminLoggedIn = ref(false);
-        const adminLoginOpen = ref(false);
-        const adminEditOpen = ref(false);
-        const adminCreds = reactive({ u: '', p: '' });
-        const newTripIdInput = ref('');
-
-        // Core Data
-                        const settings = reactive({
+        // --- 2. Data Models ---
+        const settings = reactive({
             route: 'HKG ✈️ KIX', startDate: '2026-03-22', endDate: '2026-03-27',
             localCurrency: 'TWD', homeCurrency: 'HKD', weatherLoc: '台北', weatherLocEn: 'Taipei',
             showInfoCard: true
         });
-
         const editingSettings = reactive({});
-
         const itinerary = reactive([[], [], [], [], [], []]);
         const preTripNotes = ref([]);
         const shoppingList = ref([]);
@@ -1415,16 +1413,33 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         const infoList = ref([]);
         const members = ref(['Me', 'Partner']);
         
-                // Flights
+        // Flights Data
         const currentFlightView = ref('outbound');
-        const isFlightMinimized = ref(false); // New state
+        const isFlightMinimized = ref(false);
         const flights = reactive({
             outbound: { id:'outbound', code:'CX400', title:'Cathay Pacific', fromCode:'HKG', fromTerminal:'1', toCode:'TPE', toTerminal:'1', depTime:'13:00', arrTime:'14:50', status:'Scheduled', gate:'24', liveLink:'' },
             return: { id:'return', code:'CX401', title:'Cathay Pacific', fromCode:'TPE', fromTerminal:'1', toCode:'HKG', toTerminal:'1', depTime:'16:00', arrTime:'17:50', status:'Scheduled', gate:'--', liveLink:'' }
         });
         const displayedFlight = computed(() => flights[currentFlightView.value]);
 
-        // Modals
+        // Rate & Weather Data
+        const rateDisplayMode = ref(Number(localStorage.getItem('rate_mode') || 0));
+        const currentLiveRate = ref(4.0);
+        const lastRateUpdateLabel = ref('--:--');
+        // Effective Rate: Live Rate with 3% Fee adjustment
+        const effectiveRate = computed(() => currentLiveRate.value * 0.97);
+        const weather = reactive({ temp: '--', min: '--', max: '--', code: 0, feelsLike: '--', humidity: '--', uv: '--', rain: 0, warning: null });
+
+        // --- 3. UI Helper Constants ---
+        const expenseCats = [
+            {name: '門票', icon: 'ph-ticket'}, {name: '交通', icon: 'ph-train'},
+            {name: '購物', icon: 'ph-shopping-bag'}, {name: '餐飲', icon: 'ph-fork-knife'},
+            {name: '娛樂', icon: 'ph-confetti'}, {name: '住宿', icon: 'ph-bed'},
+            {name: '服務', icon: 'ph-hand-coins'}, {name: '其他', icon: 'ph-dots-three-circle'}
+        ];
+        const dayColors = ['border-purple-500', 'border-[#007AFF]', 'border-pink-500', 'border-orange-500', 'border-yellow-500', 'border-teal-500', 'border-slate-500', 'border-gray-400'];
+
+        // --- 4. Modals State ---
         const flightModalOpen = ref(false); const newFlight = reactive({});
         const preNoteModalOpen = ref(false); const editingPreNote = reactive({});
         const shoppingModalOpen = ref(false); const newShoppingItem = reactive({});
@@ -1432,228 +1447,279 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         const itineraryModalOpen = ref(false); const newItineraryItem = reactive({});
         const memberModalOpen = ref(false); const newMemberName = ref('');
         const infoModalOpen = ref(false); const newInfoItem = reactive({});
-                const imageViewer = reactive({ 
-            open: false, 
-            list: [], 
-            index: 0,
-            touch: { startX: 0, startY: 0, diffX: 0, diffY: 0, dragging: false }
-        });
         
-        // Multi-image upload state
-        const tempImages = ref([]); // For display
-        const uploadQueue = ref([]); // { file: File, blob: String }
+        // --- 5. Logic: Helper Functions ---
+        const generateId = () => Date.now() + Math.random().toString(36).substr(2, 5);
+        const formatNumber = (n) => Number(n).toLocaleString('en-US', {maximumFractionDigits: 1});
+        const showToast = (msg) => { notification.value = msg; setTimeout(()=>notification.value=null, 3000); };
+        const scrollToTop = () => { const main = document.querySelector('main'); if(main) main.scrollTo({top: 0, behavior: 'smooth'}); };
 
-        // Moved up for Swipe Logic access
-        const selectedMapLocation = ref(null);
-        const tempMapApp = ref(null);
-
-                const expenseFilter = ref('all');
-        const settlementCanvas = ref(null);
-
-                // --- Doughnut Chart Logic (Native Canvas) ---
-        const catColors = {
-            '餐飲': '#FF9500', '交通': '#007AFF', '購物': '#FF2D55',
-            '住宿': '#5AC8FA', '娛樂': '#FFCC00', '門票': '#AF52DE',
-            '服務': '#8E8E93', '其他': '#E5E5EA'
+        // Unified Currency Calculation Helper
+        // Calculates the amount in Home Currency (HKD)
+        const calculateHomeAmount = (expense) => {
+            const amt = parseFloat(expense.amount) || 0;
+            if (expense.currency === settings.homeCurrency) return amt;
+            
+            if (expense.currency === settings.localCurrency) {
+                // Use historical rate if saved, otherwise live effective rate
+                const rate = expense.exchange_rate_at_save || effectiveRate.value;
+                return amt / rate;
+            }
+            
+            if (expense.currency === 'USD') return amt * 7.8;
+            if (expense.currency === 'JPY') return amt * 0.052;
+            
+            return amt; // Fallback
         };
-        
-        const activeCategory = ref(null);
-        let chartSegments = []; // Store angles for hit detection
 
-        function drawSettlementChart() {
-            const cvs = settlementCanvas.value;
-            if (!cvs) return;
-            const ctx = cvs.getContext('2d');
-            const w = cvs.width; const h = cvs.height;
-            ctx.clearRect(0, 0, w, h);
-            chartSegments = []; // Reset
-
-            // 1. Data Aggregation
-            const dataMap = {};
-            let total = 0;
-            expenses.value.forEach(e => {
-                let amt = parseFloat(e.amount) || 0;
-                let homeAmt = 0;
-                                if(e.currency === settings.homeCurrency) homeAmt = amt;
-                else if(e.currency === settings.localCurrency) {
-             
-                    // 修正：使用統一的 effectiveRate
-                    const rate = e.exchange_rate_at_save || effectiveRate.value;
-                    homeAmt = amt / rate;
-                } else if(e.currency === 'USD') homeAmt = amt * 7.8;
-                else if(e.currency === 'JPY') homeAmt = amt * 0.052;
-                else homeAmt = amt;
-
-                if (!dataMap[e.category]) dataMap[e.category] = 0;
-                dataMap[e.category] += homeAmt;
-                total += homeAmt;
-            });
-
-            // 2. Sort Data (Desc)
-            const sortedCats = Object.entries(dataMap).sort((a, b) => b[1] - a[1]);
-
-            // 3. Draw Doughnut
-            const centerX = w / 2;
-            const centerY = h / 2;
-            const radius = (w / 2) - 25; 
-            const lineWidth = 30;
-            let currentSweep = 0; // 0 to 2PI
-            const baseAngle = -0.5 * Math.PI; // Top
-
-            // Empty State
-            if (total === 0) {
-                ctx.beginPath();
-                ctx.lineWidth = 25;
-                ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-                ctx.stroke();
-                
-                ctx.fillStyle = 'rgba(255,255,255,0.3)';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.font = 'bold 24px -apple-system, sans-serif';
-                ctx.fillText('No Data', centerX, centerY);
-                return;
-            }
-
-            // Draw Segments
-            sortedCats.forEach(([cat, amt]) => {
-                const sliceAngle = (amt / total) * 2 * Math.PI;
-                const startAngle = baseAngle + currentSweep;
-                const endAngle = startAngle + sliceAngle;
-                const color = catColors[cat] || '#8E8E93';
-
-                ctx.beginPath();
-                ctx.lineWidth = lineWidth;
-                ctx.strokeStyle = color;
-                ctx.lineCap = 'butt';
-                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
-                ctx.stroke();
-                
-                // Store segment for hit detection (normalize to 0-2PI relative to top)
-                chartSegments.push({
-                    category: cat,
-                    start: currentSweep,
-                    end: currentSweep + sliceAngle
-                });
-
-                currentSweep += sliceAngle;
-            });
-
-                        // 4. Center Text (Semantic & Localized) - Optimized for Readability
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            const isZh = lang.value === 'zh';
-            const topLabel = isZh ? '總支出' : 'Total';
-            const bottomLabel = isZh ? 'HKD' : '(HKD)';
-            const amountStr = formatNumber(total);
-
-            // Dynamic Font Scaling
-            // Calculate available width inside the doughnut
-            // Canvas is 400px wide but displayed at 200px.
-            // We target ~13px screen size for labels (26px canvas)
-            // and ~32px screen size for numbers (64px canvas).
-            const innerDiameter = (radius - lineWidth/2) * 2;
-            const maxTextWidth = innerDiameter * 0.85; // 85% safety margin to avoid edge touching
-
-            // Helper: Find max font size that fits width
-            const getFitFontSize = (text, startSize, minSize, fontWeight) => {
-                ctx.font = `${fontWeight} ${startSize}px -apple-system, sans-serif`;
-                let width = ctx.measureText(text).width;
-                let size = startSize;
-                while (width > maxTextWidth && size > minSize) {
-                    size -= 2;
-                    ctx.font = `${fontWeight} ${size}px -apple-system, sans-serif`;
-                    width = ctx.measureText(text).width;
-                }
-                return size;
+        // Translation Dictionary
+        const t = (k) => {
+            const dict = {
+                'cancel': { zh: '取消', en: 'Cancel' }, 'save': { zh: '儲存', en: 'Save' }, 'delete': { zh: '刪除', en: 'Delete' }, 'done': { zh: '完成', en: 'Done' },
+                'show': { zh: '顯示', en: 'Show' }, 'hide': { zh: '隱藏', en: 'Hide' }, 'homeDataCard': { zh: '首頁資訊卡片', en: 'Home Info Card' },
+                'prepListHeader': { zh: '準備清單', en: 'Preparation List' }, 'quickAddPlaceholder': { zh: '快速新增項目...', en: 'Quick add item...' },
+                'add': { zh: '新增', en: 'Add' }, 'title': { zh: '標題', en: 'Title' }, 'notes': { zh: '備註', en: 'Notes' }, 'details': { zh: '詳細內容...', en: 'Details...' },
+                'editItem': { zh: '編輯項目', en: 'Edit Item' }, 'tripRoute': { zh: '旅程路線', en: 'Trip Route' },
+                'outbound': { zh: '去程', en: 'Outbound' }, 'return': { zh: '回程', en: 'Return' }, 'gate': { zh: '閘口', en: 'GATE' }, 'terminal': { zh: ' ', en: ' ' },
+                'estDep': { zh: '預計起飛', en: 'Est. Dep' }, 'estArr': { zh: '預計抵達', en: 'Est. Arr' }, 'economy': { zh: '經濟艙', en: 'Economy' },
+                'rate': { zh: '即時匯率', en: 'Live Rate' }, 'feeIncluded': { zh: '含3%手續費', en: '3% Fee Incl.' },
+                'itinerary': { zh: '行程', en: 'Itinerary' }, 'viewAll': { zh: '查看全部', en: 'View All' },
+                'prepList': { zh: '準備清單', en: 'Preparation' }, 'shopping': { zh: '購物清單', en: 'Shopping' },
+                'totalExpense': { zh: '總支出', en: 'Total Expense' }, 'creditCard': { zh: '信用卡', en: 'Credit Card' }, 'cash': { zh: '現金', en: 'Cash' },
+                'info': { zh: '資訊', en: 'Info' }, 'noInfo': { zh: '暫無資訊', en: 'No info yet' }, 'noItems': { zh: '無項目', en: 'No items' },
+                'feelsLike': { zh: '體感', en: 'Feels' }, 'humidity': { zh: '濕度', en: 'Hum' }, 'rain': { zh: '降雨', en: 'Rain' },
+                'Scheduled': { zh: '預定', en: 'Scheduled' }, 'On Time': { zh: '準時', en: 'On Time' }, 'Delayed': { zh: '延誤', en: 'Delayed' },
+                'Boarding': { zh: '登機中', en: 'Boarding' }, 'Landed': { zh: '已抵達', en: 'Landed' },
+                'editFlight': { zh: '編輯航班', en: 'Edit Flight' }, 'flightCode': { zh: '航班編號 (e.g. CX400)', en: 'Flight Code' },
+                'airline': { zh: '航空公司', en: 'Airline Name' }, 'depTerm': { zh: '出發客運大樓', en: 'Dep Term' },
+                'arrTerm': { zh: '抵達客運大樓', en: 'Arr Term' }, 'trackingUrl': { zh: '追蹤連結', en: 'Tracking URL' },
+                'liveStatus': { zh: '航班實況', en: 'Live Status' },
+                'filter_all': { zh: '全部', en: 'All' }, 'filter_credit': { zh: '信用卡', en: 'Card' }, 'filter_cash': { zh: '現金', en: 'Cash' }, 'filter_settlement': { zh: '結算', en: 'Settle' },
+                'shouldPay': { zh: '需支付', en: 'Should Pay' }, 'shouldReceive': { zh: '需收取', en: 'Should Receive' }, 'noSettlement': { zh: '無需結算', en: 'All settled' },
+                'payer': { zh: '付款人', en: 'Payer' }, 'all': { zh: '全員', en: 'All' }, 'desc': { zh: '描述', en: 'Description' },
+                '門票': { zh: '門票', en: 'Tickets' }, '交通': { zh: '交通', en: 'Transport' }, '購物': { zh: '購物', en: 'Shopping' }, '餐飲': { zh: '餐飲', en: 'Food' },
+                '娛樂': { zh: '娛樂', en: 'Fun' }, '住宿': { zh: '住宿', en: 'Hotel' }, '服務': { zh: '服務', en: 'Service' }, '其他': { zh: '其他', en: 'Others' },
+                'shoppingItem': { zh: '購物項目', en: 'Shopping Item' }, 'itemName': { zh: '物品名稱', en: 'Item Name' },
+                'imgRef': { zh: '參考圖片', en: 'Image Reference' }, 'uploadImg': { zh: '上傳圖片', en: 'Upload Image' },
+                'imgSelected': { zh: '已選取圖片', en: 'Image Selected' }, 'changeImg': { zh: '更換圖片', en: 'Change Image' },
+                'pasteUrl': { zh: '或貼上圖片網址', en: 'Or paste URL here' }, 'taskName': { zh: '任務名稱', en: 'Task Name' },
+                'editInfo': { zh: '編輯資訊', en: 'Edit Info' }, 'manageMembers': { zh: '管理成員', en: 'Manage Members' }, 'newName': { zh: '新成員', en: 'New Member' },
+                'editEvent': { zh: '編輯行程', en: 'Edit Event' }, 'mapAddr': { zh: 'Google Map 地址', en: 'Google Map Address' },
+                '首頁': { zh: '首頁', en: 'Home' }, '行程': { zh: '行程', en: 'Itinerary' }, '記帳': { zh: '記帳', en: 'Expenses' }, '設定': { zh: '設定', en: 'Settings' },
+                'settings': { zh: '設定', en: 'Settings' }, 'routeHeader': { zh: '路線標題', en: 'Route Header' },
+                'startDate': { zh: '開始日期', en: 'Start Date' }, 'endDate': { zh: '結束日期', en: 'End Date' },
+                'localCurr': { zh: '當地貨幣', en: 'Local Currency' }, 'homeCurr': { zh: '本國貨幣', en: 'Home Currency' },
+                'weatherLoc': { zh: '天氣地點', en: 'Weather Location' }, 'openMaps': { zh: '打開地圖', en: 'Open Maps' }, 'navigate': { zh: '導航', en: 'Navigate' },
+                'mapApp': { zh: '地圖 App', en: 'Map App' }, 'map_name_Google': { zh: 'Google', en: 'Google' }, 'map_name_Apple': { zh: 'Apple', en: 'Apple' },
+                'map_name_NAVER': { zh: 'NAVER', en: 'NAVER' }, 'map_name_Amap': { zh: '高德', en: 'A-map' }
             };
+            return dict[k]?.[lang.value] || k;
+        };
 
-            // 1. Calculate Amount Size (Primary)
-            // Start large (64px) for visibility, scale down if number is long
-            const amountFontSize = getFitFontSize(amountStr, 64, 36, 300);
+        const toggleLang = () => { lang.value = lang.value === 'zh' ? 'en' : 'zh'; localStorage.setItem('app_lang', lang.value); };
+        const toggleRateOrder = () => { rateDisplayMode.value = rateDisplayMode.value === 0 ? 1 : 0; localStorage.setItem('rate_mode', rateDisplayMode.value); };
+        const isSocialLink = (url) => url && (url.includes('instagram.com') || url.includes('ig.me') || url.includes('threads') || url.includes('threads.net'));
+        const getSocialIcon = (url) => url && url.includes('threads') ? 'ph-threads-logo' : 'ph-instagram-logo';
+        const getCategoryIcon = (c) => { const f = expenseCats.find(x=>x.name===c); return f ? f.icon : 'ph-star'; };
 
-            // 2. Calculate Label Size (Secondary)
-            // Fixed legible size (26px), scale down only if extremely constrained
-            const labelFontSize = getFitFontSize(topLabel, 26, 20, 700);
-
-            // Draw Top Label
-            ctx.font = `700 ${labelFontSize}px -apple-system, sans-serif`;
-            ctx.fillStyle = 'rgba(255,255,255,0.6)';
-            // Dynamic offset based on amount size to keep grouping tight
-            ctx.fillText(topLabel, centerX, centerY - (amountFontSize * 0.65));
-
-            // Draw Amount
-            ctx.font = `300 ${amountFontSize}px -apple-system, sans-serif`;
-            ctx.fillStyle = 'white';
-            ctx.fillText(amountStr, centerX, centerY + (amountFontSize * 0.05));
-            
-            // Draw Currency
-            ctx.font = `700 ${labelFontSize}px -apple-system, sans-serif`;
-            ctx.fillStyle = 'rgba(255,255,255,0.4)';
-            ctx.fillText(bottomLabel, centerX, centerY + (amountFontSize * 0.75));
-        }
+        // --- 6. Computed Logic ---
+        const syncStatusText = computed(() => ({ 'synced': '已同步', 'saving': '儲存中...', 'loading': '載入中...', 'error': '錯誤' }[syncState.value] || ''));
         
-        function handleChartClick(e) {
-            if (!chartSegments.length || !settlementCanvas.value) return;
-            const rect = e.target.getBoundingClientRect();
-            
-            // Scale coords (Canvas is 2x visual size)
-            const scaleX = e.target.width / rect.width; 
-            const scaleY = e.target.height / rect.height;
-            const x = (e.clientX - rect.left) * scaleX;
-            const y = (e.clientY - rect.top) * scaleY;
-            
-            const cx = e.target.width / 2;
-            const cy = e.target.height / 2;
-            const dx = x - cx;
-            const dy = y - cy;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            
-            // Ring hit detection (Radius ~175, Width 30 => 160-190). generous: 140-210
-            if (dist < 140 || dist > 210) {
-                activeCategory.value = null;
-                return;
+        const dayList = computed(() => {
+            if(!settings.startDate || !settings.endDate) return [];
+            const start = new Date(settings.startDate);
+            const end = new Date(settings.endDate);
+            const diffDays = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1; 
+            const list = [];
+            for(let i=0; i<diffDays; i++){
+                const d = new Date(start); d.setDate(d.getDate() + i);
+                list.push({ 
+                    dateStr: d.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric' }), 
+                    weekday: d.toLocaleDateString('en-US', {weekday:'short'}), 
+                    fullDate: d 
+                });
             }
-            
-            // Calculate Angle
-            let angle = Math.atan2(dy, dx);
-            // Normalize to [0, 2PI) starting from -0.5PI (Top)
-            const base = -0.5 * Math.PI;
-            let clickAngle = angle - base;
-            if (clickAngle < 0) clickAngle += 2 * Math.PI;
-            
-            const found = chartSegments.find(s => clickAngle >= s.start && clickAngle < s.end);
-            
-            if (found) {
-                activeCategory.value = (activeCategory.value === found.category) ? null : found.category;
-            } else {
-                activeCategory.value = null;
-            }
-        }
+            return list;
+        });
 
-        watch(expenseFilter, (val) => {
-            if (val === 'settlement') {
-                activeCategory.value = null;
-                nextTick(drawSettlementChart);
-            }
+        const headerDateRange = computed(() => {
+            if(!settings.startDate || !settings.endDate) return '';
+            const s = new Date(settings.startDate), e = new Date(settings.endDate);
+            const sy = s.getFullYear(), ey = e.getFullYear();
+            const fs = `${s.getDate()}/${s.getMonth()+1}`, fe = `${e.getDate()}/${e.getMonth()+1}`;
+            return (sy === ey) ? `${fs} ~ ${fe}/${sy}` : `${fs}/${sy} ~ ${fe}/${ey}`;
+        });
+
+        const selectedDay = ref(0);
+        const sortedItinerary = computed(() => {
+            if (selectedDay.value === 'prep') return [];
+            const list = itinerary[selectedDay.value] || [];
+            return list.sort((a, b) => (a.time || '23:59').localeCompare(b.time || '23:59'));
+        });
+
+        const isPreTrip = computed(() => {
+            if(!settings.startDate) return false;
+            return new Date() < new Date(settings.startDate);
+        });
+
+        const currentTripDayIndex = computed(() => {
+            if(!settings.startDate) return -1;
+            const diffDays = Math.floor((new Date() - new Date(settings.startDate)) / (1000 * 60 * 60 * 24));
+            return (diffDays >= 0 && diffDays < itinerary.length) ? diffDays : -1;
+        });
+
+        const displayedRate = computed(() => {
+             const r = effectiveRate.value;
+             return (rateDisplayMode.value === 1) ? (1 / r).toFixed(5) : r.toFixed(5);
+        });
+
+        const totalExpense = computed(() => {
+            let totalHome = 0;
+            expenses.value.forEach(e => { totalHome += calculateHomeAmount(e); });
+            return { hkd: totalHome, twd: totalHome * currentLiveRate.value };
+        });
+
+        const expensesBreakdown = computed(() => {
+            let cardHkd = 0, cashHkd = 0;
+            expenses.value.forEach(e => {
+                const homeAmt = calculateHomeAmount(e);
+                if(e.paymentMethod === 'credit_card') cardHkd += homeAmt; else cashHkd += homeAmt;
+            });
+            return {
+                card: { hkd: cardHkd, twd: cardHkd * currentLiveRate.value },
+                cash: { hkd: cashHkd, twd: cashHkd * currentLiveRate.value }
+            };
+        });
+
+        const expenseFilter = ref('all');
+        const filteredExpenses = computed(() => {
+            let list = [...expenses.value].sort((a,b) => new Date(b.date) - new Date(a.date));
+            if(expenseFilter.value === 'credit') return list.filter(e => e.paymentMethod === 'credit_card');
+            if(expenseFilter.value === 'cash') return list.filter(e => e.paymentMethod === 'cash');
+            return list;
+        });
+
+        const settlementList = computed(() => {
+            const bal = {};
+            members.value.forEach(m => bal[m] = 0);
+            expenses.value.forEach(e => {
+                const homeAmt = calculateHomeAmount(e);
+                const payer = e.payer || members.value[0];
+                const involved = (e.involved && e.involved.length > 0) ? e.involved : members.value;
+                
+                if(bal[payer] === undefined) bal[payer] = 0;
+                bal[payer] += homeAmt;
+                const split = homeAmt / involved.length;
+                involved.forEach(m => {
+                    if(bal[m] === undefined) bal[m] = 0;
+                    bal[m] -= split;
+                });
+            });
+            return Object.keys(bal).map(k => ({name: k, amount: bal[k]})).filter(x => Math.abs(x.amount) > 1);
         });
         
-        watch([expenses, lang], () => {
-             if (expenseFilter.value === 'settlement') {
-                 nextTick(drawSettlementChart);
-             }
-        }, { deep: true });
+        const weatherIconClass = computed(() => {
+            const c = weather.code;
+            if (c >= 95) return 'ph ph-cloud-lightning-rain';
+            if (c >= 80 || c >= 60) return 'ph ph-cloud-rain';
+            if (c >= 50) return 'ph ph-cloud-drizzle';
+            if (c >= 45) return 'ph ph-cloud-fog';
+            if (c > 2) return 'ph ph-cloud';
+            if (c >= 1) return 'ph ph-cloud-sun';
+            return 'ph ph-sun';
+        });
 
-                const selectedDay = ref(0);
+        const getDayHeader = (idx) => {
+             const d = dayList.value[idx];
+             return d ? `${d.dateStr} ${d.weekday}` : `Day ${idx+1}`;
+        };
+
+        // --- 7. Feature: Map Logic ---
+        const selectedMapLocation = ref(null);
+        const mapApp = ref(localStorage.getItem('mapApp') || 'Google');
+        const tempMapApp = ref(null);
+        const addressPlaceholder = computed(() => lang.value === 'zh' ? '香港九龍旺角亞皆老街8號' : '8 Argyle St, Mong Kok, Kowloon, Hong Kong');
+
+        function showLocationOnMap(item) {
+             selectedMapLocation.value = (item.address && item.address.trim() !== '') ? { title: item.title, address: item.address, id: item.id } : null;
+        }
+
+        function selectMapApp(app) {
+            mapApp.value = app;
+            localStorage.setItem('mapApp', app);
+        }
+
+        function openMap(addr) {
+            if(!addr) return;
+            const app = tempMapApp.value; // Strictly use tempMapApp (Modal Scope)
+            const q = encodeURIComponent(addr);
+            let url = '';
+            
+            if(app === 'Google') url = 'https://www.google.com/maps/search/?api=1&query=' + q;
+            else if(app === 'Apple') url = 'maps://?q=' + q;
+            else if(app === 'NAVER') url = 'nmap://search?query=' + q;
+            else if(app === 'Amap') url = 'androidamap://keywordNavi?keyword=' + q;
+            
+            if(url) window.open(url, '_blank');
+        }
+
+        function openExternalLink(url) { if (url) window.open(url, '_blank'); }
+
+        // --- 8. Feature: Upload & Image Viewer ---
+        const tempImages = ref([]);
+        const uploadQueue = ref([]); // { file: File, blob: String }
+        const imageViewer = reactive({ open: false, list: [], index: 0, touch: { startX: 0, startY: 0, diffX: 0, diffY: 0, dragging: false } });
+
+        function handleMultiFileUpload(e) {
+            const files = Array.from(e.target.files);
+            const remainingSlots = 5 - tempImages.value.length;
+            files.slice(0, remainingSlots).forEach(file => {
+                const blobUrl = URL.createObjectURL(file);
+                tempImages.value.push(blobUrl);
+                uploadQueue.value.push({ file: file, blob: blobUrl });
+            });
+            e.target.value = '';
+        }
+
+        function removeTempImage(idx) {
+            const imgUrl = tempImages.value[idx];
+            tempImages.value.splice(idx, 1);
+            const qIdx = uploadQueue.value.findIndex(x => x.blob === imgUrl);
+            if (qIdx !== -1) uploadQueue.value.splice(qIdx, 1);
+        }
         
-                // --- Photo Viewer Logic ---
+        async function uploadFileToSupabase(file) {
+            if (!file) return null;
+            const fileName = `${Date.now()}_${Math.floor(Math.random()*1000)}_${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
+            try {
+                const { error } = await supabaseClient.storage.from('uploads').upload(fileName, file);
+                if (error) throw error;
+                const { data } = supabaseClient.storage.from('uploads').getPublicUrl(fileName);
+                return data.publicUrl;
+            } catch (e) {
+                console.error(e);
+                alert('Upload failed');
+                return null;
+            }
+        }
+
+        async function processUploadQueue() {
+            const finalImages = [...tempImages.value];
+            for (const item of uploadQueue.value) {
+                const url = await uploadFileToSupabase(item.file);
+                if (url) {
+                    const idx = finalImages.indexOf(item.blob);
+                    if (idx !== -1) finalImages[idx] = url;
+                }
+            }
+            return finalImages;
+        }
+
+        // Image Viewer Logic
         function openImageViewer(sources, startIndex = 0) {
             if (!sources) return;
             const list = Array.isArray(sources) ? sources : [sources];
             if (list.length === 0) return;
-            
             imageViewer.list = list;
             imageViewer.index = startIndex;
             imageViewer.touch = { startX: 0, startY: 0, diffX: 0, diffY: 0, dragging: false };
@@ -1676,19 +1742,12 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
 
         function handleViewerTouchMove(e) {
             if (!imageViewer.touch.dragging) return;
-            const currentX = e.touches[0].clientX;
-            const currentY = e.touches[0].clientY;
-            const diffX = currentX - imageViewer.touch.startX;
-            const diffY = currentY - imageViewer.touch.startY;
-
-            // Horizontal Swipe (Nav) vs Vertical (Close)
+            const diffX = e.touches[0].clientX - imageViewer.touch.startX;
+            const diffY = e.touches[0].clientY - imageViewer.touch.startY;
+            
             if (Math.abs(diffX) > Math.abs(diffY)) {
-                // Resistance at edges
-                if ((imageViewer.index === 0 && diffX > 0) || (imageViewer.index === imageViewer.list.length - 1 && diffX < 0)) {
-                    imageViewer.touch.diffX = diffX * 0.3;
-                } else {
-                    imageViewer.touch.diffX = diffX;
-                }
+                // Horizontal Swipe (Nav) with resistance
+                imageViewer.touch.diffX = ((imageViewer.index === 0 && diffX > 0) || (imageViewer.index === imageViewer.list.length - 1 && diffX < 0)) ? diffX * 0.3 : diffX;
                 imageViewer.touch.diffY = 0;
             } else {
                 // Vertical Swipe (Close)
@@ -1700,142 +1759,205 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         function handleViewerTouchEnd() {
             imageViewer.touch.dragging = false;
             const { diffX, diffY } = imageViewer.touch;
-            const threshold = 80;
-
-            // Vertical Close
             if (Math.abs(diffY) > 100) {
                 closeImageViewer();
-            } 
-            // Horizontal Nav
-            else if (Math.abs(diffX) > threshold) {
-                if (diffX > 0 && imageViewer.index > 0) {
-                    imageViewer.index--;
-                } else if (diffX < 0 && imageViewer.index < imageViewer.list.length - 1) {
-                    imageViewer.index++;
-                }
+            } else if (Math.abs(diffX) > 80) {
+                if (diffX > 0 && imageViewer.index > 0) imageViewer.index--;
+                else if (diffX < 0 && imageViewer.index < imageViewer.list.length - 1) imageViewer.index++;
             }
-            
-            // Reset
             imageViewer.touch.diffX = 0;
             imageViewer.touch.diffY = 0;
         }
 
-        // --- Mobile Swipe Logic Start ---
-        const swipeContainer = ref(null);
-        const swipeContentVisual = ref(null); // Level 2: Target for content animation
-        const bounceClass = ref('');
-                const touchStart = { x: 0, y: 0 };
-        let startTime = 0;
-        let isSwipeValid = false; // [Patch] Flag to restrict swipe area
+        // --- 9. Feature: Chart Logic (Canvas) ---
+        const settlementCanvas = ref(null);
+        const activeCategory = ref(null);
+        const catColors = {
+            '餐飲': '#FF9500', '交通': '#007AFF', '購物': '#FF2D55',
+            '住宿': '#5AC8FA', '娛樂': '#FFCC00', '門票': '#AF52DE',
+            '服務': '#8E8E93', '其他': '#E5E5EA'
+        };
+        let chartSegments = [];
 
-// Level 2 Visual States
+        function drawSettlementChart() {
+            const cvs = settlementCanvas.value;
+            if (!cvs) return;
+            const ctx = cvs.getContext('2d');
+            const w = cvs.width, h = cvs.height;
+            ctx.clearRect(0, 0, w, h);
+            chartSegments = [];
+
+            // 1. Data Aggregation
+            const dataMap = {};
+            let total = 0;
+            expenses.value.forEach(e => {
+                const homeAmt = calculateHomeAmount(e);
+                if (!dataMap[e.category]) dataMap[e.category] = 0;
+                dataMap[e.category] += homeAmt;
+                total += homeAmt;
+            });
+
+            // 2. Sort Data
+            const sortedCats = Object.entries(dataMap).sort((a, b) => b[1] - a[1]);
+
+            // 3. Draw Doughnut
+            const centerX = w / 2, centerY = h / 2, radius = (w / 2) - 25, lineWidth = 30;
+            let currentSweep = 0;
+            const baseAngle = -0.5 * Math.PI;
+
+            if (total === 0) {
+                ctx.beginPath();
+                ctx.lineWidth = 25; ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                ctx.stroke();
+                ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.font = 'bold 24px -apple-system, sans-serif';
+                ctx.fillText('No Data', centerX, centerY);
+                return;
+            }
+
+            sortedCats.forEach(([cat, amt]) => {
+                const sliceAngle = (amt / total) * 2 * Math.PI;
+                const startAngle = baseAngle + currentSweep;
+                const endAngle = startAngle + sliceAngle;
+                const color = catColors[cat] || '#8E8E93';
+
+                ctx.beginPath();
+                ctx.lineWidth = lineWidth; ctx.strokeStyle = color; ctx.lineCap = 'butt';
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.stroke();
+                
+                chartSegments.push({ category: cat, start: currentSweep, end: currentSweep + sliceAngle });
+                currentSweep += sliceAngle;
+            });
+
+            // 4. Center Text
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            const isZh = lang.value === 'zh';
+            const topLabel = isZh ? '總支出' : 'Total';
+            const bottomLabel = isZh ? 'HKD' : '(HKD)';
+            const amountStr = formatNumber(total);
+            const innerDiameter = (radius - lineWidth/2) * 2;
+            const maxTextWidth = innerDiameter * 0.85;
+
+            const getFitFontSize = (text, startSize, minSize, fontWeight) => {
+                ctx.font = `${fontWeight} ${startSize}px -apple-system, sans-serif`;
+                let width = ctx.measureText(text).width;
+                let size = startSize;
+                while (width > maxTextWidth && size > minSize) {
+                    size -= 2;
+                    ctx.font = `${fontWeight} ${size}px -apple-system, sans-serif`;
+                    width = ctx.measureText(text).width;
+                }
+                return size;
+            };
+
+            const amountFontSize = getFitFontSize(amountStr, 64, 36, 300);
+            const labelFontSize = getFitFontSize(topLabel, 26, 20, 700);
+
+            ctx.font = `700 ${labelFontSize}px -apple-system, sans-serif`; ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.fillText(topLabel, centerX, centerY - (amountFontSize * 0.65));
+            ctx.font = `300 ${amountFontSize}px -apple-system, sans-serif`; ctx.fillStyle = 'white';
+            ctx.fillText(amountStr, centerX, centerY + (amountFontSize * 0.05));
+            ctx.font = `700 ${labelFontSize}px -apple-system, sans-serif`; ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.fillText(bottomLabel, centerX, centerY + (amountFontSize * 0.75));
+        }
+        
+        function handleChartClick(e) {
+            if (!chartSegments.length || !settlementCanvas.value) return;
+            const rect = e.target.getBoundingClientRect();
+            const scaleX = e.target.width / rect.width, scaleY = e.target.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX, y = (e.clientY - rect.top) * scaleY;
+            const cx = e.target.width / 2, cy = e.target.height / 2;
+            const dist = Math.sqrt((x - cx)**2 + (y - cy)**2);
+
+            // Ring hit detection (Generous: 140-210)
+            if (dist < 140 || dist > 210) { activeCategory.value = null; return; }
+            
+            let angle = Math.atan2(y - cy, x - cx);
+            let clickAngle = angle - (-0.5 * Math.PI);
+            if (clickAngle < 0) clickAngle += 2 * Math.PI;
+
+            const found = chartSegments.find(s => clickAngle >= s.start && clickAngle < s.end);
+            activeCategory.value = (found && activeCategory.value !== found.category) ? found.category : null;
+        }
+
+        // --- 10. Feature: Mobile Swipe Logic ---
+        const swipeContainer = ref(null);
+        const swipeContentVisual = ref(null);
+        const bounceClass = ref('');
         const visualOffset = ref(0);
         const isSwipeAnimating = ref(false);
+        const touchStart = { x: 0, y: 0 };
+        let startTime = 0;
+        let isSwipeValid = false;
+
         const visualSwipeStyle = computed(() => ({
             transform: `translateX(${visualOffset.value}px)`,
             transition: isSwipeAnimating.value ? 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)' : 'none'
         }));
 
-        // Compute if any modal is active to freeze swipe
-                const isAnyModalOpen = computed(() => 
+        const isAnyModalOpen = computed(() => 
             flightModalOpen.value || preNoteModalOpen.value || shoppingModalOpen.value || 
             expenseModalOpen.value || itineraryModalOpen.value || memberModalOpen.value || 
             infoModalOpen.value || imageViewer.open || selectedMapLocation.value
         );
 
         const handleTouchStart = (e) => {
-            // [Patch] Check if touch target is within the itinerary body container
+            // [Bug Fix] Check if touch target is within the itinerary body container
             if (!swipeContentVisual.value || !swipeContentVisual.value.contains(e.target)) {
                 isSwipeValid = false;
                 return;
             }
             isSwipeValid = true;
-
             isSwipeAnimating.value = false;
-// Disable transition for direct finger tracking
             touchStart.x = e.changedTouches[0].clientX;
             touchStart.y = e.changedTouches[0].clientY;
             startTime = Date.now();
         };
 
         const handleTouchMove = (e) => {
-            if (!isSwipeValid) return; // [Patch] Ignore if start was invalid
-
-            const touchCurrent = e.changedTouches[0];
-            const diffX = touchCurrent.clientX - touchStart.x;
-
-            const diffY = touchCurrent.clientY - touchStart.y;
-            
-            // Simple visual follow if horizontal motion is detected
-            if (Math.abs(diffX) > Math.abs(diffY)) {
-                // e.preventDefault(); // Optional: prevent scroll if strictly horizontal needed
-                visualOffset.value = diffX;
-            }
+            if (!isSwipeValid) return;
+            const diffX = e.changedTouches[0].clientX - touchStart.x;
+            const diffY = e.changedTouches[0].clientY - touchStart.y;
+            // Horizontal dominant check
+            if (Math.abs(diffX) > Math.abs(diffY)) visualOffset.value = diffX;
         };
 
         const handleTouchEnd = (e) => {
-            if (!isSwipeValid) return; // [Patch] Ignore if start was invalid
+            if (!isSwipeValid) return;
+            const diffX = e.changedTouches[0].clientX - touchStart.x;
+            const diffY = e.changedTouches[0].clientY - touchStart.y;
+            isSwipeAnimating.value = true;
 
-            const touchEnd = e.changedTouches[0];
-            const diffX = touchEnd.clientX - touchStart.x;
-
-            const diffY = touchEnd.clientY - touchStart.y;
-            
-            isSwipeAnimating.value = true; // Enable transition for result animation
-
-            // Threshold 50px & Horizontal > Vertical
-                        if ((Math.abs(diffX) > 50 || Math.abs(diffX / (Date.now() - startTime)) > 0.5) && Math.abs(diffX) > Math.abs(diffY)) {
+            if ((Math.abs(diffX) > 50 || Math.abs(diffX / (Date.now() - startTime)) > 0.5) && Math.abs(diffX) > Math.abs(diffY)) {
                 const screenW = window.innerWidth;
-                
-                // Helper to perform visual exit -> update -> visual enter
                 const performSwitch = (newDayVal, exitDir) => {
-                    // 1. Slide Out
-                    visualOffset.value = exitDir * screenW; // Move completely off screen
-                    
-                    // 2. Wait for slide out, then switch data
+                    visualOffset.value = exitDir * screenW; // Slide Out
                     setTimeout(() => {
                         selectedDay.value = newDayVal;
-                        
-                        // 3. Teleport to opposite side (No animation)
                         isSwipeAnimating.value = false;
-                        visualOffset.value = -exitDir * screenW;
-                        
-                        // 4. Slide In (With animation)
+                        visualOffset.value = -exitDir * screenW; // Teleport
                         requestAnimationFrame(() => {
                             requestAnimationFrame(() => {
                                 isSwipeAnimating.value = true;
-                                visualOffset.value = 0;
+                                visualOffset.value = 0; // Slide In
                             });
                         });
-                    }, 250); // Match transition duration approx
+                    }, 250);
                 };
 
-                if (diffX < 0) {
-                    // Swipe Left -> Next Day
-                    if (selectedDay.value === 'prep') {
-                        performSwitch(0, -1);
-                    } else if (selectedDay.value < dayList.value.length - 1) {
-                        performSwitch(selectedDay.value + 1, -1);
-                    } else {
-                        // Last day boundary
-                        visualOffset.value = 0; // Rebound logic
-                        triggerBounce('bounce-left');
-                    }
-                } else {
-                    // Swipe Right -> Prev Day
-                    if (selectedDay.value === 0) {
-                        performSwitch('prep', 1);
-                    } else if (selectedDay.value === 'prep') {
-                        // First day boundary
-                        visualOffset.value = 0; // Rebound logic
-                        triggerBounce('bounce-right');
-                    } else {
-                        performSwitch(selectedDay.value - 1, 1);
-                    }
+                if (diffX < 0) { // Swipe Left -> Next
+                    if (selectedDay.value === 'prep') performSwitch(0, -1);
+                    else if (selectedDay.value < dayList.value.length - 1) performSwitch(selectedDay.value + 1, -1);
+                    else { visualOffset.value = 0; triggerBounce('bounce-left'); }
+                } else { // Swipe Right -> Prev
+                    if (selectedDay.value === 0) performSwitch('prep', 1);
+                    else if (selectedDay.value === 'prep') { visualOffset.value = 0; triggerBounce('bounce-right'); }
+                    else performSwitch(selectedDay.value - 1, 1);
                 }
             } else {
-                // Rebound if threshold not met
-                visualOffset.value = 0;
+                visualOffset.value = 0; // Rebound
             }
         };
 
@@ -1858,541 +1980,37 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
                 swipeContainer.value.removeEventListener('touchend', handleTouchEnd);
             }
         };
-        // Sync Listener with Tab and Modal state
-        watch([currentTab, isAnyModalOpen], async ([tab, modalOpen]) => {
-            await nextTick(); // Wait for DOM update
-            // Cleanup first to ensure no duplicates
-            removeSwipeListener();
-            
-            // Only attach if in Itinerary tab AND no modals are open
-            if (tab === '行程' && !modalOpen) {
-                addSwipeListener();
-            }
-        }, { immediate: true });
-        // --- Mobile Swipe Logic End ---
 
-        const newPreNoteInput = ref('');
-        const quickItinerary = reactive({ time: '', title: '' });
-                // 每日顏色陣列 (Patch: 更新為 8 色視覺分類池)
-        const dayColors = ['border-purple-500', 'border-[#007AFF]', 'border-pink-500', 'border-orange-500', 'border-yellow-500', 'border-teal-500', 'border-slate-500', 'border-gray-400'];
-
-                function jumpToPreNote(id) {
-             selectedDay.value = 'prep';
-             currentTab.value = '行程';
-             nextTick(() => {
-                 const el = document.querySelector(`li[data-id="${id}"]`) || document.querySelector(`div[data-id="${id}"]`);
-                 if(el) {
-                     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                     el.classList.add('ring-2', 'ring-green-500');
-                     setTimeout(() => el.classList.remove('ring-2', 'ring-green-500'), 1500);
-                 }
-             });
-        }
+        // --- 11. Core Logic: Data & Actions ---
         
-                // Map Logic (New in 7.5)
-        // Map Settings (Patch)
-
-        const mapApp = ref(localStorage.getItem('mapApp') || 'Google');
-
-        const addressPlaceholder = computed(() => lang.value === 'zh' ? '香港九龍旺角亞皆老街8號' : '8 Argyle St, Mong Kok, Kowloon, Hong Kong');
-
-        function goToPrepInput() {
-            selectedDay.value = 'prep';
-            currentTab.value = '行程';
-            nextTick(() => {
-                const el = document.getElementById('prepInputBox');
-                if(el) {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    el.focus();
-                }
-            });
-        }
-
-                function jumpToShoppingItem(id) {
-            currentTab.value = '購物';
-            nextTick(() => {
-                // 相容 li (首頁) 與 div (購物頁新樣式)
-                const el = document.querySelector(`div[data-id="${id}"]`) || document.querySelector(`li[data-id="${id}"]`);
-                if(el) {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    el.classList.add('ring-2', 'ring-pink-400'); 
-                    setTimeout(() => el.classList.remove('ring-2', 'ring-pink-400'), 1500);
-                }
-            });
-        }
-        
-        function selectMapApp(app) {
-            mapApp.value = app;
-            localStorage.setItem('mapApp', app);
-        }
-
-                        // FIX: 新增外部連結開啟函式，統一處理開窗行為
-        function openExternalLink(url) {
-            if (!url) return;
-            window.open(url, '_blank');
-        }
-
-        function openMap(addr) {
-            if(!addr) return;
-            // Patch: Strictly use tempMapApp (Modal Scope), No Fallback
-            const app = tempMapApp.value;
-            const q = encodeURIComponent(addr);
-            let url = '';
-            
-            if(app === 'Google') url = 'https://www.google.com/maps/search/?api=1&query=' + q;
-            else if(app === 'Apple') url = 'maps://?q=' + q;
-            else if(app === 'NAVER') url = 'nmap://search?query=' + q;
-            else if(app === 'Amap') url = 'androidamap://keywordNavi?keyword=' + q;
-            
-            if(url) window.open(url, '_blank');
-        }
-
-        
-                // Upload Logic (Multi)
-        const isUploading = ref(false);
-        
-        function handleMultiFileUpload(e) {
-            const files = Array.from(e.target.files);
-            const remainingSlots = 5 - tempImages.value.length;
-            const toAdd = files.slice(0, remainingSlots);
-            
-            toAdd.forEach(file => {
-                const blobUrl = URL.createObjectURL(file);
-                tempImages.value.push(blobUrl);
-                uploadQueue.value.push({ file: file, blob: blobUrl });
-            });
-            // Reset input
-            e.target.value = '';
-        }
-
-        function removeTempImage(idx) {
-            const imgUrl = tempImages.value[idx];
-            // Remove from display
-            tempImages.value.splice(idx, 1);
-            // Remove from upload queue if it's a new file
-            const qIdx = uploadQueue.value.findIndex(x => x.blob === imgUrl);
-            if (qIdx !== -1) {
-                uploadQueue.value.splice(qIdx, 1);
-            }
-        }
-        
-        async function processUploadQueue() {
-            const finalImages = [...tempImages.value];
-            
-            for (const item of uploadQueue.value) {
-                const url = await uploadFileToSupabase(item.file);
-                if (url) {
-                    // Replace blob url with real url in final list
-                    const idx = finalImages.indexOf(item.blob);
-                    if (idx !== -1) finalImages[idx] = url;
-                }
-            }
-            return finalImages;
-        }
-
-        const expenseCats = [
-            {name: '門票', icon: 'ph-ticket'}, {name: '交通', icon: 'ph-train'},
-            {name: '購物', icon: 'ph-shopping-bag'}, {name: '餐飲', icon: 'ph-fork-knife'},
-            {name: '娛樂', icon: 'ph-confetti'}, {name: '住宿', icon: 'ph-bed'},
-            {name: '服務', icon: 'ph-hand-coins'}, {name: '其他', icon: 'ph-dots-three-circle'}
-        ];
-        
-        const syncStatusText = computed(() => ({ 'synced': '已同步', 'saving': '儲存中...', 'loading': '載入中...', 'error': '錯誤' }[syncState.value] || ''));
-        
-        const dayList = computed(() => {
-            if(!settings.startDate || !settings.endDate) return [];
-            const start = new Date(settings.startDate);
-            const end = new Date(settings.endDate);
-            const diffTime = Math.abs(end - start);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; 
-            const list = [];
-            for(let i=0; i<diffDays; i++){
-                const d = new Date(start); d.setDate(d.getDate() + i);
-                const dateStr = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric' });
-                const weekday = d.toLocaleDateString('en-US', {weekday:'short'});
-                list.push({ dateStr, weekday, fullDate: d });
-            }
-            return list;
-        });
-
-        const headerDateRange = computed(() => {
-            if(!settings.startDate || !settings.endDate) return '';
-            const s = new Date(settings.startDate);
-            const e = new Date(settings.endDate);
-            const sy = s.getFullYear(); const ey = e.getFullYear();
-            const sm = s.getMonth()+1; const sd = s.getDate();
-            const em = e.getMonth()+1; const ed = e.getDate();
-            const fs = `${sd}/${sm}`;
-            const fe = `${ed}/${em}`;
-            if(sy === ey) return `${fs} ~ ${fe}/${sy}`;
-            return `${fs}/${sy} ~ ${fe}/${ey}`;
-        });
-
-                const sortedItinerary = computed(() => {
-            if (selectedDay.value === 'prep') return [];
-            const list = itinerary[selectedDay.value] || [];
-            // 強制依時間排序
-            return list.sort((a, b) => (a.time || '23:59').localeCompare(b.time || '23:59'));
-        });
-        
-        const currentLiveRate = ref(4.0);
-        // 核心修正：定義全域唯一的「有效匯率」，包含 3% 手續費
-        const effectiveRate = computed(() => currentLiveRate.value * 0.97);
-        const lastRateUpdateLabel = ref('--:--');
-
-                // 判斷是否為旅程前 (用於顯示準備清單)
-        const isPreTrip = computed(() => {
-            if(!settings.startDate) return false;
-            const now = new Date();
-            const start = new Date(settings.startDate);
-            // 當下時間 < 開始日期的 00:00 (簡單比較)
-            return now < start;
-        });
-
-        // 判斷今天是否在旅程中，回傳 Index，否則 -1
-        const currentTripDayIndex = computed(() => {
-            if(!settings.startDate) return -1;
-            const now = new Date();
-            const start = new Date(settings.startDate);
-            const diffTime = now - start;
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            // 假設 itinerary 長度對應天數
-            if (diffDays >= 0 && diffDays < itinerary.length) {
-                return diffDays;
-            }
-            return -1;
-        });
-
-        // 自動收合航班卡片：若今天日期 != 航班日期，則收合
+        // Flight Logic
         function autoToggleFlightCard() {
-            const nowStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric' }); // e.g., "15/12" (match headerDateRange partial logic or simple compare)
-            // 這裡做簡化：若非旅程當日，預設收合
             if (currentTripDayIndex.value === -1) {
                 isFlightMinimized.value = true;
             } else {
-                // 檢查是否為去程或回程日
                 const isOutbound = currentTripDayIndex.value === 0;
                 const isReturn = currentTripDayIndex.value === itinerary.length - 1;
                 if (isOutbound || isReturn) {
                     isFlightMinimized.value = false;
                     currentFlightView.value = isReturn ? 'return' : 'outbound';
-                                } else {
+                } else {
                     isFlightMinimized.value = true;
                 }
             }
         }
-
-        const displayedRate = computed(() => {
-             // 修正：基於 effectiveRate 進行顯示轉換，嚴禁再次套用手續費運算
-             const r = effectiveRate.value;
-             if (rateDisplayMode.value === 1) return (1 / r).toFixed(5);
-             return r.toFixed(5);
-        });
-
-        const totalExpense = computed(() => {
-    let totalHome = 0;
-    expenses.value.forEach(e => {
-        let amt = parseFloat(e.amount) || 0;
-        let homeAmt = 0;
-        if(e.currency === settings.homeCurrency) homeAmt = amt;
-        // Patch Start: 使用匯率快照或即時匯率(含3%手續費)
-        else if(e.currency === settings.localCurrency) {
-             // 修正：使用統一的 effectiveRate
-             const rate = e.exchange_rate_at_save || effectiveRate.value;
-  
-           homeAmt = amt / rate;
-        }
-
-        // Patch End
-        else if(e.currency === 'USD') homeAmt = amt * 7.8; 
-        else if(e.currency === 'JPY') homeAmt = amt * 0.052;
-        else homeAmt = amt;
-    
-        totalHome += homeAmt;
-    });
-    return { hkd: totalHome, twd: totalHome * currentLiveRate.value };
-});
-
-       const expensesBreakdown = computed(() => {
-    let cardHkd = 0, cashHkd = 0;
-    expenses.value.forEach(e => {
-        let amt = parseFloat(e.amount) || 0;
-        // Patch Start: 使用匯率快照或即時匯率(含3%手續費)
-        // 修正：使用統一的 effectiveRate
-        let rate = e.exchange_rate_at_save || effectiveRate.value;
-        let homeAmt = (e.currency === settings.homeCurrency) ? amt : (amt / rate);
-        // Patch End
-
-        if(e.paymentMethod === 'credit_card') cardHkd += homeAmt; else cashHkd += homeAmt;
-    });
-    return {
-        card: { hkd: cardHkd, twd: cardHkd * currentLiveRate.value },
-        cash: { hkd: cashHkd, twd: cashHkd * currentLiveRate.value }
-    };
-});
-
-        const filteredExpenses = computed(() => {
-            let list = [...expenses.value].sort((a,b) => new Date(b.date) - new Date(a.date));
-            if(expenseFilter.value === 'credit') return list.filter(e => e.paymentMethod === 'credit_card');
-            if(expenseFilter.value === 'cash') return list.filter(e => e.paymentMethod === 'cash');
-            return list;
-        });
-
-        const settlementList = computed(() => {
-    const bal = {};
-    members.value.forEach(m => bal[m] = 0);
-    expenses.value.forEach(e => {
-        let amt = parseFloat(e.amount) || 0;
-        let homeAmt = 0;
-  
-        if(e.currency === settings.homeCurrency) homeAmt = amt;
-        // Patch Start: 使用匯率快照或即時匯率(含3%手續費)
-        else if(e.currency === settings.localCurrency) {
-            
-            // 修正：使用統一的 effectiveRate
-            const rate = e.exchange_rate_at_save || effectiveRate.value;
-            homeAmt = amt / rate;
-        }
-        // Patch End
-        else return; 
-        let payer = e.payer || members.value[0];
-        let involved = e.involved && e.involved.length > 0 ? e.involved 
-        : members.value;
-        
-                if(bal[payer] === undefined) bal[payer] = 0;
-                bal[payer] += homeAmt;
-                let split = homeAmt / involved.length;
-                involved.forEach(m => {
-                    if(bal[m] === undefined) bal[m] = 0;
-                    bal[m] -= split;
-                });
-            });
-            return Object.keys(bal).map(k => ({name: k, amount: bal[k]})).filter(x => Math.abs(x.amount) > 1);
-        });
-
-        const weather = reactive({ temp: '--', min: '--', max: '--', code: 0, feelsLike: '--', humidity: '--', uv: '--', rain: 0, warning: null });
-        const weatherIconClass = computed(() => {
-            const c = weather.code;
-            if (c >= 95) return 'ph ph-cloud-lightning-rain';
-            if (c >= 80) return 'ph ph-cloud-rain';
-            if (c >= 60) return 'ph ph-cloud-rain'; // Rain
-            if (c >= 50) return 'ph ph-cloud-drizzle';
-            if (c >= 45) return 'ph ph-cloud-fog';
-            if (c > 2) return 'ph ph-cloud';
-            if (c >= 1) return 'ph ph-cloud-sun';
-            return 'ph ph-sun';
-        });
-
-               const t = (k) => {
-            const dict = {
-                // 通用
-                'cancel': { zh: '取消', en: 'Cancel' },
-                'save': { zh: '儲存', en: 'Save' },
-                'delete': { zh: '刪除', en: 'Delete' },
-                'done': { zh: '完成', en: 'Done' },
-
-                'show': { zh: '顯示', en: 'Show' },
-                'hide': { zh: '隱藏', en: 'Hide' },
-                'homeDataCard': { zh: '首頁資訊卡片', en: 'Home Info Card' },
-                'prepListHeader': { zh: '準備清單', en: 'Preparation List' },
-                'quickAddPlaceholder': { zh: '快速新增項目...', en: 'Quick add item...' },
-                'add': { zh: '新增', en: 'Add' },
-                'title': { zh: '標題', en: 'Title' },
-                'notes': { zh: '備註', en: 'Notes' },
-                'details': { zh: '詳細內容...', en: 'Details...' },
-                'editItem': { zh: '編輯項目', en: 'Edit Item' },
-                
-                // 首頁/天氣/航班
-                'tripRoute': { zh: '旅程路線', en: 'Trip Route' },
-                'outbound': { zh: '去程', en: 'Outbound' },
-                'return': { zh: '回程', en: 'Return' },
-                'gate': { zh: '閘口', en: 'GATE' },
-                'terminal': { zh: ' ', en: ' ' },
-                'estDep': { zh: '預計起飛', en: 'Est. Dep' },
-                'estArr': { zh: '預計抵達', en: 'Est. Arr' },
-                'economy': { zh: '經濟艙', en: 'Economy' },
-                'rate': { zh: '即時匯率', en: 'Live Rate' },
-                'feeIncluded': { zh: '含3%手續費', en: '3% Fee Incl.' },
-                'itinerary': { zh: '行程', en: 'Itinerary' },
-                'viewAll': { zh: '查看全部', en: 'View All' },
-                'prepList': { zh: '準備清單', en: 'Preparation' },
-                'shopping': { zh: '購物清單', en: 'Shopping' },
-                'totalExpense': { zh: '總支出', en: 'Total Expense' },
-                'creditCard': { zh: '信用卡', en: 'Credit Card' },
-                'cash': { zh: '現金', en: 'Cash' },
-                'info': { zh: '資訊', en: 'Info' },
-                'noInfo': { zh: '暫無資訊', en: 'No info yet' },
-                'noItems': { zh: '無項目', en: 'No items' },
-                'feelsLike': { zh: '體感', en: 'Feels' },
-                'humidity': { zh: '濕度', en: 'Hum' },
-                'rain': { zh: '降雨', en: 'Rain' },
-                
-                // 航班狀態 & Modal
-                'Scheduled': { zh: '預定', en: 'Scheduled' },
-                'On Time': { zh: '準時', en: 'On Time' },
-                'Delayed': { zh: '延誤', en: 'Delayed' },
-                'Boarding': { zh: '登機中', en: 'Boarding' },
-                'Landed': { zh: '已抵達', en: 'Landed' },
-                'editFlight': { zh: '編輯航班', en: 'Edit Flight' },
-                'flightCode': { zh: '航班編號 (e.g. CX400)', en: 'Flight Code' },
-                'airline': { zh: '航空公司', en: 'Airline Name' },
-                'depTerm': { zh: '出發客運大樓', en: 'Dep Term' },
-                'arrTerm': { zh: '抵達客運大樓', en: 'Arr Term' },
-                'trackingUrl': { zh: '追蹤連結', en: 'Tracking URL' },
-                'liveStatus': { zh: '航班實況', en: 'Live Status' },
-
-                // 支出
-                'filter_all': { zh: '全部', en: 'All' },
-                'filter_credit': { zh: '信用卡', en: 'Card' },
-                'filter_cash': { zh: '現金', en: 'Cash' },
-                'filter_settlement': { zh: '結算', en: 'Settle' },
-                'shouldPay': { zh: '需支付', en: 'Should Pay' },
-                'shouldReceive': { zh: '需收取', en: 'Should Receive' },
-                'noSettlement': { zh: '無需結算', en: 'All settled' },
-                'payer': { zh: '付款人', en: 'Payer' },
-                'all': { zh: '全員', en: 'All' },
-                'desc': { zh: '描述', en: 'Description' },
-                // 支出分類
-                '門票': { zh: '門票', en: 'Tickets' },
-                '交通': { zh: '交通', en: 'Transport' },
-                '購物': { zh: '購物', en: 'Shopping' },
-                '餐飲': { zh: '餐飲', en: 'Food' },
-                '娛樂': { zh: '娛樂', en: 'Fun' },
-                '住宿': { zh: '住宿', en: 'Hotel' },
-                '服務': { zh: '服務', en: 'Service' },
-                '其他': { zh: '其他', en: 'Others' },
-
-                // 購物與清單 Modal
-                'shoppingItem': { zh: '購物項目', en: 'Shopping Item' },
-                'itemName': { zh: '物品名稱', en: 'Item Name' },
-                'imgRef': { zh: '參考圖片', en: 'Image Reference' },
-                'uploadImg': { zh: '上傳圖片', en: 'Upload Image' },
-                'imgSelected': { zh: '已選取圖片', en: 'Image Selected' },
-                'changeImg': { zh: '更換圖片', en: 'Change Image' },
-                'pasteUrl': { zh: '或貼上圖片網址', en: 'Or paste URL here' },
-                'taskName': { zh: '任務名稱', en: 'Task Name' },
-                'editInfo': { zh: '編輯資訊', en: 'Edit Info' },
-
-                // 成員
-                'manageMembers': { zh: '管理成員', en: 'Manage Members' },
-                'newName': { zh: '新成員', en: 'New Member' },
-
-                // 行程 Modal
-                'editEvent': { zh: '編輯行程', en: 'Edit Event' },
-                'mapAddr': { zh: 'Google Map 地址', en: 'Google Map Address' },
-
-                // Dock Tabs (直接用中文做 Key)
-                '首頁': { zh: '首頁', en: 'Home' },
-                '行程': { zh: '行程', en: 'Itinerary' },
-                '記帳': { zh: '記帳', en: 'Expenses' },
-                '設定': { zh: '設定', en: 'Settings' },
-
-                // 設定
-                'settings': { zh: '設定', en: 'Settings' },
-                'routeHeader': { zh: '路線標題', en: 'Route Header' },
-                'startDate': { zh: '開始日期', en: 'Start Date' },
-                'endDate': { zh: '結束日期', en: 'End Date' },
-                'localCurr': { zh: '當地貨幣', en: 'Local Currency' },
-                'homeCurr': { zh: '本國貨幣', en: 'Home Currency' },
-                                'weatherLoc': { zh: '天氣地點', en: 'Weather Location' },
-                                'openMaps': { zh: '打開地圖', en: 'Open Maps' },
-                'navigate': { zh: '導航', en: 'Navigate' },
-                'mapApp': { zh: '地圖 App', en: 'Map App' },
-                
-                // 地圖名稱
-                'map_name_Google': { zh: 'Google', en: 'Google' },
-                'map_name_Apple': { zh: 'Apple', en: 'Apple' },
-                'map_name_NAVER': { zh: 'NAVER', en: 'NAVER' },
-                'map_name_Amap': { zh: '高德', en: 'A-map' }
-            };
-            return dict[k]?.[lang.value] || k;
-        };
-
-
-        function toggleLang() { lang.value = lang.value === 'zh' ? 'en' : 'zh'; localStorage.setItem('app_lang', lang.value); }
-        function toggleRateOrder() { 
-            rateDisplayMode.value = rateDisplayMode.value === 0 ? 1 : 0; 
-            localStorage.setItem('rate_mode', rateDisplayMode.value); 
-        }
-        function formatNumber(n) { return Number(n).toLocaleString('en-US', {maximumFractionDigits: 1}); }
-        function generateId() { return Date.now() + Math.random().toString(36).substr(2, 5); }
-        function showToast(msg) { notification.value = msg; setTimeout(()=>notification.value=null, 3000); }
-                        function isSocialLink(url) { return url && (url.includes('instagram.com') || url.includes('ig.me') || url.includes('threads') || url.includes('threads.net')); }
-        function getSocialIcon(url) { return url && url.includes('threads') ? 'ph-threads-logo' : 'ph-instagram-logo'; }
-        function getCategoryIcon(c) { const f = expenseCats.find(x=>x.name===c); return f ? f.icon : 'ph-star'; }
-        
-        function getDayHeader(idx) {
-             const d = dayList.value[idx];
-             if(!d) return `Day ${idx+1}`;
-             return `${d.dateStr} ${d.weekday}`;
-        }
-
-        // Map Functions
-                function showLocationOnMap(item) {
-             selectedMapLocation.value = (item.address && item.address.trim() !== '') ?
- { title: item.title, address: item.address, id: item.id } : null;
- }
-
-        function goToExpenseList() {
-             currentTab.value = '記帳';
-             nextTick(() => {
-                 const el = document.getElementById('expense-filters');
-                 if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-             });
-        }
-
-        // Upload Helper (Supabase)
-        async function uploadFileToSupabase(file) {
-            if (!file) return null;
-            const fileName = `${Date.now()}_${Math.floor(Math.random()*1000)}_${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
-            try {
-                const { error } = await supabaseClient.storage.from('uploads').upload(fileName, file);
-                if (error) throw error;
-                const { data } = supabaseClient.storage.from('uploads').getPublicUrl(fileName);
-                return data.publicUrl;
-            } catch (e) {
-                console.error(e);
-                alert('Upload failed');
-                return null;
-            }
-        }
-
-        function cancelSettings() { Object.assign(editingSettings, settings); showToast("Changes Discarded"); }
-        function saveSettings() {
-            Object.assign(settings, editingSettings);
-            const days = dayList.value.length;
-            if(itinerary.length < days) { while(itinerary.length < days) itinerary.push([]); } 
-            else if(itinerary.length > days) { itinerary.splice(days); }
-            if(selectedDay.value >= days) selectedDay.value = 0;
-            saveAll();
-            showToast("Settings Saved!");
-        }
-
         function openFlightModal() { Object.assign(newFlight, flights[currentFlightView.value]); flightModalOpen.value = true; }
         function syncModalToView() { Object.assign(newFlight, flights[currentFlightView.value]); }
         function saveFlight() { Object.assign(flights[currentFlightView.value], newFlight); flightModalOpen.value = false; saveAll(); }
-        
-                function scrollToTop() {
-            const main = document.querySelector('main');
-            if(main) main.scrollTo({top: 0, behavior: 'smooth'});
-        }
 
-                        function openPreNoteModal(item) {
+        // PreNote Logic
+        const newPreNoteInput = ref('');
+        function openPreNoteModal(item) {
             const base = item || {id:null, name:'', isDone:false, imageURL:'', images:[], linkURL:''};
             Object.assign(editingPreNote, base);
-            
-            if (base.images && Array.isArray(base.images)) {
-                tempImages.value = [...base.images];
-            } else if (base.imageURL) {
-                tempImages.value = [base.imageURL];
-            } else {
-                tempImages.value = [];
-            }
-            
+            tempImages.value = (base.images && Array.isArray(base.images)) ? [...base.images] : (base.imageURL ? [base.imageURL] : []);
             uploadQueue.value = [];
             preNoteModalOpen.value = true; 
         }
-
         async function savePreNoteEdit() {
             if(!editingPreNote.name) return;
             const finalImages = await processUploadQueue();
@@ -2402,7 +2020,6 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
                 imageURL: finalImages.length > 0 ? finalImages[0] : '', 
                 linkURL: editingPreNote.linkURL || '' 
             };
-            
             if(!itemToSave.id) preTripNotes.value.push({ ...itemToSave, id: generateId() });
             else { 
                 const idx = preTripNotes.value.findIndex(x=>x.id===itemToSave.id);
@@ -2411,90 +2028,74 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             preNoteModalOpen.value = false; 
             saveAll();
         }
-
         async function removePreNote(id) { 
             if(!confirm('Delete this task?')) return;
             const item = preTripNotes.value.find(x => x.id === id);
             const imgs = item.images || (item.imageURL ? [item.imageURL] : []);
             for (const url of imgs) {
                 if (url && url.includes('/uploads/')) {
-                    try {
-                        const urlPath = url.split('/uploads/')[1];
-                        if (urlPath) await supabaseClient.storage.from('uploads').remove([urlPath]);
-                    } catch (e) {}
+                    try { await supabaseClient.storage.from('uploads').remove([url.split('/uploads/')[1]]); } catch (e) {}
                 }
             }
             preTripNotes.value = preTripNotes.value.filter(x=>x.id!==id);
             saveAll();
         }
-
         function togglePreNoteDone(id) { const n = preTripNotes.value.find(x=>x.id===id); if(n) n.isDone = !n.isDone; saveAll(); }
+        function jumpToPreNote(id) {
+             selectedDay.value = 'prep'; currentTab.value = '行程';
+             nextTick(() => {
+                 const el = document.querySelector(`li[data-id="${id}"]`) || document.querySelector(`div[data-id="${id}"]`);
+                 if(el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('ring-2', 'ring-green-500'); setTimeout(() => el.classList.remove('ring-2', 'ring-green-500'), 1500); }
+             });
+        }
+        function goToPrepInput() {
+            selectedDay.value = 'prep'; currentTab.value = '行程';
+            nextTick(() => { const el = document.getElementById('prepInputBox'); if(el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus(); } });
+        }
 
-                // Shopping with Image (Multi)
+        // Shopping Logic
         function openShoppingModal(item) {
             const base = item || {id:null, name:'', imageURL:'', images:[], linkURL:'', isDone:false};
             Object.assign(newShoppingItem, base);
-            
-            // Init images: Use 'images' array, fallback to 'imageURL', or empty
-            if (base.images && Array.isArray(base.images)) {
-                tempImages.value = [...base.images];
-            } else if (base.imageURL) {
-                tempImages.value = [base.imageURL];
-            } else {
-                tempImages.value = [];
-            }
-            
+            tempImages.value = (base.images && Array.isArray(base.images)) ? [...base.images] : (base.imageURL ? [base.imageURL] : []);
             uploadQueue.value = [];
             shoppingModalOpen.value = true; 
         }
-
         async function saveShoppingItem() {
             if(!newShoppingItem.name) return;
-            
-            // Upload pending files
             const finalImages = await processUploadQueue();
-            
-            const itemToSave = { 
-                ...newShoppingItem, 
-                images: finalImages,
-                // Legacy support / cover image
-                imageURL: finalImages.length > 0 ? finalImages[0] : '', 
-                linkURL: newShoppingItem.linkURL || '' 
-            };
-            
+            const itemToSave = { ...newShoppingItem, images: finalImages, imageURL: finalImages.length > 0 ? finalImages[0] : '', linkURL: newShoppingItem.linkURL || '' };
             if(!itemToSave.id) shoppingList.value.push({ ...itemToSave, id: generateId() });
             else { 
-                const idx = shoppingList.value.findIndex(x=>x.id===itemToSave.id); 
+                const idx = shoppingList.value.findIndex(x=>x.id===itemToSave.id);
                 if(idx!==-1) shoppingList.value[idx] = {...itemToSave};
             }
             shoppingModalOpen.value = false; 
             saveAll();
         }
-
         async function removeShoppingItem(id) { 
             if(!confirm('Delete this item?')) return;
-            // Clean up all images
             const item = shoppingList.value.find(x => x.id === id);
             const imgs = item.images || (item.imageURL ? [item.imageURL] : []);
-            
             for (const url of imgs) {
                 if (url && url.includes('/uploads/')) {
-                    try {
-                        const urlPath = url.split('/uploads/')[1];
-                        if (urlPath) await supabaseClient.storage.from('uploads').remove([urlPath]);
-                    } catch (e) {}
+                    try { await supabaseClient.storage.from('uploads').remove([url.split('/uploads/')[1]]); } catch (e) {}
                 }
             }
             shoppingList.value = shoppingList.value.filter(x=>x.id!==id);
             saveAll();
         }
-
-        function openExpenseModal(item) { 
-            Object.assign(newExpense, item || {
-                id:null, amount:'', currency: settings.localCurrency, category:'餐飲', 
-                paymentMethod:'cash', payer: members.value[0], involved: [...members.value],
-                date: new Date().toISOString().split('T')[0], name: ''
+        function jumpToShoppingItem(id) {
+            currentTab.value = '購物';
+            nextTick(() => {
+                const el = document.querySelector(`div[data-id="${id}"]`) || document.querySelector(`li[data-id="${id}"]`);
+                if(el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('ring-2', 'ring-pink-400'); setTimeout(() => el.classList.remove('ring-2', 'ring-pink-400'), 1500); }
             });
+        }
+
+        // Expense Logic
+        function openExpenseModal(item) { 
+            Object.assign(newExpense, item || { id:null, amount:'', currency: settings.localCurrency, category:'餐飲', paymentMethod:'cash', payer: members.value[0], involved: [...members.value], date: new Date().toISOString().split('T')[0], name: '' });
             expenseModalOpen.value = true; 
         }
         function toggleParticipant(m) { const i = newExpense.involved.indexOf(m); if(i > -1) newExpense.involved.splice(i,1); else newExpense.involved.push(m); }
@@ -2506,68 +2107,37 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             newExpense.amount = val;
         }
         function saveExpense() { 
-    try { newExpense.amount = eval(String(newExpense.amount));
-    } catch{}
-    if(!newExpense.name) newExpense.name = newExpense.category;
-
-        // Patch Start: 寫入匯率快照 (僅針對當地貨幣)
-    // 若是新增資料(無快照)或編輯舊資料(無快照)，則寫入當前匯率
-    // 若編輯已有快照的資料，則保留原值 (!newExpense.exchange_rate_at_save 判斷)
-    if (newExpense.currency === settings.localCurrency && !newExpense.exchange_rate_at_save) {
-        // 修正：寫入統一的 effectiveRate
-        newExpense.exchange_rate_at_save = effectiveRate.value;
-    }
-    // Patch End
-
-    const item = { ...newExpense, id: newExpense.id || generateId(), created_at: Date.now() }; 
-    const idx = expenses.value.findIndex(e => e.id === item.id);
-    if(idx !== -1) expenses.value[idx] = item; else expenses.value.push(item);
-    expenseModalOpen.value = false; saveAll();
-}
-
-        function removeExpense(id) { if(!confirm('Delete expense?')) return; expenses.value = expenses.value.filter(x=>x.id!==id); saveAll(); }
-
-        function openMemberModal() { memberModalOpen.value = true; }
-        function addMember() { if(newMemberName.value && !members.value.includes(newMemberName.value)) { members.value.push(newMemberName.value); newMemberName.value = ''; saveAll(); } }
-        function removeMember(m) { if(confirm('Remove member?')) { members.value = members.value.filter(x => x !== m); saveAll(); } }
-
-        function openInfoModal(item) { Object.assign(newInfoItem, item || {id:null, title:'', note:''}); infoModalOpen.value = true; }
-                function saveInfoItem() { 
-            if(!newInfoItem.id) infoList.value.push({...newInfoItem, id:generateId()});
-            else { const idx = infoList.value.findIndex(x=>x.id===newInfoItem.id); if(idx!==-1) infoList.value[idx]={...newInfoItem}; } 
-            infoModalOpen.value=false; 
-            saveAll();
-            nextTick(() => initSortable('sortable-info', infoList.value));
+            try { newExpense.amount = eval(String(newExpense.amount)); } catch{}
+            if(!newExpense.name) newExpense.name = newExpense.category;
+            // Snapshot exchange rate for new/edited items if not already present
+            if (newExpense.currency === settings.localCurrency && !newExpense.exchange_rate_at_save) {
+                newExpense.exchange_rate_at_save = effectiveRate.value;
+            }
+            const item = { ...newExpense, id: newExpense.id || generateId(), created_at: Date.now() }; 
+            const idx = expenses.value.findIndex(e => e.id === item.id);
+            if(idx !== -1) expenses.value[idx] = item; else expenses.value.push(item);
+            expenseModalOpen.value = false; saveAll();
         }
-        function removeInfo(id) { if(!confirm('Delete info?')) return; infoList.value = infoList.value.filter(x=>x.id!==id); saveAll(); }
+        function removeExpense(id) { if(!confirm('Delete expense?')) return; expenses.value = expenses.value.filter(x=>x.id!==id); saveAll(); }
+        function goToExpenseList() {
+             currentTab.value = '記帳';
+             nextTick(() => { const el = document.getElementById('expense-filters'); if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+        }
 
-        // Updated Itinerary Logic (Includes Address)
-                function openItineraryModal(item) { 
-            // Patch: 增加 colorClass: '' 確保新增時是空白的，才會觸發後續的隨機分配
+        // Itinerary Logic
+        const quickItinerary = reactive({ time: '', title: '' });
+        function openItineraryModal(item) { 
+            // Ensure colorClass is empty for new items to trigger randomizer on save
             Object.assign(newItineraryItem, item || {id:null, dayIndex: selectedDay.value, time:'', title:'', note:'', address:'', colorClass: ''});
             itineraryModalOpen.value = true; 
         }
-
-                        function saveItineraryItem() { 
-            // Patch: 只有在沒有顏色時才分配，確保「儲存時決定一次，之後不變」
+        function saveItineraryItem() { 
             if (!newItineraryItem.colorClass) {
-                const colorPool = [
-                    'border-purple-500', // 門票
-                    'border-[#007AFF]',  // 交通 (UI藍)
-                    'border-pink-500',   // 購物 (UI桃紅)
-                    'border-orange-500', // 餐飲
-                    'border-yellow-500', // 娛樂
-                    'border-teal-500',   // 住宿
-                    'border-slate-500',  // 服務
-                    'border-gray-400'    // 其他
-                ];
+                const colorPool = ['border-purple-500', 'border-[#007AFF]', 'border-pink-500', 'border-orange-500', 'border-yellow-500', 'border-teal-500', 'border-slate-500', 'border-gray-400'];
                 newItineraryItem.colorClass = colorPool[Math.floor(Math.random() * colorPool.length)];
             }
-
-            const item = { ...newItineraryItem, id: newItineraryItem.id ||
-generateId() }; 
-            
-            // Patch: Remove from old day if exists elsewhere
+            const item = { ...newItineraryItem, id: newItineraryItem.id || generateId() }; 
+            // Cleanup old location if day changed
             if(item.id) {
                 itinerary.forEach((dayItems, dIdx) => {
                     if(dIdx !== item.dayIndex) {
@@ -2576,43 +2146,74 @@ generateId() };
                     }
                 });
             }
-
             const target = itinerary[item.dayIndex]; 
-            if(!target) return; 
+            if(!target) return;
             if (newItineraryItem.id) {
                 const idx = target.findIndex(x=>x.id===item.id);
-                if(idx!==-1) target[idx] = item; 
-                else target.push(item);
-            } else {
-                target.push(item);
-            }
+                if(idx!==-1) target[idx] = item; else target.push(item);
+            } else { target.push(item); }
+            
             target.sort((a,b) => (a.time||'').localeCompare(b.time||'')); 
             itineraryModalOpen.value = false; saveAll();
             if(selectedMapLocation.value?.id === item.id) showLocationOnMap(item);
         }
         function removeItineraryItem(id) { if(!confirm('Delete event?')) return; itinerary[selectedDay.value] = itinerary[selectedDay.value].filter(x=>x.id!==id); saveAll(); }
-        function addQuickItinerary() { itinerary[selectedDay.value].push({id: generateId(), time: quickItinerary.time, title: quickItinerary.title, address: '', note: ''}); itinerary[selectedDay.value].sort((a,b)=>(a.time||'').localeCompare(b.time||'')); quickItinerary.title=''; saveAll(); }
-                function selectDay(i) { 
-            selectedDay.value = i; 
+        function addQuickItinerary() { 
+            itinerary[selectedDay.value].push({id: generateId(), time: quickItinerary.time, title: quickItinerary.title, address: '', note: ''});
+            itinerary[selectedDay.value].sort((a,b)=>(a.time||'').localeCompare(b.time||'')); 
+            quickItinerary.title=''; saveAll(); 
+        }
+        function selectDay(i) { 
+            selectedDay.value = i;
             selectedMapLocation.value = null;
-            // 如果切換到 'prep'，初始化準備清單拖曳；否則移除行程拖曳 (依需求自動排序)
-            if (i === 'prep') {
-                nextTick(() => initSortable('sortable-pre-notes', preTripNotes.value));
-            } 
+            if (i === 'prep') nextTick(() => initSortable('sortable-pre-notes', preTripNotes.value));
         }
 
+        // Info & Member Logic
+        function openInfoModal(item) { Object.assign(newInfoItem, item || {id:null, title:'', note:''}); infoModalOpen.value = true; }
+        function saveInfoItem() { 
+            if(!newInfoItem.id) infoList.value.push({...newInfoItem, id:generateId()});
+            else { const idx = infoList.value.findIndex(x=>x.id===newInfoItem.id); if(idx!==-1) infoList.value[idx]={...newInfoItem}; } 
+            infoModalOpen.value=false; saveAll(); nextTick(() => initSortable('sortable-info', infoList.value));
+        }
+        function removeInfo(id) { if(!confirm('Delete info?')) return; infoList.value = infoList.value.filter(x=>x.id!==id); saveAll(); }
+        function openMemberModal() { memberModalOpen.value = true; }
+        function addMember() { if(newMemberName.value && !members.value.includes(newMemberName.value)) { members.value.push(newMemberName.value); newMemberName.value = ''; saveAll(); } }
+        function removeMember(m) { if(confirm('Remove member?')) { members.value = members.value.filter(x => x !== m); saveAll(); } }
 
-                // App Initialization
+        // Settings Logic
+        function cancelSettings() { Object.assign(editingSettings, settings); showToast("Changes Discarded"); }
+        function saveSettings() {
+            Object.assign(settings, editingSettings);
+            const days = dayList.value.length;
+            if(itinerary.length < days) { while(itinerary.length < days) itinerary.push([]); } 
+            else if(itinerary.length > days) { itinerary.splice(days); }
+            if(selectedDay.value >= days) selectedDay.value = 0;
+            saveAll(); showToast("Settings Saved!");
+        }
+
+        // Admin Logic
+        function attemptAdminLogin() {
+            if (adminCreds.u === 'admin' && adminCreds.p === '1234') {
+                isAdminLoggedIn.value = true; adminLoginOpen.value = false;
+                newTripIdInput.value = tripId.value; adminEditOpen.value = true;
+                adminCreds.u = ''; adminCreds.p = '';
+            } else { alert('Access Denied'); }
+        }
+        async function saveActiveTripId() {
+            if (!newTripIdInput.value) return;
+            const { error } = await supabaseClient.from('app_config').update({ active_trip_id: newTripIdInput.value }).eq('id', 1);
+            if (!error) { tripId.value = newTripIdInput.value; location.reload(); } 
+            else { alert('Update Failed'); }
+        }
+
+        // --- 12. Persistence & Init ---
         async function initApp() {
             syncState.value = 'loading';
             try {
-                // 1. Get Active Trip ID
                 const { data, error } = await supabaseClient.from('app_config').select('active_trip_id').eq('id', 1).single();
                 if (error || !data?.active_trip_id) throw new Error('Config Error');
-                
                 tripId.value = data.active_trip_id;
-                
-                // 2. Load Trip Data
                 await fetchCloud();
             } catch (e) {
                 console.error(e);
@@ -2636,8 +2237,7 @@ generateId() };
                     else if(c.flight) Object.assign(flights.outbound, c.flight);
                     if(c.members) members.value = c.members;
                 }
-                syncState.value = 'synced';
-                isInitialized.value = true;
+                syncState.value = 'synced'; isInitialized.value = true;
             } catch { syncState.value = 'error'; }
         }
         
@@ -2649,48 +2249,20 @@ generateId() };
             setTimeout(() => syncState.value = 'synced', 800);
         }
 
-        // Admin Functions
-        function attemptAdminLogin() {
-            if (adminCreds.u === 'admin' && adminCreds.p === '1234') {
-                isAdminLoggedIn.value = true;
-                adminLoginOpen.value = false;
-                // Open Editor immediately
-                newTripIdInput.value = tripId.value;
-                adminEditOpen.value = true;
-                adminCreds.u = ''; adminCreds.p = ''; // clear
-            } else {
-                alert('Access Denied');
-            }
-        }
-
-        async function saveActiveTripId() {
-            if (!newTripIdInput.value) return;
-            const { error } = await supabaseClient.from('app_config').update({ active_trip_id: newTripIdInput.value }).eq('id', 1);
-            if (!error) {
-                tripId.value = newTripIdInput.value;
-                location.reload(); // Force reload
-            } else {
-                alert('Update Failed');
-            }
-        }
-        
         async function fetchRate() {
             try {
                 const res = await fetch(`https://open.er-api.com/v6/latest/${settings.localCurrency}`);
                 const d = await res.json();
                 if(d?.rates?.[settings.homeCurrency]) {
-                    const r = 1 / d.rates[settings.homeCurrency];
-                    currentLiveRate.value = r;
+                    currentLiveRate.value = 1 / d.rates[settings.homeCurrency];
                     lastRateUpdateLabel.value = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
                 }
             } catch {}
         }
 
-                async function fetchWeather() {
-             // 優先使用英文地名查詢天氣 (API 支援度較佳)，若無則回退使用中文
+        async function fetchWeather() {
              const loc = settings.weatherLocEn || settings.weatherLoc || 'Taipei';
              try {
-
                  const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(loc)}&count=1&language=en&format=json`);
                  const geoData = await geoRes.json();
                  if (!geoData.results || geoData.results.length === 0) return;
@@ -2700,17 +2272,14 @@ generateId() };
                  if(d.current_weather) { 
                     weather.temp = Math.round(d.current_weather.temperature);
                     weather.code = d.current_weather.weathercode;
-                    weather.warning = null;
-                    const c = weather.code;
-                    if(c >= 95) weather.warning = '!';
-                    else if(c >= 63) weather.warning = '!'; 
+                    weather.warning = (weather.code >= 95 || weather.code >= 63) ? '!' : null;
                  }
                  if(d.hourly) {
-                    const currentHour = new Date().getHours();
-                    weather.feelsLike = d.hourly.apparent_temperature ? Math.round(d.hourly.apparent_temperature[currentHour]) : '--';
-                    weather.humidity = d.hourly.relativehumidity_2m ? d.hourly.relativehumidity_2m[currentHour] : '--';
-                    weather.uv = d.hourly.uv_index ? d.hourly.uv_index[currentHour] : '--';
-                    weather.rain = d.hourly.precipitation_probability ? (d.hourly.precipitation_probability[currentHour] || 0) : 0;
+                    const h = new Date().getHours();
+                    weather.feelsLike = d.hourly.apparent_temperature ? Math.round(d.hourly.apparent_temperature[h]) : '--';
+                    weather.humidity = d.hourly.relativehumidity_2m ? d.hourly.relativehumidity_2m[h] : '--';
+                    weather.uv = d.hourly.uv_index ? d.hourly.uv_index[h] : '--';
+                    weather.rain = d.hourly.precipitation_probability ? (d.hourly.precipitation_probability[h] || 0) : 0;
                  }
                  if(d.daily) { 
                     weather.max = Math.round(d.daily.temperature_2m_max[0]);
@@ -2724,55 +2293,34 @@ generateId() };
             if(el) Sortable.create(el, { handle:'.drag-handle', animation:150, onEnd:(evt)=>{ const item = list.splice(evt.oldIndex, 1)[0]; list.splice(evt.newIndex, 0, item); saveAll(); }});
         }
 
-                                                function runIntroSequence() {
-            // Phase 1: 0% -> 60% (保持第一句文案「收拾行李中」顯示約 800ms)
+        function runIntroSequence() {
             setTimeout(() => { introProgress.value = 60; }, 50);
-
-            // Phase 2: 60% -> 75% (切換第二句文案「檢查地圖...」)
             setTimeout(() => { introProgress.value = 75; }, 900);
-
-            // Phase 3: 75% -> 90% (切換第三句文案，並進入等待狀態)
             setTimeout(() => { introProgress.value = 90; }, 1500);
-
-            // Phase 4: Wait for App Ready logic
             const checkReadyInterval = setInterval(() => {
-                // 當時間到了 (90%) 且 App 資料已載入 (introAppReady)
                 if (introProgress.value >= 90 && introAppReady.value) {
                     clearInterval(checkReadyInterval);
-            
                     finishIntro();
                 }
             }, 100);
         }
 
         function finishIntro() {
-            // Phase 4: 90% -> 100% (Fast sprint)
             introProgress.value = 100;
-            
-            // Fade out after a short moment seeing 100%
             setTimeout(() => {
-                introFading.value = true; // Trigger CSS Opacity 0
-                
-                // Remove from DOM
-                setTimeout(() => {
-                    introVisible.value = false;
-                }, 200); // CSS transition time
+                introFading.value = true; 
+                setTimeout(() => { introVisible.value = false; }, 200);
             }, 250);
         }
 
+        // --- 13. Lifecycle Hooks ---
         onMounted(() => {
-            // 1. Start UI Intro Animation immediately
             runIntroSequence();
-
             Object.assign(editingSettings, settings);
-            // 2. Start Data Loading
             initApp().then(() => {
-                // Signal Intro that data is ready
                 introAppReady.value = true;
-                
                 fetchRate(); fetchWeather();
-                autoToggleFlightCard(); // 初始化航班卡片狀態
-
+                autoToggleFlightCard();
                 nextTick(() => { 
                     if(currentTab.value === '首頁' && isPreTrip.value) initSortable('sortable-pre-home', preTripNotes.value); 
                     initSortable('sortable-info', infoList.value);
@@ -2783,53 +2331,50 @@ generateId() };
             setInterval(fetchRate, 600000);
         });
 
+        // Watchers Grouped
         watch(currentTab, (val) => {
-             if(val === '行程' && selectedDay.value === 'prep') nextTick(() => initSortable('sortable-pre-notes', preTripNotes.value));
-             if(val === '首頁' && isPreTrip.value) nextTick(() => { initSortable('sortable-pre-home', preTripNotes.value); });
-             if(val === '購物') nextTick(() => { initSortable('sortable-shop-page', shoppingList.value); });
+            if(val === '行程' && !isAnyModalOpen.value) { nextTick(addSwipeListener); } else { removeSwipeListener(); }
+            // Sortable Re-init logic
+            if(val === '行程' && selectedDay.value === 'prep') nextTick(() => initSortable('sortable-pre-notes', preTripNotes.value));
+            if(val === '首頁' && isPreTrip.value) nextTick(() => initSortable('sortable-pre-home', preTripNotes.value));
+            if(val === '購物') nextTick(() => initSortable('sortable-shop-page', shoppingList.value));
         });
 
-                watch(selectedDay, (val) => {
+        watch(selectedDay, (val) => {
             if(val === 'prep' && currentTab.value === '行程') nextTick(() => initSortable('sortable-pre-notes', preTripNotes.value));
         });
 
-        // Patch: Strict Lifecycle for tempMapApp
-        watch(selectedMapLocation, (val) => {
-            if (val) {
-                // Initialize from global setting when modal opens
-                tempMapApp.value = mapApp.value;
-            } else {
-                // Destroy immediately when modal closes
-                tempMapApp.value = null;
-            }
+        watch(expenseFilter, (val) => {
+            if (val === 'settlement') { activeCategory.value = null; nextTick(drawSettlementChart); }
         });
+        watch([expenses, lang], () => { if (expenseFilter.value === 'settlement') nextTick(drawSettlementChart); }, { deep: true });
+        
+        watch(selectedMapLocation, (val) => { val ? (tempMapApp.value = mapApp.value) : (tempMapApp.value = null); });
+
+        // Swipe Listener Management
+        watch(isAnyModalOpen, (isOpen) => { if(isOpen) removeSwipeListener(); else if(currentTab.value === '行程') addSwipeListener(); });
 
         return {
-            // Intro Exports
             introVisible, introFading, introProgress, introText, introStep,
-            
-            swipeContainer, swipeContentVisual, visualSwipeStyle, bounceClass, // Export for template binding
+            swipeContainer, swipeContentVisual, visualSwipeStyle, bounceClass,
             appVersion, currentTab, syncState, syncStatusText, lang, t, toggleLang, showToast, notification,
-            settings, editingSettings, saveSettings, cancelSettings, headerDateRange, dayList, getDayHeader,
-                        itinerary, preTripNotes, shoppingList, expenses, totalExpense, expensesBreakdown, infoList,
+            settings, editingSettings, saveSettings, cancelSettings, headerDateRange, 
+            dayList, getDayHeader, itinerary, preTripNotes, shoppingList, expenses, totalExpense, expensesBreakdown, infoList,
             currentFlightView, isFlightMinimized, displayedFlight, openFlightModal, flightModalOpen, newFlight, saveFlight, syncModalToView,
             rateDisplayMode, toggleRateOrder, displayedRate, lastRateUpdateLabel, weather, weatherIconClass,
             selectedDay, selectDay, sortedItinerary, openItineraryModal, itineraryModalOpen, newItineraryItem, saveItineraryItem, removeItineraryItem, quickItinerary, addQuickItinerary,
-                                   preNoteModalOpen, editingPreNote, openPreNoteModal, savePreNoteEdit, removePreNote, togglePreNoteDone,
+            preNoteModalOpen, editingPreNote, openPreNoteModal, savePreNoteEdit, removePreNote, togglePreNoteDone,
             shoppingModalOpen, newShoppingItem, openShoppingModal, saveShoppingItem, removeShoppingItem,
             expenseModalOpen, newExpense, expenseFilter, filteredExpenses, settlementList, openExpenseModal, handleCalcInput, saveExpense, removeExpense,
             memberModalOpen, members, newMemberName, openMemberModal, addMember, removeMember, toggleParticipant, toggleAllParticipants,
             infoModalOpen, newInfoItem, openInfoModal, saveInfoItem, removeInfo,
             imageViewer, isSocialLink, getSocialIcon, formatNumber, expenseCats, getCategoryIcon, openImageViewer,
-            selectedMapLocation, showLocationOnMap, mapApp, selectMapApp, tempMapApp, 
-                        selectedMapLocation, showLocationOnMap, mapApp, selectMapApp, tempMapApp, 
-            openMap, openExternalLink, addressPlaceholder, jumpToShoppingItem, scrollToTop, jumpToPreNote, goToExpenseList,
-                                    isPreTrip, currentTripDayIndex, newPreNoteInput,
+            selectedMapLocation, showLocationOnMap, mapApp, selectMapApp, tempMapApp, openMap, openExternalLink, addressPlaceholder, 
+            jumpToShoppingItem, scrollToTop, jumpToPreNote, goToExpenseList, isPreTrip, currentTripDayIndex, newPreNoteInput,
             tempImages, handleMultiFileUpload, removeTempImage, closeImageViewer,
             handleViewerTouchStart, handleViewerTouchMove, handleViewerTouchEnd,
-                                    dayColors, settlementCanvas, activeCategory, handleChartClick, catColors,
-            // Admin Exports
-            isAdminLoggedIn, adminLoginOpen, adminEditOpen, adminCreds, attemptAdminLogin, saveActiveTripId, newTripIdInput
+            dayColors, settlementCanvas, activeCategory, handleChartClick, catColors,
+            isAdminLoggedIn, adminLoginOpen, adminEditOpen, adminCreds, attemptAdminLogin, saveActiveTripId, newTripIdInput, goToPrepInput
         };
       }
     }).mount('#app');
