@@ -214,6 +214,24 @@
     .calc-btn.top-op { background: #D1D1D6; color: black; }
         .calc-btn.done-btn { background: var(--ios-primary); color: white; font-size: 17px; font-weight: 600; }
 
+        /* Dynamic Hotel Capsule */
+    .dynamic-island-capsule {
+        position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+        background: black; color: white; border-radius: 20px;
+        padding: 6px 16px; font-size: 11px; font-weight: 600;
+        z-index: 60; display: flex; align-items: center; gap: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        height: 30px; white-space: nowrap; max-width: 200px; justify-content: center;
+        cursor: pointer;
+    }
+    .capsule-flash { animation: capsule-flash 0.6s ease-in-out; }
+    @keyframes capsule-flash { 
+        0% { transform: translateX(-50%) scale(1); background: black; } 
+        50% { transform: translateX(-50%) scale(1.1); background: #333; } 
+        100% { transform: translateX(-50%) scale(1); background: black; } 
+    }
+
     /* 新增懸浮按鈕樣式 */
     .floating-add-btn {
         position: fixed; bottom: 100px; right: 20px;
