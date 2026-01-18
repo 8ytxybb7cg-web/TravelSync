@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.91</title>
+  <title>Travel Sync v13.92</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -764,8 +764,8 @@
              </div>
         </div>
 
-         <transition name="fade">
-            <div v-if="selectedMapLocation" class="fixed bottom-24 left-4 right-4 z-40 ios-card bg-white/90 p-4 border-2 border-[#007AFF]/10 shadow-2xl">
+                  <transition name="fade">
+        <div v-if="selectedMapLocation" class="fixed bottom-24 left-4 right-4 z-50 ios-card bg-white/90 p-4 border-2 border-[#007AFF]/10 shadow-2xl">
                 <button @click="selectedMapLocation = null" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 p-1 rounded-full bg-gray-100 transition">
                     <i class="ph ph-x text-base"></i>
                 </button>
@@ -1367,7 +1367,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
 
     createApp({
       setup() {
-        const appVersion = ref('v260117-13.91');
+        const appVersion = ref('v260117-13.92');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
                 const isInitialized = ref(false);
