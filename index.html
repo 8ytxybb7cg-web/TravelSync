@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v14.02b</title>
+  <title>Travel Sync v14.02c</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1368,7 +1368,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260118-14.02b');
+        const appVersion = ref('v260118-14.02c');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -2218,7 +2218,14 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             Object.assign(settings, editingSettings);
             const days = dayList.value.length;
             if(itinerary.length < days) { while(itinerary.length < days) itinerary.push([]); } 
-            else if(itinerary.length > days) { itinerary.splice(days); }
+            else if(itinerary.length > days) { itinerary.splice(days);
+            }
+            // [Smart Hotel] Resize Sync
+            if (sh_hotelSchedule.value.length < days) {
+                 while(sh_hotelSchedule.value.length < days) sh_hotelSchedule.value.push({name:'', address:''});
+            } else if (sh_hotelSchedule.value.length > days) {
+                 sh_hotelSchedule.value.splice(days);
+ }
             if(selectedDay.value >= days) selectedDay.value = 0;
             saveAll(); showToast("Settings Saved!");
         }
