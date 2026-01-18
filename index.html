@@ -2434,6 +2434,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             if(itinerary.length < days) { while(itinerary.length < days) itinerary.push([]); } 
             else if(itinerary.length > days) { itinerary.splice(days); }
             if(selectedDay.value >= days) selectedDay.value = 0;
+            if(hotels.value.length < days) { while(hotels.value.length < days) hotels.value.push(null); }
             saveAll(); showToast("Settings Saved!");
         }
 
@@ -2490,7 +2491,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         async function saveAll() {
             if(!isInitialized.value || !tripId.value) return;
             syncState.value = 'saving';
-            const payload = { settings, itinerary, preTripNotes: preTripNotes.value, shoppingList: shoppingList.value, expenses: expenses.value, infoList: infoList.value, flights, members: members.value };
+                        const payload = { settings, itinerary, preTripNotes: preTripNotes.value, shoppingList: shoppingList.value, expenses: expenses.value, infoList: infoList.value, flights, members: members.value, hotels: hotels.value };
             await supabaseClient.from('trip_data').upsert({ id: tripId.value, content: payload, updated_at: new Date() });
             setTimeout(() => syncState.value = 'synced', 800);
         }
@@ -2572,6 +2573,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
                     initSortable('sortable-info', infoList.value);
                     if(currentTab.value === '購物') initSortable('sortable-shop-page', shoppingList.value);
                     if(currentTab.value === '行程' && selectedDay.value === 'prep') initSortable('sortable-pre-notes', preTripNotes.value);
+                                checkCapsuleCondition(); // Check on app launch
                 });
             });
             setInterval(fetchRate, 600000);
