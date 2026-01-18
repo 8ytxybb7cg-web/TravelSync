@@ -1368,7 +1368,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260118-14.02');
+        const appVersion = ref('v260118-14.02bb');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -2283,7 +2283,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         async function saveAll() {
             if(!isInitialized.value || !tripId.value) return;
             syncState.value = 'saving';
-            const payload = { settings, itinerary, preTripNotes: preTripNotes.value, shoppingList: shoppingList.value, expenses: expenses.value, infoList: infoList.value, flights, members: members.value };
+            const payload = { settings, itinerary, preTripNotes: preTripNotes.value, shoppingList: shoppingList.value, expenses: expenses.value, infoList: infoList.value, flights, members: members.value, hotelSchedule: sh_hotelSchedule.value };
             await supabaseClient.from('trip_data').upsert({ id: tripId.value, content: payload, updated_at: new Date() });
             setTimeout(() => syncState.value = 'synced', 800);
         }
