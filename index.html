@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v14.04</title>
+  <title>Travel Sync v14.05</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -722,6 +722,45 @@
 
              <div v-else>
                  <div class="relative pl-4 border-l-2 border-gray-300/50 ml-3 space-y-3 py-2">
+                        
+                        <div class="ios-card p-3 mb-2 bg-gradient-to-br from-white/80 to-blue-50/30 border border-blue-100/50 relative group">
+                            <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                <i class="ph-fill ph-house-line text-[#007AFF]"></i> 
+                                {{ lang === 'zh' ? '下榻酒店' : 'Accommodations' }}
+                                <span v-if="sh_viewHotel.isInherited" class="ml-auto text-[9px] bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded">
+                                    {{ lang === 'zh' ? '繼承自 Day ' : 'From Day ' }}{{ sh_viewHotel.sourceDay }}
+                                </span>
+                            </h3>
+                            
+                            <div v-if="sh_viewHotel.isInherited" class="flex flex-col gap-1 cursor-pointer opacity-80 hover:opacity-100 transition-opacity"
+                                 @click="openMap(sh_viewHotel.address)">
+                                <div class="font-bold text-slate-800 text-sm truncate">{{ sh_viewHotel.name }}</div>
+                                <div class="text-[10px] text-gray-500 truncate flex items-center gap-1">
+                                    <i class="ph-fill ph-map-pin text-gray-300"></i> {{ sh_viewHotel.address }}
+                                </div>
+                            </div>
+
+                            <div v-else class="space-y-2">
+                                <input :value="sh_hotelSchedule[selectedDay]?.name" 
+                                       @input="e => sh_updateHotel(selectedDay, 'name', e.target.value)"
+                                       class="w-full bg-white/50 border border-transparent focus:border-blue-200 focus:bg-white rounded-lg px-2 py-1.5 text-xs font-bold text-slate-800 placeholder-gray-300 transition-all outline-none" 
+                                       :placeholder="lang==='zh'?'酒店名稱':'Hotel Name'">
+                                <div class="relative">
+                                    <i class="ph-bold ph-map-pin absolute left-2 top-2 text-gray-300 text-xs"></i>
+                                    <input :value="sh_hotelSchedule[selectedDay]?.address"
+                                           @input="e => sh_updateHotel(selectedDay, 'address', e.target.value)" 
+                                           class="w-full bg-white/50 border border-transparent focus:border-blue-200 focus:bg-white rounded-lg pl-6 pr-2 py-1.5 text-[10px] text-gray-600 placeholder-gray-300 transition-all outline-none font-mono"
+                                           :placeholder="lang==='zh'?'地址 (自動定位)':'Address (Auto Geo)'">
+                                </div>
+                            </div>
+                            
+                            <button v-if="sh_viewHotel.isInherited" 
+                                    @click="sh_updateHotel(selectedDay, 'address', ' ')"
+                                    class="absolute top-2 right-2 text-gray-300 hover:text-[#007AFF] transition-colors">
+                                <i class="ph-bold ph-pencil-simple text-xs"></i>
+                            </button>
+                        </div>
+
                         <div v-for="it in sortedItinerary" :key="it.id"
                           @click="showLocationOnMap(it)"
      
@@ -1378,7 +1417,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260118-14.04');
+        const appVersion = ref('v260118-14.05');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
