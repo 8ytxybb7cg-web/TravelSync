@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v14.02c</title>
+  <title>Travel Sync v14.03</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1368,7 +1368,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260118-14.02c');
+        const appVersion = ref('v260118-14.03');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -2013,6 +2013,57 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         };
 
         // --- 11. Core Logic: Data & Actions ---
+        // [Smart Hotel] Actions
+        async function sh_updateHotel(dayIdx, field, val) {
+            if (!sh_hotelSchedule.value[dayIdx]) sh_hotelSchedule.value[dayIdx] = { name: '', address: '' };
+            sh_hotelSchedule.value[dayIdx][field] = val;
+            
+            // Auto-Geocode if address changed
+            if (field === 'address' && val.length > 5) {
+                try {
+                   const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(val)}&count=1&format=json`);
+                   const data = await res.json();
+                   if (data.results && data.results.length > 0) {
+                       sh_hotelSchedule.value[dayIdx].lat = data.results[0].latitude;
+                       sh_hotelSchedule.value[dayIdx].lng = data.results[0].longitude;
+                   }
+                } catch(e) {}
+            }
+            saveAll();
+        }
+
+        function sh_checkTrigger() {
+            const now = new Date();
+            // 1. Time Check (> 17:00)
+            if (now.getHours() < 17) return; 
+            
+            const hotel = sh_todayHotel.value;
+            if (!hotel || !hotel.lat || !hotel.lng) return;
+
+            // 2. Position Check
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    const lat1 = pos.coords.latitude;
+                    const lon1 = pos.coords.longitude;
+                    const lat2 = hotel.lat;
+                    const lon2 = hotel.lng;
+                    
+                    // Haversine Distance
+                    const R = 6371; // km
+                    const dLat = (lat2 - lat1) * Math.PI / 180;
+                    const dLon = (lon2 - lon1) * Math.PI / 180;
+                    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+                    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                    const d = R * c; // Distance in km
+
+                    // 3. Distance Check (> 0.5km)
+                    if (d > 0.5) {
+                        sh_showPill.value = true;
+                    }
+                }, () => {}, { timeout: 5000, maximumAge: 60000 });
+            }
+        }
         
         // Flight Logic
         function autoToggleFlightCard() {
