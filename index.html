@@ -2470,6 +2470,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
                 const { data } = await supabaseClient.from('trip_data').select('content').eq('id', tripId.value).single();
                 if(data?.content) {
                     const c = data.content;
+                                        if(c.hotels) hotels.value = c.hotels;
                     if(c.settings) { Object.assign(settings, c.settings); Object.assign(editingSettings, settings); }
                     if(c.itinerary) c.itinerary.forEach((d,i) => itinerary[i] = d || []);
                     if(c.preTripNotes) preTripNotes.value = c.preTripNotes;
