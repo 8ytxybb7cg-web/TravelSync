@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v14.06</title>
+  <title>Travel Sync v14.07</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1450,7 +1450,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260118-14.06');
+        const appVersion = ref('v260118-14.07');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1542,6 +1542,152 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         const formatNumber = (n) => Number(n).toLocaleString('en-US', {maximumFractionDigits: 1});
         const showToast = (msg) => { notification.value = msg; setTimeout(()=>notification.value=null, 3000); };
         const scrollToTop = () => { const main = document.querySelector('main'); if(main) main.scrollTo({top: 0, behavior: 'smooth'}); };
+
+        // --- Hotel & Capsule Logic ---
+        const hotelModalOpen = ref(false);
+        const editingHotel = reactive({ name: '', address: '', lat: null, lng: null });
+        let editingHotelDayIdx = -1;
+
+        function openHotelModal(idx) {
+            editingHotelDayIdx = idx;
+            const existing = hotels.value[idx] || { name: '', address: '' };
+            Object.assign(editingHotel, existing);
+            hotelModalOpen.value = true;
+        }
+
+        async function saveHotel() {
+            if (!editingHotel.name) return;
+            
+            // 1. Try Geocoding (Open-Meteo) for Navigation
+            try {
+                if (editingHotel.address) {
+                    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(editingHotel.address)}&count=1&format=json`);
+                    const data = await res.json();
+                    if (data.results && data.results.length > 0) {
+                        editingHotel.lat = data.results[0].latitude;
+                        editingHotel.lng = data.results[0].longitude;
+                    }
+                }
+            } catch (e) { console.error('Geo fail', e); }
+
+            // 2. Save & Propagate to future days (Inheritance logic on save)
+            const days = dayList.value.length;
+            // Ensure array size
+            while(hotels.value.length < days) hotels.value.push(null);
+
+            for (let i = editingHotelDayIdx; i < days; i++) {
+                // We overwrite future days to ensure "Stay" logic
+                hotels.value[i] = { ...editingHotel };
+            }
+            
+            hotelModalOpen.value = false;
+            saveAll();
+        }
+
+        function clearHotelDay() {
+            if (editingHotelDayIdx !== -1 && hotels.value[editingHotelDayIdx]) {
+                hotels.value[editingHotelDayIdx] = null;
+                saveAll();
+            }
+            hotelModalOpen.value = false;
+        }
+        
+        // Navigation / Capsule Logic
+        function getEffectiveHotel() {
+            // 03:00 cutoff logic
+            const now = new Date();
+            let checkDate = new Date();
+            if (now.getHours() < 3) {
+                checkDate.setDate(checkDate.getDate() - 1);
+            }
+            
+            // Find corresponding day index
+            if (!settings.startDate) return null;
+            const start = new Date(settings.startDate);
+            const diff = Math.floor((checkDate - start) / (1000 * 60 * 60 * 24));
+            
+            if (diff < 0) return null; // Pre-trip
+            
+            // Look up hotel (allow looking back for inheritance if current day is empty)
+            // Though our save logic propagates forward, we double check here
+            let target = null;
+            let searchIdx = Math.min(diff, hotels.value.length - 1);
+            
+            while (searchIdx >= 0) {
+                if (hotels.value[searchIdx] && hotels.value[searchIdx].address) {
+                    target = hotels.value[searchIdx];
+                    break;
+                }
+                searchIdx--;
+            }
+            return target;
+        }
+
+        function haversine(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; 
+            const φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180, Δλ = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ1) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function checkCapsuleCondition() {
+            // 1. Reset
+            clearInterval(capsuleInterval);
+            capsuleMode.value = 'weather';
+            capsuleDisplay.value = 'weather';
+            
+            // 2. Time Check (>= 17:00)
+            const h = new Date().getHours();
+            if (h < 17) return;
+
+            // 3. Hotel Check
+            const hotel = getEffectiveHotel();
+            if (!hotel || !hotel.lat) return; // No hotel or no coords
+
+            // 4. GPS Check (One-time)
+            if (!navigator.geolocation) return;
+            navigator.geolocation.getCurrentPosition(pos => {
+                const dist = haversine(pos.coords.latitude, pos.coords.longitude, hotel.lat, hotel.lng);
+                
+                if (dist >= 500) {
+                    // Activate Nav Mode
+                    capsuleMode.value = 'nav';
+                    
+                    // Trigger flash
+                    capsuleFlashing.value = true;
+                    capsuleDisplay.value = 'nav'; // Initial show
+                    setTimeout(() => capsuleFlashing.value = false, 600);
+                    
+                    // Start Rotation Cycle (Weather 6s, Nav 4s)
+                    let step = 0; // 0=Nav(4s), 1=Weather(6s) - Start with Nav for immediate feedback
+                    
+                    // Initial delay to hold "Nav" then switch
+                    setTimeout(() => {
+                         startCapsuleLoop();
+                    }, 4000); 
+                }
+            }, err => { /* Silent fail */ }, { timeout: 5000, maximumAge: 60000 });
+        }
+
+        function startCapsuleLoop() {
+            // Loop: Weather (6s) -> Nav (4s)
+            capsuleDisplay.value = 'weather';
+            
+            capsuleInterval = setInterval(() => {
+                if (capsuleDisplay.value === 'weather') {
+                    capsuleDisplay.value = 'nav';
+                    setTimeout(() => { if(capsuleMode.value === 'nav') capsuleDisplay.value = 'weather'; }, 4000); // Show nav for 4s then back to weather
+                }
+            }, 10000); // Total cycle 10s (6+4)
+        }
+
+        function handleCapsuleClick() {
+            if (capsuleDisplay.value === 'nav' || capsuleMode.value === 'nav') {
+                const h = getEffectiveHotel();
+                if (h) openMap(h.address);
+            }
+        }
 
         // Unified Currency Calculation Helper
         // Calculates the amount in Home Currency (HKD)
