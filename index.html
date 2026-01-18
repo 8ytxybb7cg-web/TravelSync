@@ -2586,6 +2586,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             if(val === '行程' && selectedDay.value === 'prep') nextTick(() => initSortable('sortable-pre-notes', preTripNotes.value));
             if(val === '首頁' && isPreTrip.value) nextTick(() => initSortable('sortable-pre-home', preTripNotes.value));
             if(val === '購物') nextTick(() => initSortable('sortable-shop-page', shoppingList.value));
+                    if (val === '首頁') checkCapsuleCondition(); // Check on switch home
         });
 
         watch(selectedDay, (val) => {
