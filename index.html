@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.93</title>
+  <title>Travel Sync v14.08</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1368,7 +1368,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260118-13.93');
+        const appVersion = ref('v260118-14.08');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1475,6 +1475,14 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         // Translation Dictionary
         const t = (k) => {
             const dict = {
+                'navHome': { zh: '導航回酒店', en: 'Go Home' },
+                'accommodation': { zh: '下塌酒店', en: 'Accommodation' },
+                'addHotel': { zh: '新增當日下塌酒店', en: 'Add Hotel' },
+                'editHotel': { zh: '編輯酒店資訊', en: 'Edit Hotel Info' },
+                'hotelNote': { zh: '設定後將自動套用至之後的日期', en: 'Will apply to this and future dates' },
+                'hotelName': { zh: '酒店名稱', en: 'Hotel Name' },
+                'itineraryHotelCard': { zh: '行程頁酒店卡片', en: 'Itinerary Hotel Card' },
+                'clear': { zh: '清除', en: 'Clear' },
                 'cancel': { zh: '取消', en: 'Cancel' }, 'save': { zh: '儲存', en: 'Save' }, 'delete': { zh: '刪除', en: 'Delete' }, 'done': { zh: '完成', en: 'Done' },
                 'show': { zh: '顯示', en: 'Show' }, 'hide': { zh: '隱藏', en: 'Hide' }, 'homeDataCard': { zh: '首頁資訊卡片', en: 'Home Info Card' },
                 'prepListHeader': { zh: '準備清單', en: 'Preparation List' }, 'quickAddPlaceholder': { zh: '快速新增項目...', en: 'Quick add item...' },
