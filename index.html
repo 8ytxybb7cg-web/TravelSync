@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.86</title>
+  <title>Travel Sync v13.9</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -689,9 +689,9 @@
                                       </div>
                                  </div>
 
-                                              <a v-if="note.linkURL" href="#" @click.prevent.stop="openExternalLink(note.linkURL)" class="flex-shrink-0 text-xs font-semibold text-gray-600 bg-gray-100 border border-gray-200 px-3 py-2 rounded-lg inline-flex items-center gap-1.5 hover:bg-gray-200 transition">
-                                    <i class="ph text-lg" :class="getSocialIcon(note.linkURL)"></i> Open Link
-                                      </a>
+                                        <a v-if="note.linkURL" href="#" @click.prevent.stop="openExternalLink(note.linkURL)" class="flex-shrink-0 text-2xl text-gray-400 hover:text-[#007AFF] transition-colors">
+                                    <i class="ph-fill" :class="getSocialIcon(note.linkURL)"></i>
+                       </a>
                              </div>
                          </div>
                          <button @click.stop="removePreNote(note.id)" class="absolute top-3 right-3 text-gray-400 hover:text-[#FF3B30] 
@@ -1367,7 +1367,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
 
     createApp({
       setup() {
-        const appVersion = ref('v260117-13.86');
+        const appVersion = ref('v260117-13.9');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
                 const isInitialized = ref(false);
