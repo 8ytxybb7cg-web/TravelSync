@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v14.04</title>
+  <title>Travel Sync v14.05</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1357,6 +1357,25 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         </div>
     </div>
 
+    <div v-if="hotelModalOpen" class="modal-backdrop" @click.self="hotelModalOpen=false">
+        <div class="ios-modal-container">
+            <div class="ios-modal-header">{{ t('editHotel') }}</div>
+            <div class="ios-modal-body space-y-3">
+                <div class="text-xs text-gray-400 px-1">{{ t('hotelNote') }}</div>
+                <input v-model="editingHotel.name" class="ios-input font-bold" :placeholder="t('hotelName')">
+                <div class="relative">
+                    <i class="ph ph-map-pin absolute left-3 top-3.5 text-gray-400"></i>
+                    <input v-model="editingHotel.address" class="ios-input pl-10 text-sm" :placeholder="addressPlaceholder">
+                </div>
+            </div>
+            <div class="ios-modal-footer">
+                <button v-if="editingHotel.name" @click="clearHotelDay" class="btn-ios-cancel text-red-500">{{ t('clear') }}</button>
+                <button @click="hotelModalOpen=false" class="btn-ios-cancel">{{ t('cancel') }}</button>
+                <button @click="saveHotel" class="btn-ios-primary">{{ t('save') }}</button>
+            </div>
+        </div>
+    </div>
+
             <div v-if="adminLoginOpen" class="modal-backdrop" @click.self="adminLoginOpen=false">
         <div class="ios-modal-container" style="max-width: 320px;">
             <div class="ios-modal-header">Admin Login</div>
@@ -1431,7 +1450,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260118-14.04');
+        const appVersion = ref('v260118-14.05');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
