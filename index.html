@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.93</title>
+  <title>Travel Sync v13.94</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -13,290 +13,503 @@
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
   <style>
-        :root {
-      --ios-bg: #F2F2F7;
-      /* iOS 26 Style: 降低白底濃度，讓背景透出來 */
-      --ios-card-bg: rgba(255, 255, 255, 0.55);
-      /* 增強邊框亮度，製造切割玻璃感 */
-      --ios-card-border: rgba(255, 255, 255, 0.65);
-      --ios-primary: #007AFF;
-      /* 關鍵：加入 saturate(180%) 讓透視的顏色更鮮豔，增加模糊度 */
-      --glass-blur: blur(40px) saturate(180%);
-      --hkg-navy: #353E53;
-      --hkg-yellow: #E9EB4F;
-      --hkg-red: #BF443B;
-      --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    :root {
+        --ios-bg: #F2F2F7;
+        /* iOS 26: 提高透度，依賴高飽和度濾鏡來呈現質感 */
+        --ios-card-bg: rgba(255, 255, 255, 0.65);
+        --ios-primary: #007AFF;
+        --ios-danger: #FF3B30;
+        
+        /* 核心升級：iOS 26 玻璃參數 */
+        /* 增加 saturate 至 190% 讓透出的顏色極度鮮豔，blur 設為 25px 保持細節隱約可見 */
+        --glass-blur: blur(25px) saturate(190%) contrast(100%);
+        
+        /* 高光切邊專用 Shadow：內陰影模擬 0.5px 邊框 + 頂部光源反射 */
+        --glass-edge: inset 0 0 0 0.5px rgba(255, 255, 255, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.4);
+        
+        /* 擴散陰影：大範圍低濃度 */
+        --glass-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.08);
+
+        --hkg-navy: #353E53;
+        --hkg-yellow: #E9EB4F;
+        --hkg-red: #BF443B;
+        --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
 
     body {
-      background-color: var(--ios-bg);
-      font-family: var(--font-stack);
-      -webkit-font-smoothing: antialiased;
-      margin: 0;
-      color: #000; overflow: hidden; user-select: none;
+        background-color: var(--ios-bg);
+        font-family: var(--font-stack);
+        -webkit-font-smoothing: antialiased;
+        margin: 0;
+        color: #000;
+        overflow: hidden;
+        user-select: none;
+        /* 讓字體在玻璃上更清晰 */
+        text-rendering: optimizeLegibility;
     }
 
-        .bg-fixed-layer { 
-  position: fixed; 
-  inset: 0; 
-  z-index: 0; 
-  pointer-events: none; 
-}
+    .bg-fixed-layer {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+    }
 
-.bg-fixed-layer img { 
-  width: 100%; 
-  height: 100%; 
-  object-fit: cover; 
-  /* 改動 1：移除圖片 blur */
-  filter: none; 
-  /* 改動 2：縮細 scale，避免過度模糊邊緣 */
-  transform: scale(1.05); 
-}
+    .bg-fixed-layer img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: none;
+        transform: scale(1.05);
+    }
 
-.bg-overlay { 
-  position: absolute; 
-  inset: 0; 
-  /* 改動 3：稍微加深遮罩 */
-  background: rgba(242, 242, 247, 0.55); 
-  /* 改動 4：保留但降低 blur */
-  backdrop-filter: blur(4px); 
-}
-    #app { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+    .bg-overlay {
+        position: absolute;
+        inset: 0;
+        /* 降低遮罩濃度，讓背景圖的色彩能透過 saturate 濾鏡爆發出來 */
+        background: rgba(242, 242, 247, 0.4);
+        backdrop-filter: blur(2px);
+    }
+
+    #app {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+    }
 
     main {
         flex: 1;
-        overflow-y: auto; -webkit-overflow-scrolling: touch;
-        padding-bottom: 120px; padding-top: 110px;
-        position: relative; z-index: 10;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 120px;
+        padding-top: 110px;
+        position: relative;
+        z-index: 10;
     }
 
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    
+
+    /* --- iOS 26 Card Style Upgrade --- */
     .ios-card {
-      background: var(--ios-card-bg);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-      /* 複合邊框：外邊框 + 內部微光，增加立體感 */
-      border: 1px solid var(--ios-card-border); border-radius: 24px;
-      box-shadow: 
-        0 8px 32px 0 rgba(31, 38, 135, 0.07),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.3);
-      overflow: hidden;
+        background: var(--ios-card-bg);
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        /* 替換原本的 Border，改用光學切邊 */
+        border: none;
+        box-shadow: var(--glass-shadow), var(--glass-edge);
+        border-radius: 24px;
+        overflow: hidden;
+        transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
 
-        /* List Item Styles */
+    /* List Item - Glass on Glass */
     .ios-list-item {
-      /* 更通透，形成「玻璃上的玻璃」層次感 */
-      background: rgba(255, 255, 255, 0.45);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-radius: 20px;
-      margin-bottom: 8px; 
-      padding: 14px;
-      display: flex;
-      align-items: center; 
-      justify-content: space-between;
-      transition: background 0.2s, transform 0.2s;
-      border: 1px solid rgba(255,255,255,0.5);
-      touch-action: manipulation;
+        background: rgba(255, 255, 255, 0.5); /* 更通透 */
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        /* 使用微弱的白色內描邊 */
+        box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.5);
+        border: none; /* 移除實體邊框 */
+        border-radius: 20px;
+        margin-bottom: 8px;
+        padding: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.2s ease-out;
+        touch-action: manipulation;
     }
-    .ios-list-item:active { background: rgba(255, 255, 255, 0.95); transform: scale(0.98); }
-    .task-done { text-decoration: line-through; color: #8E8E93; opacity: 0.7; }
+
+    .ios-list-item:active {
+        background: rgba(255, 255, 255, 0.85);
+        transform: scale(0.98);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .task-done {
+        text-decoration: line-through;
+        color: #8E8E93;
+        opacity: 0.7;
+    }
 
     /* Action Buttons */
     .action-btn-group {
-        display: flex; align-items: center; gap: 4px; flex-shrink: 0; padding-left: 8px;
-        opacity: 0.6; transition: opacity 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex-shrink: 0;
+        padding-left: 8px;
+        opacity: 0.6;
+        transition: opacity 0.2s;
     }
     .ios-list-item:hover .action-btn-group, .action-btn-group:active { opacity: 1; }
-    .icon-btn { padding: 6px; color: #8E8E93; transition: color 0.2s; border-radius: 50%; }
+    
+    .icon-btn {
+        padding: 6px;
+        color: #8E8E93;
+        transition: all 0.2s;
+        border-radius: 50%;
+    }
     .icon-btn:hover { background: rgba(0,0,0,0.05); }
+    .icon-btn:active { transform: scale(0.9); background: rgba(0,0,0,0.1); }
     .icon-btn.edit:hover { color: var(--ios-primary); }
     .icon-btn.delete:hover { color: var(--ios-danger); }
 
     .ios-input {
-      background: rgba(118, 118, 128, 0.12);
-      border: none; border-radius: 10px;
-      padding: 10px 12px; font-size: 16px; color: #000; width: 100%; box-sizing: border-box;
+        background: rgba(118, 118, 128, 0.12);
+        border: none;
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-size: 16px;
+        color: #000;
+        width: 100%;
+        box-sizing: border-box;
+        transition: background 0.2s;
     }
-    .ios-input:focus { background: rgba(118, 118, 128, 0.2); outline: none; }
+    .ios-input:focus {
+        background: rgba(118, 118, 128, 0.18);
+        outline: none;
+    }
 
-    .modal-backdrop { 
-      background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(5px);
-      z-index: 100; position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px;
+    /* --- Modal Upgrade --- */
+    .modal-backdrop {
+        background: rgba(0, 0, 0, 0.2); /* 降低背景遮罩濃度，依賴模糊 */
+        backdrop-filter: blur(8px);
+        z-index: 100;
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        animation: fadeIn 0.2s ease-out;
     }
+    
     .ios-modal-container {
-      /* 統一使用玻璃變數，保持通透 */
-      background: rgba(255, 255, 255, 0.70);
-      backdrop-filter: blur(50px) saturate(200%);
-      -webkit-backdrop-filter: blur(50px) saturate(200%);
-      border-radius: 36px;
-      display: flex; flex-direction: column; max-height: 90vh; width: 100%; max-width: 400px;
-      /* 更柔和深邃的陰影 */
-      box-shadow: 0 20px 60px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.5);
-      border: 1px solid rgba(255,255,255,0.4);
-/* 修復：強制裁切溢出的子元素背景，解決底部直角突出問題 */
-      overflow: hidden;
+        /* 極致毛玻璃 */
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(50px) saturate(200%);
+        -webkit-backdrop-filter: blur(50px) saturate(200%);
+        border-radius: 36px;
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
+        width: 100%;
+        max-width: 400px;
+        /* 高階陰影與切邊 */
+        box-shadow: 0 40px 80px rgba(0,0,0,0.25), var(--glass-edge);
+        border: none;
+        overflow: hidden;
+        animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .ios-modal-header { padding: 16px; text-align: center; font-weight: 600; font-size: 17px; border-bottom: 0.5px solid rgba(0,0,0,0.1); position: relative;}
-    .ios-modal-body { flex: 1; overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; }
-    .ios-modal-body.calc-body { padding: 16px 16px 8px 16px; overflow-y: hidden; display: flex; flex-direction: column; }
     
-    .ios-modal-footer { padding: 16px 20px; border-top: 0.5px solid rgba(0,0,0,0.1); display: flex; gap: 12px; background: rgba(255,255,255,0.5); }
-    
-    .btn-ios-cancel { flex: 1; height: 44px; border-radius: 12px; background: rgba(118, 118, 128, 0.12); color: #000; font-weight: 600; }
-    .btn-ios-primary { flex: 1; height: 44px; border-radius: 12px; background: var(--ios-primary); color: white; font-weight: 600; box-shadow: 0 0 15px rgba(0, 122, 255, 0.4); }
+    @keyframes modalSlideUp {
+        from { transform: translateY(100px) scale(0.95); opacity: 0; }
+        to { transform: translateY(0) scale(1); opacity: 1; }
+    }
 
-    .iphone-dock {
-      background: rgba(255, 255, 255, 0.65);
-      backdrop-filter: blur(40px) saturate(180%);
-      -webkit-backdrop-filter: blur(40px) saturate(180%);
-      border-radius: 40px; padding: 12px 24px; 
-      border: 1px solid rgba(255, 255, 255, 0.45);
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-      display: flex; justify-content: space-between; align-items: flex-end;
-      width: 100%; max-width: 360px;
-      margin: 0 auto;
+    .ios-modal-header {
+        padding: 18px;
+        text-align: center;
+        font-weight: 700;
+        font-size: 17px;
+        /* 微妙的分隔線 */
+        border-bottom: 0.5px solid rgba(0,0,0,0.08);
+        position: relative;
+        color: #1D1D1F;
     }
-    
-    .animate-fade-in { animation: fadeIn 0.3s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    .ios-modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px 20px;
+        -webkit-overflow-scrolling: touch;
+    }
+    .ios-modal-body.calc-body {
+        padding: 16px 16px 8px 16px;
+        overflow-y: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .ios-modal-footer {
+        padding: 16px 20px;
+        border-top: 0.5px solid rgba(0,0,0,0.08);
+        display: flex;
+        gap: 12px;
+        background: rgba(255,255,255,0.4);
+    }
+
+    .btn-ios-cancel {
+        flex: 1;
+        height: 50px;
+        border-radius: 14px;
+        background: rgba(118, 118, 128, 0.12);
+        color: #000;
+        font-weight: 600;
+        font-size: 16px;
+        border: none;
+        transition: all 0.2s;
+    }
+    .btn-ios-cancel:active {
+        background: rgba(118, 118, 128, 0.2);
+        transform: scale(0.98);
+    }
+
+    /* 物理感按鈕：高光 + 內發光 */
+    .btn-ios-primary {
+        flex: 1;
+        height: 50px;
+        border-radius: 14px;
+        background: var(--ios-primary);
+        color: white;
+        font-weight: 600;
+        font-size: 16px;
+        border: none;
+        /* 柔軟的擴散光暈 */
+        box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    /* 點擊時的物理反饋 */
+    .btn-ios-primary:active {
+        transform: scale(0.96);
+        filter: brightness(1.15); /* 點擊變亮 */
+        box-shadow: 0 2px 8px rgba(0, 122, 255, 0.5);
+    }
+
+    /* --- Dock Refined --- */
+    .iphone-dock {
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(40px) saturate(180%);
+        -webkit-backdrop-filter: blur(40px) saturate(180%);
+        border-radius: 40px;
+        padding: 12px 24px;
+        /* Dock 特有的切邊與浮起感 */
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), var(--glass-edge);
+        border: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        width: 100%;
+        max-width: 360px;
+        margin: 0 auto;
+    }
+
+    .animate-fade-in { animation: fadeIn 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 
     .toast-notification {
-        position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
-        background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
-        color: white; padding: 10px 20px; border-radius: 50px;
-        font-size: 14px; font-weight: 600; z-index: 200;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        display: flex; align-items: center; gap: 8px;
+        position: fixed;
+        top: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.85);
+        backdrop-filter: blur(20px) saturate(180%);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 50px;
+        font-size: 14px;
+        font-weight: 600;
+        z-index: 200;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
     }
     .fade-enter-active, .fade-leave-active { transition: opacity 0.3s, transform 0.3s; }
-    .fade-enter-from, .fade-leave-to { opacity: 0; transform: translate(-50%, -10px); }
+    .fade-enter-from, .fade-leave-to { opacity: 0; transform: translate(-50%, -20px); }
 
-        /* 移植 5.09 Tab 樣式 */
-    .day-tab { transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-      background: rgba(255, 255, 255, 0.5); border: 1px solid rgba(255,255,255,0.2); }
-    .day-tab.active { background: rgba(255, 255, 255, 0.9);
-      border-color: rgba(255,255,255,0.5); box-shadow: 0 4px 15px rgba(0,0,0,0.05); transform: translateY(-2px); }
-    
-    /* 修正 Input 樣式以適應快速新增欄 */
+    /* Tabs Upgrade */
+    .day-tab {
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        background: rgba(255, 255, 255, 0.45);
+        border: none;
+        box-shadow: inset 0 0 0 0.5px rgba(255,255,255,0.4);
+    }
+    .day-tab.active {
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08), inset 0 0 0 0.5px white;
+        transform: translateY(-2px);
+    }
+
     .ios-input-bar {
-      background: rgba(118, 118, 128, 0.12);
-      border: none; border-radius: 12px; padding: 12px 16px;
-      font-size: 17px; color: #000; width: 100%; box-sizing: border-box;
-      transition: background 0.2s;
+        background: rgba(118, 118, 128, 0.12);
+        border: none;
+        border-radius: 14px;
+        padding: 12px 16px;
+        font-size: 17px;
+        color: #000;
+        width: 100%;
+        box-sizing: border-box;
+        transition: background 0.2s;
     }
     .ios-input-bar:focus { background: rgba(118, 118, 128, 0.2); outline: none; }
-    
-    .hkg-header { background: var(--hkg-navy); color: white; }
-    .hkg-yellow-text { color: var(--hkg-yellow); }
-    .hkg-footer { background: var(--hkg-red); color: white; }
-    .flight-tab { transition: all 0.2s; }
-    .flight-tab.active { background: rgba(255,255,255,0.2); font-weight: bold; border: 1px solid rgba(255,255,255,0.3); }
 
+    .hkg-header { background: var(--hkg-navy); color: white; }
+    .hkg-yellow-text { color: var(--hkg-yellow); text-shadow: 0 0 10px rgba(233, 235, 79, 0.4); }
+    .hkg-footer { background: var(--hkg-red); color: white; }
+
+    .flight-tab { transition: all 0.2s; }
+    .flight-tab.active {
+        background: rgba(255,255,255,0.25);
+        font-weight: bold;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.3);
+    }
+
+    /* Dark Glass - Enhanced Depth */
     .ios-card-dark-glass {
-      background: rgba(20, 20, 24, 0.75);
-      backdrop-filter: blur(50px) saturate(150%);
-      -webkit-backdrop-filter: blur(50px) saturate(150%);
-      /* 稍微調亮邊框，增加深色玻璃的邊緣反光 */
-      border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 28px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); color: white; position: relative; overflow: hidden;
+        background: rgba(20, 20, 24, 0.7);
+        backdrop-filter: blur(50px) saturate(180%);
+        -webkit-backdrop-filter: blur(50px) saturate(180%);
+        /* 深色模式下的切邊要更亮一點 */
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 0 0.5px rgba(255, 255, 255, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+        border: none;
+        border-radius: 28px;
+        color: white;
+        position: relative;
+        overflow: hidden;
     }
     .dark-glass-gradient {
-        position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-        background: radial-gradient(circle at 80% 20%, rgba(10, 132, 255, 0.25), transparent 60%); pointer-events: none; z-index: 0;
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 80% 20%, rgba(10, 132, 255, 0.3), transparent 50%);
+        pointer-events: none;
+        z-index: 0;
+        mix-blend-mode: screen;
     }
-    .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; flex: 1; margin-top: 8px; }
-    .calc-btn { border-radius: 10px; background: white; font-size: 20px; font-weight: 500; color: #333; height: 100%; min-height: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-    .calc-btn:active { background: #E5E5EA; }
-    .calc-btn.op { background: #FF9500; color: white; font-weight: 600; }
-    .calc-btn.top-op { background: #D1D1D6; color: black; }
-        .calc-btn.done-btn { background: var(--ios-primary); color: white; font-size: 17px; font-weight: 600; }
 
-    /* 新增懸浮按鈕樣式 */
-    .floating-add-btn {
-        position: fixed; bottom: 100px; right: 20px;
-        width: 56px; height: 56px; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 40;
-        transition: all 0.2s; color: white;
-        backdrop-filter: blur(5px);
+    .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex: 1; margin-top: 12px; }
+    .calc-btn {
+        border-radius: 14px;
+        background: rgba(255,255,255,0.9);
+        font-size: 22px;
+        font-weight: 500;
+        color: #333;
+        height: 100%;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        border: none;
     }
-    .floating-add-btn:active, .floating-add-btn:hover { transform: scale(1.05); filter: brightness(1.1); }
+    .calc-btn:active { background: #E5E5EA; transform: scale(0.95); }
+    .calc-btn.op { background: #FF9500; color: white; font-weight: 600; }
+    .calc-btn.op:active { background: #D67E00; }
+    .calc-btn.top-op { background: #D1D1D6; color: black; }
+    .calc-btn.done-btn { background: var(--ios-primary); color: white; font-size: 17px; font-weight: 600; }
+
+    /* Floating Add Button with Glow */
+    .floating-add-btn {
+        position: fixed;
+        bottom: 100px;
+        right: 20px;
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.3);
+        z-index: 40;
+        transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        color: white;
+        backdrop-filter: blur(5px);
+        border: none;
+    }
+    .floating-add-btn:active { transform: scale(0.9); filter: brightness(0.9); }
+    .floating-add-btn:hover { transform: scale(1.05) translateY(-2px); filter: brightness(1.1); }
     .floating-add-btn i { font-size: 28px; }
 
-    /* Swipe Boundary Bounce Animation */
     @keyframes bounce-limit-left { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-30px); } }
-        @keyframes bounce-limit-right { 0%, 100% { transform: translateX(0);
-} 50% { transform: translateX(30px); } }
-    .bounce-left { animation: bounce-limit-left 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
-}
-    .bounce-right { animation: bounce-limit-right 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
-}
+    @keyframes bounce-limit-right { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(30px); } }
+    .bounce-left { animation: bounce-limit-left 0.3s cubic-bezier(0.25, 0.8, 0.5, 1); }
+    .bounce-right { animation: bounce-limit-right 0.3s cubic-bezier(0.25, 0.8, 0.5, 1); }
 
-    /* --- Intro Loading Layer (Sketch Style) --- */
+    /* --- Intro Loading Layer (Sketch Style Preserved) --- */
     .intro-layer {
-        position: fixed; inset: 0; z-index: 9999;
-        background: #F2F2F7; /* 配合 iOS 背景色 */
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        transition: opacity 0.2s ease-out;
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: #F2F2F7;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.3s ease-out;
     }
     .intro-layer.fade-out { opacity: 0; pointer-events: none; }
     
-        .sketch-box {
+    .sketch-box {
         width: 280px;
         max-width: 80%;
-        display: flex; flex-direction: column; align-items: center; gap: 20px;
-        /* 修正：移除旋轉，確保進度條水平 */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
         transform: none;
     }
-
     .sketch-track {
-        width: 100%; height: 24px;
+        width: 100%;
+        height: 24px;
         background: white;
-        /* 手繪不規則邊框技巧 */
         border: 2px solid #353E53;
         border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
         padding: 3px;
         position: relative;
         box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
     }
-
     .sketch-fill {
         height: 100%;
         background: #353E53;
-        /* 內部填充也要稍微不規則 */
         border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
         width: 0%;
         transition: width 0.3s ease-out;
         position: relative;
     }
-    
-    /* 填充條上的紋理 (鉛筆塗抹感) */
     .sketch-fill::after {
-        content: ''; position: absolute; inset: 0;
-        background: repeating-linear-gradient(
-            45deg,
-            transparent,
-            transparent 2px,
-            rgba(255,255,255,0.1) 2px,
-            rgba(255,255,255,0.1) 4px
-        );
+        content: '';
+        position: absolute; inset: 0;
+        background: repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px);
     }
-
     .sketch-text {
-        font-weight: 700; color: #353E53; font-size: 15px;
-        text-align: center; letter-spacing: 0.5px;
+        font-weight: 700;
+        color: #353E53;
+        font-size: 15px;
+        text-align: center;
+        letter-spacing: 0.5px;
         min-height: 24px;
-        display: flex; align-items: center; gap: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
-
-    /* 簡單的圖示彈跳動畫 */
     .icon-bounce { animation: icon-bounce 1s infinite alternate ease-in-out; }
     @keyframes icon-bounce { from { transform: translateY(0); } to { transform: translateY(-3px); } }
 
-  </style>
+    /* Vibrancy Text Utilities */
+    /* 讓副標題與玻璃融合 */
+    h1 span.opacity-80, .text-gray-400, .text-gray-500 {
+        mix-blend-mode: plus-darker; /* 在淺色背景上增加對比 */
+    }
+    /* 在深色玻璃上的文字 Vibrancy */
+    .ios-card-dark-glass .text-white\/60,
+    .ios-card-dark-glass .text-white\/40 {
+        mix-blend-mode: plus-lighter;
+    }
+
+</style>
 </head>
 
 <body>
@@ -1368,7 +1581,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260118-13.93');
+        const appVersion = ref('v260118-13.94');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
