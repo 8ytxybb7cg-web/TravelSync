@@ -659,8 +659,8 @@
 
                 <div class="space-y-3" id="sortable-pre-notes">
                      
-                  <div v-for="(note, i) in preTripNotes" :key="note.id" :data-id="note.id"
-                        @click="editPreNote(note)" 
+                                    <div v-for="(note, i) in preTripNotes" :key="note.id" :data-id="note.id"
+                        @click="openPreNoteModal(note)"  
                         class="relative group cursor-pointer">
                      
                      <div class="bg-white/70 backdrop-blur-xl rounded-2xl 
