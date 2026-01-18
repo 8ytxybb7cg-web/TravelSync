@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v14.03b</title>
+  <title>Travel Sync v14.04</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1056,6 +1056,14 @@
                  </div>
              </div>
 
+             <div class="mt-4">
+                 <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('itineraryHotelCard') }}</label>
+                 <div class="bg-gray-200/50 p-1 rounded-xl flex">
+                     <button @click="settings.showHotelCard = true; saveAll()" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all" :class="settings.showHotelCard !== false ? 'bg-white shadow-sm text-black' : 'text-gray-500'">{{ t('show') }}</button>
+                     <button @click="settings.showHotelCard = false; saveAll()" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all" :class="settings.showHotelCard === false ? 'bg-white shadow-sm text-black' : 'text-gray-500'">{{ t('hide') }}</button>
+                 </div>
+             </div>
+
              <div class="flex gap-3 mt-4">
                  <button @click="cancelSettings" class="btn-ios-cancel">{{ t('cancel') }}</button>
                  <button @click="saveSettings" class="btn-ios-primary">{{ t('save') }}</button>
@@ -1423,7 +1431,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260118-14.03b');
+        const appVersion = ref('v260118-14.04');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
