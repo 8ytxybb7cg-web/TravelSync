@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.83</title>
+  <title>Travel Sync v13.84</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1367,7 +1367,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
 
     createApp({
       setup() {
-        const appVersion = ref('v260117-13.83');
+        const appVersion = ref('v260117-13.84');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
                 const isInitialized = ref(false);
@@ -2377,56 +2377,38 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             if(main) main.scrollTo({top: 0, behavior: 'smooth'});
         }
 
-                function addPreNote() { 
-            editingPreNote.id = null;
-            editingPreNote.name = ''; 
-            editingPreNote.images = [];
-            editingPreNote.imageURL = ''; 
-            editingPreNote.linkURL = '';
-            tempImages.value = []; 
-            uploadQueue.value = [];
-            preNoteModalOpen.value = true;
-        }
-        
-        function addPreNoteDirect() {
-            if(newPreNoteInput.value.trim()) {
-                preTripNotes.value.push({id: generateId(), name: newPreNoteInput.value, isDone: false});
-                newPreNoteInput.value='';
-                saveAll();
-            }
-        }
-        
-        function editPreNote(n) { 
-            Object.assign(editingPreNote, n);
-            if (n.images && Array.isArray(n.images)) {
-                tempImages.value = [...n.images];
-            } else if (n.imageURL) {
-                tempImages.value = [n.imageURL];
+                        function openPreNoteModal(item) {
+            const base = item || {id:null, name:'', isDone:false, imageURL:'', images:[], linkURL:''};
+            Object.assign(editingPreNote, base);
+            
+            if (base.images && Array.isArray(base.images)) {
+                tempImages.value = [...base.images];
+            } else if (base.imageURL) {
+                tempImages.value = [base.imageURL];
             } else {
                 tempImages.value = [];
             }
+            
             uploadQueue.value = [];
             preNoteModalOpen.value = true; 
         }
-        
+
         async function savePreNoteEdit() {
             if(!editingPreNote.name) return;
-            
             const finalImages = await processUploadQueue();
-            
-            const item = { 
+            const itemToSave = { 
                 ...editingPreNote, 
                 images: finalImages,
-                imageURL: finalImages.length > 0 ? finalImages[0] : '',
+                imageURL: finalImages.length > 0 ? finalImages[0] : '', 
                 linkURL: editingPreNote.linkURL || '' 
             };
             
-            if(!item.id) preTripNotes.value.push({ ...item, id: generateId(), isDone: false });
-            else {
-                const idx = preTripNotes.value.findIndex(x=>x.id === item.id);
-                if(idx !== -1) preTripNotes.value[idx] = { ...item };
+            if(!itemToSave.id) preTripNotes.value.push({ ...itemToSave, id: generateId() });
+            else { 
+                const idx = preTripNotes.value.findIndex(x=>x.id===itemToSave.id);
+                if(idx!==-1) preTripNotes.value[idx] = {...itemToSave};
             }
-            preNoteModalOpen.value = false;
+            preNoteModalOpen.value = false; 
             saveAll();
         }
 
@@ -2434,16 +2416,14 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             if(!confirm('Delete this task?')) return;
             const item = preTripNotes.value.find(x => x.id === id);
             const imgs = item.images || (item.imageURL ? [item.imageURL] : []);
-            
             for (const url of imgs) {
-                 if (url && url.includes('/uploads/')) {
+                if (url && url.includes('/uploads/')) {
                     try {
                         const urlPath = url.split('/uploads/')[1];
                         if (urlPath) await supabaseClient.storage.from('uploads').remove([urlPath]);
                     } catch (e) {}
                 }
             }
-            
             preTripNotes.value = preTripNotes.value.filter(x=>x.id!==id);
             saveAll();
         }
