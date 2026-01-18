@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.93</title>
+  <title>Travel Sync v14.0</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1368,7 +1368,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260118-13.93');
+        const appVersion = ref('v260118-14.0');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1400,6 +1400,37 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         });
 
         // --- 2. Data Models ---
+        // [Smart Hotel] Data Store
+        const sh_hotelSchedule = ref([]); // Array of { name, address, lat, lng }
+        // [Smart Hotel] Computed: Current View's Hotel (with inheritance)
+        const sh_viewHotel = computed(() => {
+            if (typeof selectedDay.value === 'string') return null; // 'prep' case
+            let ptr = selectedDay.value;
+            // Backtrack to find last set hotel
+            while (ptr >= 0) {
+                const h = sh_hotelSchedule.value[ptr];
+                if (h && h.address && h.address.trim() !== '') {
+                    return { ...h, isInherited: ptr !== selectedDay.value, sourceDay: ptr + 1 };
+                }
+                ptr--;
+            }
+            return { name: '', address: '', isInherited: false };
+        });
+        // [Smart Hotel] Computed: Today's Actual Hotel (for Global Trigger)
+        const sh_todayHotel = computed(() => {
+            const idx = currentTripDayIndex.value;
+            if (idx === -1) return null;
+            let ptr = idx;
+            while (ptr >= 0) {
+                const h = sh_hotelSchedule.value[ptr];
+                if (h && h.address && h.address.trim() !== '') return h;
+                ptr--;
+            }
+            return null;
+        });
+        // [Smart Hotel] Global Trigger State
+        const sh_showPill = ref(false);
+
         const settings = reactive({
             route: 'HKG ✈️ KIX', startDate: '2026-03-22', endDate: '2026-03-27',
             localCurrency: 'TWD', homeCurrency: 'HKD', weatherLoc: '台北', weatherLocEn: 'Taipei',
