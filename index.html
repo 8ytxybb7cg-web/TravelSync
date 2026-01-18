@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v14.03</title>
+  <title>Travel Sync v14.03b</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -214,7 +214,7 @@
     .calc-btn.top-op { background: #D1D1D6; color: black; }
         .calc-btn.done-btn { background: var(--ios-primary); color: white; font-size: 17px; font-weight: 600; }
 
-        /* Dynamic Hotel Capsule */
+    /* Dynamic Hotel Capsule */
     .dynamic-island-capsule {
         position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
         background: black; color: white; border-radius: 20px;
@@ -342,6 +342,20 @@
     </div>
 
         <header @click="scrollToTop" class="cursor-pointer fixed top-0 left-0 right-0 z-50 pt-8 pb-3 px-6 flex justify-between items-end bg-white/10 backdrop-blur-xl border-b border-white/10 transition-all duration-300">
+               <div v-if="currentTab === '首頁'" class="dynamic-island-capsule" 
+           :class="{'capsule-flash': capsuleFlashing}"
+           @click="handleCapsuleClick">
+           
+           <div v-if="capsuleDisplay === 'weather'" class="flex items-center gap-1.5 animate-fade-in">
+               <i :class="weatherIconClass" class="text-sm text-[#FFCC00]"></i>
+               <span>{{ weather.temp }}°</span>
+           </div>
+           
+           <div v-else class="flex items-center gap-1.5 animate-fade-in text-[#34C759]">
+               <i class="ph-fill ph-house-line"></i>
+               <span>{{ t('navHome') }}</span>
+           </div>
+      </div>
 
       <div>
         <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5 font-mono flex items-center gap-2">
@@ -363,21 +377,6 @@
             {{ lang === 'zh' ? 'EN' : '繁' }}
          </button>
       </div>
-            <div v-if="currentTab === '首頁'" class="dynamic-island-capsule" 
-           :class="{'capsule-flash': capsuleFlashing}"
-           @click="handleCapsuleClick">
-           
-           <div v-if="capsuleDisplay === 'weather'" class="flex items-center gap-1.5 animate-fade-in">
-               <i :class="weatherIconClass" class="text-sm text-[#FFCC00]"></i>
-               <span>{{ weather.temp }}°</span>
-           </div>
-           
-           <div v-else class="flex items-center gap-1.5 animate-fade-in text-[#34C759]">
-               <i class="ph-fill ph-house-line"></i>
-               <span>{{ t('navHome') }}</span>
-           </div>
-      </div>
-
     </header>
 
     <transition name="fade">
@@ -744,7 +743,7 @@
            </div>
 
              <div v-else>
-              <div v-if="settings.showHotelCard !== false && hotels[selectedDay]" 
+                               <div v-if="settings.showHotelCard !== false && hotels[selectedDay]" 
                       class="ios-card p-4 mb-4 flex justify-between items-center bg-indigo-50/50 border-indigo-100/50 cursor-pointer group transition-all hover:bg-indigo-50"
                       @click="openHotelModal(selectedDay)">
                     <div class="flex items-center gap-3 overflow-hidden">
@@ -766,6 +765,7 @@
                      <i class="ph-bold ph-plus"></i>
                      <span class="text-xs font-bold">{{ t('addHotel') }}</span>
                  </div>
+
                  <div class="relative pl-4 border-l-2 border-gray-300/50 ml-3 space-y-3 py-2">
                         <div v-for="it in sortedItinerary" :key="it.id"
                           @click="showLocationOnMap(it)"
@@ -1423,7 +1423,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260118-14.03');
+        const appVersion = ref('v260118-14.03b');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
