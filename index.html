@@ -2604,6 +2604,8 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         watch(isAnyModalOpen, (isOpen) => { if(isOpen) removeSwipeListener(); else if(currentTab.value === '行程') addSwipeListener(); });
 
         return {
+                      hotels, hotelModalOpen, editingHotel, openHotelModal, saveHotel, clearHotelDay,
+            capsuleDisplay, capsuleFlashing, handleCapsuleClick, weather,
             introVisible, introFading, introProgress, introText, introStep,
             swipeContainer, swipeContentVisual, visualSwipeStyle, bounceClass,
             appVersion, currentTab, syncState, syncStatusText, lang, t, toggleLang, showToast, notification,
