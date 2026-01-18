@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v14.08</title>
+  <title>Travel Sync v14.09</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1451,7 +1451,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260118-14.08');
+        const appVersion = ref('v260118-14.09');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -2472,6 +2472,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
                 const { data } = await supabaseClient.from('trip_data').select('content').eq('id', tripId.value).single();
                 if(data?.content) {
                     const c = data.content;
+                    if(c.hotels) hotels.value = c.hotels;
                     if(c.settings) { Object.assign(settings, c.settings); Object.assign(editingSettings, settings); }
                     if(c.itinerary) c.itinerary.forEach((d,i) => itinerary[i] = d || []);
                     if(c.preTripNotes) preTripNotes.value = c.preTripNotes;
