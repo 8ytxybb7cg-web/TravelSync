@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v14.4</title>
+  <title>Travel Sync v14.5</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -363,7 +363,7 @@
       <div>
 
         <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5 font-mono flex items-center gap-2">
-           TRAVEL SYNC v14.4
+           TRAVEL SYNC v14.5
             <div class="flex items-center gap-1.5">
                <div class="w-2 h-2 rounded-full transition-all duration-300"
                     :class="{'bg-[#34C759]': syncState === 'synced', 'bg-[#FFCC00] animate-pulse': syncState === 'syncing', 'bg-[#FF3B30]': syncState === 'error', 'bg-gray-400': syncState === 'offline'}"></div>
@@ -1456,7 +1456,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260119-14.4');
+        const appVersion = ref('v260119-14.5');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1500,6 +1500,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         const capsuleDisplay = ref('weather');
         const capsuleFlashing = ref(false);
         let capsuleInterval = null;
+        const lastGpsCheckTime = ref(0);
 
         const editingSettings = reactive({});
         const itinerary = reactive([[], [], [], [], [], []]);
@@ -1600,34 +1601,32 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         }
         
         // Navigation / Capsule Logic
-        function getEffectiveHotel() {
-            // 03:00 cutoff logic
+                function getEffectiveHotel() {
+            // 每日定義：03:01 am ～ 翌日 03:00 am
             const now = new Date();
-            let checkDate = new Date();
-            if (now.getHours() < 3) {
+            const checkDate = new Date();
+            
+            // 若當前時間為 00:00 ~ 03:00 (含 03:00:59)，視為前一日
+            // h < 3 代表 0, 1, 2 點；(h === 3 && m === 0) 代表 03:00 整
+            if (now.getHours() < 3 || (now.getHours() === 3 && now.getMinutes() === 0)) {
                 checkDate.setDate(checkDate.getDate() - 1);
             }
             
-            // Find corresponding day index
+            // 計算當日 Index
             if (!settings.startDate) return null;
             const start = new Date(settings.startDate);
+            // 使用 checkDate 確保 03:01 前仍算前一天
             const diff = Math.floor((checkDate - start) / (1000 * 60 * 60 * 24));
             
-            if (diff < 0) return null; // Pre-trip
-            
-            // Look up hotel (allow looking back for inheritance if current day is empty)
-            // Though our save logic propagates forward, we double check here
-            let target = null;
-            let searchIdx = Math.min(diff, hotels.value.length - 1);
-            
-            while (searchIdx >= 0) {
-                if (hotels.value[searchIdx] && hotels.value[searchIdx].address) {
-                    target = hotels.value[searchIdx];
-                    break;
+            // 只讀取「當日」的酒店資料，不向後搜尋，也不受 showHotelCard 影響
+            if (diff >= 0 && diff < hotels.value.length) {
+                const target = hotels.value[diff];
+                // 必須有座標才視為有效資料
+                if (target && target.lat && target.lng) {
+                    return target;
                 }
-                searchIdx--;
             }
-            return target;
+            return null;
         }
 
         function haversine(lat1, lon1, lat2, lon2) {
@@ -1638,55 +1637,75 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        function checkCapsuleCondition() {
-            // 1. Reset
-            clearInterval(capsuleInterval);
-            capsuleMode.value = 'weather';
-            capsuleDisplay.value = 'weather';
-            
-            // 2. Time Check (>= 17:00)
-            const h = new Date().getHours();
-            if (h < 17) return;
-
-            // 3. Hotel Check
-            const hotel = getEffectiveHotel();
-            if (!hotel || !hotel.lat) return; // No hotel or no coords
-
-            // 4. GPS Check (One-time)
-            if (!navigator.geolocation) return;
-            navigator.geolocation.getCurrentPosition(pos => {
-                const dist = haversine(pos.coords.latitude, pos.coords.longitude, hotel.lat, hotel.lng);
-                
-                if (dist >= 500) {
-                    // Activate Nav Mode
-                    capsuleMode.value = 'nav';
-                    
-                    // Trigger flash
-                    capsuleFlashing.value = true;
-                    capsuleDisplay.value = 'nav'; // Initial show
-                    setTimeout(() => capsuleFlashing.value = false, 600);
-                    
-                    // Start Rotation Cycle (Weather 6s, Nav 4s)
-                    let step = 0; // 0=Nav(4s), 1=Weather(6s) - Start with Nav for immediate feedback
-                    
-                    // Initial delay to hold "Nav" then switch
-                    setTimeout(() => {
-                         startCapsuleLoop();
-                    }, 4000); 
+                function checkCapsuleCondition() {
+            // A. 時間門檻：17:00 前不進行檢查
+            const now = new Date();
+            if (now.getHours() < 17) {
+                // 確保強制重置為天氣模式
+                if (capsuleMode.value === 'nav') {
+                    clearInterval(capsuleInterval);
+                    capsuleMode.value = 'weather';
+                    capsuleDisplay.value = 'weather';
                 }
-            }, err => { /* Silent fail */ }, { timeout: 5000, maximumAge: 60000 });
+                return;
+            }
+
+            // B & C. GPS 節流：距離上次定位需 >= 10分鐘 (600,000ms)
+            if (Date.now() - lastGpsCheckTime.value < 600000) return;
+
+            // 檢查是否有當日酒店資料
+            const hotel = getEffectiveHotel();
+            if (!hotel) return;
+
+            if (!navigator.geolocation) return;
+
+            // 觸發 GPS 定位
+            navigator.geolocation.getCurrentPosition(pos => {
+                // 定位成功，更新最後定位時間
+                lastGpsCheckTime.value = Date.now();
+
+                const dist = haversine(pos.coords.latitude, pos.coords.longitude, hotel.lat, hotel.lng);
+
+                // D. 距離判斷
+                if (dist > 500) {
+                    // 若尚未進入導航模式，則啟動
+                    if (capsuleMode.value !== 'nav') {
+                        capsuleMode.value = 'nav';
+                        capsuleFlashing.value = true;
+                        setTimeout(() => capsuleFlashing.value = false, 600);
+                        startCapsuleLoop();
+                    }
+                } else {
+                    // 距離 <= 500m，立即退出導航提示
+                    if (capsuleMode.value === 'nav') {
+                        clearInterval(capsuleInterval);
+                        capsuleMode.value = 'weather';
+                        capsuleDisplay.value = 'weather';
+                    }
+                }
+            }, err => {
+                console.error('GPS Error', err);
+            }, { timeout: 5000, maximumAge: 60000 });
         }
 
         function startCapsuleLoop() {
-            // Loop: Weather (6s) -> Nav (4s)
-            capsuleDisplay.value = 'weather';
+            clearInterval(capsuleInterval);
             
+            // 立即顯示「返回酒店」(4秒)
+            capsuleDisplay.value = 'nav';
+            setTimeout(() => {
+                if (capsuleMode.value === 'nav') capsuleDisplay.value = 'weather';
+            }, 4000);
+
+            // 之後每 10 秒循環一次 (4s Nav + 6s Weather)
             capsuleInterval = setInterval(() => {
-                if (capsuleDisplay.value === 'weather') {
-                    capsuleDisplay.value = 'nav';
-                    setTimeout(() => { if(capsuleMode.value === 'nav') capsuleDisplay.value = 'weather'; }, 4000); // Show nav for 4s then back to weather
-                }
-            }, 10000); // Total cycle 10s (6+4)
+                if (capsuleMode.value !== 'nav') return;
+                
+                capsuleDisplay.value = 'nav';
+                setTimeout(() => {
+                     if (capsuleMode.value === 'nav') capsuleDisplay.value = 'weather';
+                }, 4000);
+            }, 10000);
         }
 
         function handleCapsuleClick() {
@@ -2583,9 +2602,13 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         }
 
         // --- 13. Lifecycle Hooks ---
-        onMounted(() => {
+                onMounted(() => {
             runIntroSequence();
             Object.assign(editingSettings, settings);
+            
+            // 加入全域互動監聽，觸發 GPS 檢查 (受 checkCapsuleCondition 內的節流保護)
+            document.addEventListener('click', checkCapsuleCondition);
+
             initApp().then(() => {
                 introAppReady.value = true;
                 fetchRate(); fetchWeather();
@@ -2595,7 +2618,9 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
                     initSortable('sortable-info', infoList.value);
                     if(currentTab.value === '購物') initSortable('sortable-shop-page', shoppingList.value);
                     if(currentTab.value === '行程' && selectedDay.value === 'prep') initSortable('sortable-pre-notes', preTripNotes.value);
-                                checkCapsuleCondition(); // Check on app launch
+                    
+                    // 用戶剛打開 App 時觸發一次
+                    checkCapsuleCondition();
                 });
             });
             setInterval(fetchRate, 600000);
