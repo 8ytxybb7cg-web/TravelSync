@@ -1773,7 +1773,24 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         const getCategoryIcon = (c) => { const f = expenseCats.find(x=>x.name===c); return f ? f.icon : 'ph-star'; };
 
         // --- 6. Computed Logic ---
-        const syncStatusText = computed(() => ({ 'synced': '已同步', 'saving': '儲存中...', 'loading': '載入中...', 'error': '錯誤' }[syncState.value] || ''));
+        const syncStatusText = computed(() => {
+  const zh = {
+    synced: '已同步',
+    saving: '儲存中...',
+    loading: '載入中...',
+    error: '錯誤'
+  };
+
+  const en = {
+    synced: 'Synced',
+    saving: 'Saving...',
+    loading: 'Loading...',
+    error: 'Error'
+  };
+
+  const map = lang.value === 'zh' ? zh : en;
+  return map[syncState.value] || '';
+});
         
         const dayList = computed(() => {
             if(!settings.startDate || !settings.endDate) return [];
