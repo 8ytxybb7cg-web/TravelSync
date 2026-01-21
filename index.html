@@ -1427,7 +1427,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
                 await supabase.from('active_sessions').delete().lt('last_seen_at', cleanupThreshold);
 
                 // 3. Count Active
-                const { count } = await supabase.from('active_sessions')
+                const { count } = await supabaseClient.from('active_sessions')
                     .select('*', { count: 'exact', head: true })
                     .gt('last_seen_at', activeThreshold);
                 
