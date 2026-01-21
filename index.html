@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.95</title>
+  <title>Travel Sync v14.02</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1382,13 +1382,52 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
 
     createApp({
       setup() {
-        // --- 1. App State & Core Config ---
-        const appVersion = ref('v260121-13.95');
+                // --- 1. App State & Core Config ---
+        const appVersion = ref('v260121-14.02'); // Bump version
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
         const notification = ref(null);
         const lang = ref(localStorage.getItem('app_lang') || 'zh');
+
+        // Feature: Online Presence
+        const sessionId = ref(sessionStorage.getItem('ts_sid') || generateId());
+        if (!sessionStorage.getItem('ts_sid')) sessionStorage.setItem('ts_sid', sessionId.value);
+        const onlineCount = ref(1);
+        const showOnlineInfo = ref(false);
+
+        const updateHeartbeat = async () => {
+            if (document.visibilityState !== 'visible') return;
+            const now = new Date();
+            const activeThreshold = new Date(now.getTime() - 90000).toISOString(); // 90s
+            const cleanupThreshold = new Date(now.getTime() - 120000).toISOString(); // 2m
+
+            try {
+                // 1. Upsert Self
+                await supabaseClient.from('active_sessions').upsert({ 
+                    id: sessionId.value, 
+                    last_seen_at: now.toISOString(),
+                    user_agent: navigator.userAgent 
+                });
+                
+                // 2. Simple Synchronous Cleanup (Delete records older than 2 mins)
+                // This keeps the table size extremely small without background jobs.
+                await supabaseClient.from('active_sessions').delete().lt('last_seen_at', cleanupThreshold);
+
+                // 3. Count Active (seen within last 90s)
+                const { count } = await supabaseClient.from('active_sessions')
+                    .select('*', { count: 'exact', head: true })
+                    .gt('last_seen_at', activeThreshold);
+                
+                if (count) onlineCount.value = count;
+            } catch (e) { console.error('Presence error', e); }
+        };
+
+        const toggleOnlineInfo = () => {
+            showOnlineInfo.value = !showOnlineInfo.value;
+            if (showOnlineInfo.value) setTimeout(() => showOnlineInfo.value = false, 3000);
+        };
+
         
         // Admin State
         const tripId = ref(null);
