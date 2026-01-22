@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.94</title>
+  <title>Travel Sync v13.95</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -466,7 +466,15 @@
 (settings.localCurrency + ' / ' + settings.homeCurrency) : (settings.homeCurrency + ' / ' + settings.localCurrency) }}
                    </div>
                    <div class="font-bold text-slate-800 tracking-tight leading-none text-[clamp(22px,20cqw,36px)]">{{ displayedRate }}</div>
-                   <div class="text-[9px] text-gray-400 mt-1 font-mono">{{ t('feeIncluded') }} • {{ lastRateUpdateLabel }}</div>
+                                      <div class="text-[9px] text-gray-400 mt-1 font-mono">{{ t('feeIncluded') }} • {{ lastRateUpdateLabel }}</div>
+                   
+                   <div class="mt-1 pt-1 border-t border-gray-200/30">
+                       <div class="relative flex items-center justify-end">
+                           <input type="number" v-model="quickEstAmount" placeholder="0" class="flex-1 min-w-0 bg-transparent text-right font-bold text-slate-800 text-lg p-0 border-none focus:outline-none placeholder-gray-200/50 appearance-none m-0 leading-tight">
+                           <span class="text-[10px] font-bold text-gray-400 ml-1 flex-shrink-0">{{ settings.localCurrency }}</span>
+                       </div>
+                       <div v-if="quickEstAmount !== ''" class="text-right text-xs font-bold text-blue-600 mt-0.5 leading-none">≈ {{ settings.homeCurrency }} {{ quickEstResult }}</div>
+                   </div>
            
     </div>
             </div>
@@ -1368,7 +1376,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260118-13.94');
+        const appVersion = ref('v260118-13.95');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1588,6 +1596,14 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         const displayedRate = computed(() => {
              const r = effectiveRate.value;
              return (rateDisplayMode.value === 1) ? (1 / r).toFixed(5) : r.toFixed(5);
+        });
+        const quickEstAmount = ref('');
+        const quickEstResult = computed(() => {
+             const amt = parseFloat(quickEstAmount.value);
+             if (isNaN(amt)) return '0';
+             const r = parseFloat(displayedRate.value);
+             if (!r) return '0';
+             return formatNumber(rateDisplayMode.value === 0 ? (amt / r) : (amt * r));
         });
 
         const totalExpense = computed(() => {
@@ -2378,7 +2394,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             settings, editingSettings, saveSettings, cancelSettings, headerDateRange, 
             dayList, getDayHeader, itinerary, preTripNotes, shoppingList, expenses, totalExpense, expensesBreakdown, infoList,
             currentFlightView, isFlightMinimized, displayedFlight, openFlightModal, flightModalOpen, newFlight, saveFlight, syncModalToView,
-            rateDisplayMode, toggleRateOrder, displayedRate, lastRateUpdateLabel, weather, weatherIconClass,
+            rateDisplayMode, toggleRateOrder, displayedRate, quickEstAmount, quickEstResult, lastRateUpdateLabel, weather, weatherIconClass,
             selectedDay, selectDay, sortedItinerary, openItineraryModal, itineraryModalOpen, newItineraryItem, saveItineraryItem, removeItineraryItem, quickItinerary, addQuickItinerary,
             preNoteModalOpen, editingPreNote, openPreNoteModal, savePreNoteEdit, removePreNote, togglePreNoteDone,
             shoppingModalOpen, newShoppingItem, openShoppingModal, saveShoppingItem, removeShoppingItem,
