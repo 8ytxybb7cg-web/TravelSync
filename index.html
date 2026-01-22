@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.95</title>
+  <title>Travel Sync v13.96</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -452,15 +452,16 @@
         </section>
 
         <div class="grid grid-cols-2 gap-4">
-            <div class="ios-card p-4 relative overflow-hidden group">
-               <div class="flex justify-between items-start mb-2">
+                        <div class="ios-card p-4 relative overflow-hidden group">
+               <div class="absolute inset-0 z-0" @mousedown="captureQuickEstFocus" @touchstart="captureQuickEstFocus" @click="clearQuickEstOnRateCardBg" aria-hidden="true"></div>
+               <div class="relative z-10 flex justify-between items-start mb-2">
                    <div class="flex items-center gap-2">
                        <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-lg"><i class="ph-bold ph-currency-circle-dollar"></i></div>
                        <span class="text-xs font-bold text-gray-500">{{ t('rate') }}</span>
                    </div>
                    <button @click="toggleRateOrder" class="text-gray-400 hover:text-blue-500 p-1"><i class="ph ph-arrows-left-right"></i></button>
                </div>
-               <div class="flex flex-col" style="container-type: inline-size;">
+                              <div class="relative z-10 flex flex-col" style="container-type: inline-size;">
                    <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">
                       {{ rateDisplayMode === 0 ?
 (settings.localCurrency + ' / ' + settings.homeCurrency) : (settings.homeCurrency + ' / ' + settings.localCurrency) }}
@@ -478,7 +479,8 @@
             focus-within:border-blue-500/50
             transition-colors">
 
-        <input
+                <input
+            ref="quickEstInput"
             type="text"
             inputmode="decimal"
             v-model="quickEstAmount"
@@ -1400,7 +1402,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260118-13.95');
+        const appVersion = ref('v260118-13.96');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1617,11 +1619,27 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             return (diffDays >= 0 && diffDays < itinerary.length) ? diffDays : -1;
         });
 
-        const displayedRate = computed(() => {
+                const displayedRate = computed(() => {
              const r = effectiveRate.value;
              return (rateDisplayMode.value === 1) ? (1 / r).toFixed(5) : r.toFixed(5);
         });
-                const quickEstAmount = ref('');
+        const quickEstAmount = ref('');
+        const quickEstInput = ref(null);
+        let quickEstWasFocused = false;
+        const captureQuickEstFocus = () => {
+            const el = quickEstInput.value;
+            quickEstWasFocused = !!el && document.activeElement === el;
+        };
+        const clearQuickEstOnRateCardBg = () => {
+            quickEstAmount.value = '';
+            if (quickEstWasFocused) {
+                nextTick(() => {
+                    const el = quickEstInput.value;
+                    if (el) el.focus();
+                });
+            }
+            quickEstWasFocused = false;
+        };
         const unformatQuickEst = () => { quickEstAmount.value = quickEstAmount.value.replace(/,/g, ''); };
         const formatQuickEst = () => { 
              if(!quickEstAmount.value) return;
@@ -2435,7 +2453,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             settings, editingSettings, saveSettings, cancelSettings, headerDateRange, 
             dayList, getDayHeader, itinerary, preTripNotes, shoppingList, expenses, totalExpense, expensesBreakdown, infoList,
             currentFlightView, isFlightMinimized, displayedFlight, openFlightModal, flightModalOpen, newFlight, saveFlight, syncModalToView,
-            rateDisplayMode, toggleRateOrder, displayedRate, quickEstAmount, quickEstResult, formatQuickEst, unformatQuickEst, lastRateUpdateLabel, weather, weatherIconClass,
+            rateDisplayMode, toggleRateOrder, displayedRate, quickEstAmount, quickEstInput, quickEstResult, formatQuickEst, unformatQuickEst, captureQuickEstFocus, clearQuickEstOnRateCardBg, lastRateUpdateLabel, weather, weatherIconClass,
             selectedDay, selectDay, sortedItinerary, openItineraryModal, itineraryModalOpen, newItineraryItem, saveItineraryItem, removeItineraryItem, quickItinerary, addQuickItinerary,
             preNoteModalOpen, editingPreNote, openPreNoteModal, savePreNoteEdit, removePreNote, togglePreNoteDone,
             shoppingModalOpen, newShoppingItem, openShoppingModal, saveShoppingItem, removeShoppingItem,
