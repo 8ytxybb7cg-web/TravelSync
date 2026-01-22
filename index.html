@@ -478,14 +478,15 @@
             focus-within:border-blue-500/50
             transition-colors">
 
-                <input
+                        <input
             type="text"
             inputmode="decimal"
             v-model="quickEstAmount"
             @focus="unformatQuickEst"
             @blur="formatQuickEst"
             placeholder="0"
-            class="w-auto min-w-[4ch] max-w-[14ch] bg-transparent text-right
+            :style="{ width: (quickEstAmount.length || 1) + 1 + 'ch' }"
+            class="min-w-[4ch] max-w-[15ch] bg-transparent text-right
                    font-bold text-slate-800 text-lg
                    p-0 border-none focus:outline-none
                    placeholder-gray-300/70
