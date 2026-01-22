@@ -469,8 +469,8 @@
                                       <div class="text-[9px] text-gray-400 mt-1 font-mono">{{ t('feeIncluded') }} • {{ lastRateUpdateLabel }}</div>
                    
                    <div class="mt-1 pt-1 border-t border-gray-200/30">
-                       <div class="relative flex items-center justify-end">
-                           <input type="number" v-model="quickEstAmount" placeholder="0" class="flex-1 min-w-0 bg-transparent text-right font-bold text-slate-800 text-lg p-0 border-none focus:outline-none placeholder-gray-200/50 appearance-none m-0 leading-tight">
+                        <div class="relative flex items-center justify-end">
+                           <input type="number" v-model="quickEstAmount" placeholder="0" class="flex-1 min-w-0 bg-transparent text-right font-bold text-slate-800 text-lg p-0 border-b border-gray-500/20 focus:border-blue-500/50 rounded-none focus:outline-none placeholder-gray-200/50 appearance-none m-0 leading-tight transition-colors">
                            <span class="text-[10px] font-bold text-gray-400 ml-1 flex-shrink-0">{{ settings.localCurrency }}</span>
                        </div>
                        <div v-if="quickEstAmount !== ''" class="text-right text-xs font-bold text-blue-600 mt-0.5 leading-none">≈ {{ settings.homeCurrency }} {{ quickEstResult }}</div>
