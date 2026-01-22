@@ -469,8 +469,8 @@
                                       <div class="text-[9px] text-gray-400 mt-1 font-mono">{{ t('feeIncluded') }} • {{ lastRateUpdateLabel }}</div>
                    
                    <div class="mt-1 pt-1 border-t border-gray-200/30">
-                        <div class="relative flex items-center justify-end">
-                           <input type="number" v-model="quickEstAmount" placeholder="0" class="flex-1 min-w-0 bg-transparent text-right font-bold text-slate-800 text-lg p-0 border-b border-gray-500/20 focus:border-blue-500/50 rounded-none focus:outline-none placeholder-gray-200/50 appearance-none m-0 leading-tight transition-colors">
+                          <div class="relative flex items-center justify-end">
+                           <input type="text" inputmode="decimal" v-model="quickEstAmount" @focus="unformatQuickEst" @blur="formatQuickEst" placeholder="0" class="flex-1 min-w-0 bg-transparent text-right font-bold text-slate-800 text-lg p-0 border-b border-gray-500/20 focus:border-blue-500/50 rounded-none focus:outline-none placeholder-gray-200/50 appearance-none m-0 leading-tight transition-colors">
                            <span class="text-[10px] font-bold text-gray-400 ml-1 flex-shrink-0">{{ settings.localCurrency }}</span>
                        </div>
                        <div v-if="quickEstAmount !== ''" class="text-right text-xs font-bold text-blue-600 mt-0.5 leading-none">≈ {{ settings.homeCurrency }} {{ quickEstResult }}</div>
@@ -1597,13 +1597,19 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
              const r = effectiveRate.value;
              return (rateDisplayMode.value === 1) ? (1 / r).toFixed(5) : r.toFixed(5);
         });
-        const quickEstAmount = ref('');
+                const quickEstAmount = ref('');
+        const unformatQuickEst = () => { quickEstAmount.value = quickEstAmount.value.replace(/,/g, ''); };
+        const formatQuickEst = () => { 
+             if(!quickEstAmount.value) return;
+             const n = parseFloat(quickEstAmount.value.replace(/,/g, ''));
+             if(!isNaN(n)) quickEstAmount.value = n.toLocaleString('en-US', {maximumFractionDigits: 10}); 
+        };
         const quickEstResult = computed(() => {
-             const amt = parseFloat(quickEstAmount.value);
+             const amt = parseFloat(quickEstAmount.value.replace(/,/g, ''));
              if (isNaN(amt)) return '0';
              const r = parseFloat(displayedRate.value);
              if (!r) return '0';
-             return formatNumber(rateDisplayMode.value === 0 ? (amt / r) : (amt * r));
+             return formatNumber(rateDisplayMode.value === 0 ? (amt * r) : (amt / r));
         });
 
         const totalExpense = computed(() => {
@@ -2394,7 +2400,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             settings, editingSettings, saveSettings, cancelSettings, headerDateRange, 
             dayList, getDayHeader, itinerary, preTripNotes, shoppingList, expenses, totalExpense, expensesBreakdown, infoList,
             currentFlightView, isFlightMinimized, displayedFlight, openFlightModal, flightModalOpen, newFlight, saveFlight, syncModalToView,
-            rateDisplayMode, toggleRateOrder, displayedRate, quickEstAmount, quickEstResult, lastRateUpdateLabel, weather, weatherIconClass,
+            rateDisplayMode, toggleRateOrder, displayedRate, quickEstAmount, quickEstResult, formatQuickEst, unformatQuickEst, lastRateUpdateLabel, weather, weatherIconClass,
             selectedDay, selectDay, sortedItinerary, openItineraryModal, itineraryModalOpen, newItineraryItem, saveItineraryItem, removeItineraryItem, quickItinerary, addQuickItinerary,
             preNoteModalOpen, editingPreNote, openPreNoteModal, savePreNoteEdit, removePreNote, togglePreNoteDone,
             shoppingModalOpen, newShoppingItem, openShoppingModal, saveShoppingItem, removeShoppingItem,
