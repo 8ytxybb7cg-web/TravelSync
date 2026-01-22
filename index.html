@@ -1605,12 +1605,23 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
              if(!isNaN(n)) quickEstAmount.value = n.toLocaleString('en-US', {maximumFractionDigits: 10}); 
         };
         const quickEstResult = computed(() => {
-             const amt = parseFloat(quickEstAmount.value.replace(/,/g, ''));
-             if (isNaN(amt)) return '0';
-             const r = parseFloat(displayedRate.value);
-             if (!r) return '0';
-             return formatNumber(rateDisplayMode.value === 0 ? (amt * r) : (amt / r));
-        });
+    const amt = parseFloat(quickEstAmount.value.replace(/,/g, ''));
+    if (isNaN(amt)) return '0';
+
+    const r = parseFloat(displayedRate.value);
+    if (!r) return '0';
+
+    // rateDisplayMode:
+    // 0 = Home → Local (1 Home = r Local)
+    // 1 = Local → Home (1 Local = r Home)
+    // rateDisplayMode controls the semantic direction of displayedRate,
+    // NOT just UI presentation.
+    return formatNumber(
+        rateDisplayMode.value === 0
+            ? (amt / r)   // Local → Home
+            : (amt * r)
+    );
+});
 
         const totalExpense = computed(() => {
             let totalHome = 0;
