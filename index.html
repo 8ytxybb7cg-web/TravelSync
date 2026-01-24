@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.97</title>
+  <title>Travel Sync v13.98</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -600,7 +600,7 @@
                 <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">{{ preTripNotes.filter(i=>!i.isDone).length }}</span>
              </div>
              
-             <ul v-if="preTripNotes.filter(i=>!i.isDone).length > 0" class="space-y-2 mt-2 pr-1" :class="{'max-h-[200px] overflow-y-auto': preTripNotes.filter(i=>!i.isDone).length > 5}">
+                          <ul id="sortable-pre-home" v-if="preTripNotes.filter(i=>!i.isDone).length > 0" class="space-y-2 mt-2 pr-1" :class="{'max-h-[200px] overflow-y-auto': preTripNotes.filter(i=>!i.isDone).length > 5}">
                  <li v-for="item in preTripNotes.filter(i=>!i.isDone)" :key="item.id" 
                    @click.stop="jumpToPreNote(item.id)"
                    class="text-xs text-slate-700 border-b border-gray-100 pb-1 last:border-0 flex justify-between items-center hover:bg-black/5 rounded px-1 -mx-1 transition-colors">
@@ -1177,7 +1177,7 @@
                  </div>
             </div>
             <div class="ios-modal-footer">
-                <button v-if="newExpense.id" @click="removeExpense(newExpense.id); expenseModalOpen=false" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
+                <button v-if="newExpense.id" @click="removeExpense(newExpense.id)" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
                 <button @click="expenseModalOpen=false" class="btn-ios-cancel">{{ t('cancel') }}</button>
             </div>
         </div>
@@ -1259,7 +1259,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
                 </div>
             </div>
             <div class="ios-modal-footer">
-                <button v-if="newShoppingItem.id" @click="removeShoppingItem(newShoppingItem.id); shoppingModalOpen=false" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
+                <button v-if="newShoppingItem.id" @click="removeShoppingItem(newShoppingItem.id)" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
                 <button @click="shoppingModalOpen=false" class="btn-ios-cancel">{{ t('cancel') }}</button>
                 <button @click="saveShoppingItem" class="btn-ios-primary">{{ t('save') }}</button>
             </div>
@@ -1273,7 +1273,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
                 <input v-model="newInfoItem.title" class="ios-input" :placeholder="t('title')">
             </div>
             <div class="ios-modal-footer">
-                <button v-if="newInfoItem.id" @click="removeInfo(newInfoItem.id); infoModalOpen=false" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
+                <button v-if="newInfoItem.id" @click="removeInfo(newInfoItem.id)" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
                 <button @click="infoModalOpen=false" class="btn-ios-cancel">{{ t('cancel') }}</button>
                 <button @click="saveInfoItem" class="btn-ios-primary">{{ t('save') }}</button>
             </div>
@@ -1321,7 +1321,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             </div>
             <div class="ios-modal-footer">
           
-       <button v-if="editingPreNote.id" @click="removePreNote(editingPreNote.id); preNoteModalOpen=false" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
+                <button v-if="editingPreNote.id" @click="removePreNote(editingPreNote.id)" class="btn-ios-cancel text-red-500">{{ t('delete') }}</button>
                 <button @click="preNoteModalOpen=false" class="btn-ios-cancel">{{ t('cancel') }}</button>
                 <button @click="savePreNoteEdit" class="btn-ios-primary">{{ t('save') }}</button>
             </div>
@@ -1402,7 +1402,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260118-13.97');
+        const appVersion = ref('v260118-13.98');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -2141,6 +2141,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
                 }
             }
             preTripNotes.value = preTripNotes.value.filter(x=>x.id!==id);
+            preNoteModalOpen.value = false;
             saveAll();
         }
         function togglePreNoteDone(id) { const n = preTripNotes.value.find(x=>x.id===id); if(n) n.isDone = !n.isDone; saveAll(); }
@@ -2196,7 +2197,8 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
                     try { await supabaseClient.storage.from('uploads').remove([url.split('/uploads/')[1]]); } catch (e) {}
                 }
             }
-            shoppingList.value = shoppingList.value.filter(x=>x.id!==id);
+                        shoppingList.value = shoppingList.value.filter(x=>x.id!==id);
+            shoppingModalOpen.value = false; 
             saveAll();
         }
         function jumpToShoppingItem(id) {
@@ -2232,7 +2234,8 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             if(idx !== -1) expenses.value[idx] = item; else expenses.value.push(item);
             expenseModalOpen.value = false; saveAll();
         }
-        function removeExpense(id) { if(!confirm('Delete expense?')) return; expenses.value = expenses.value.filter(x=>x.id!==id); saveAll(); }
+                function removeExpense(id) { if(!confirm('Delete expense?')) return;
+            expenses.value = expenses.value.filter(x=>x.id!==id); expenseModalOpen.value = false; saveAll(); }
         function goToExpenseList() {
              currentTab.value = '記帳';
              nextTick(() => { const el = document.getElementById('expense-filters'); if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
@@ -2290,7 +2293,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             else { const idx = infoList.value.findIndex(x=>x.id===newInfoItem.id); if(idx!==-1) infoList.value[idx]={...newInfoItem}; } 
             infoModalOpen.value=false; saveAll(); nextTick(() => initSortable('sortable-info', infoList.value));
         }
-        function removeInfo(id) { if(!confirm('Delete info?')) return; infoList.value = infoList.value.filter(x=>x.id!==id); saveAll(); }
+        function removeInfo(id) { if(!confirm('Delete info?')) return; infoList.value = infoList.value.filter(x=>x.id!==id); infoModalOpen.value = false; saveAll(); }
         function openMemberModal() { memberModalOpen.value = true; }
         function addMember() { if(newMemberName.value && !members.value.includes(newMemberName.value)) { members.value.push(newMemberName.value); newMemberName.value = ''; saveAll(); } }
         function removeMember(m) { if(confirm('Remove member?')) { members.value = members.value.filter(x => x !== m); saveAll(); } }
