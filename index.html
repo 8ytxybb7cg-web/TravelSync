@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.96</title>
+  <title>Travel Sync v13.97</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1402,7 +1402,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260118-13.96');
+        const appVersion = ref('v260118-13.97');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -2107,12 +2107,27 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             if(!editingPreNote.name) return;
             const finalImages = await processUploadQueue();
             const itemToSave = { 
-                ...editingPreNote, 
-                images: finalImages,
-                imageURL: finalImages.length > 0 ? finalImages[0] : '', 
-                linkURL: editingPreNote.linkURL || '' 
-            };
-            if(!itemToSave.id) preTripNotes.value.push({ ...itemToSave, id: generateId() });
+  ...editingPreNote, 
+  images: finalImages,
+  imageURL: finalImages.length > 0 ? finalImages[0] : '', 
+  linkURL: editingPreNote.linkURL || '' 
+};
+
+// Fix: detect & delete removed images
+if (itemToSave.id) {
+  const oldItem = preTripNotes.value.find(x => x.id === itemToSave.id);
+  if (oldItem) {
+    const oldImgs = oldItem.images || (oldItem.imageURL ? [oldItem.imageURL] : []);
+    const deleted = oldImgs.filter(
+      url => url && !finalImages.includes(url) && url.includes('/uploads/')
+    );
+    if (deleted.length > 0) {
+      await supabaseClient
+        .storage
+        .from('uploads')
+        .remove(deleted.map(u => u.split('/uploads/')[1]));
+    }
+  }
             else { 
                 const idx = preTripNotes.value.findIndex(x=>x.id===itemToSave.id);
                 if(idx!==-1) preTripNotes.value[idx] = {...itemToSave};
@@ -2156,15 +2171,52 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         async function saveShoppingItem() {
             if(!newShoppingItem.name) return;
             const finalImages = await processUploadQueue();
-            const itemToSave = { ...newShoppingItem, images: finalImages, imageURL: finalImages.length > 0 ? finalImages[0] : '', linkURL: newShoppingItem.linkURL || '' };
-            if(!itemToSave.id) shoppingList.value.push({ ...itemToSave, id: generateId() });
-            else { 
-                const idx = shoppingList.value.findIndex(x=>x.id===itemToSave.id);
-                if(idx!==-1) shoppingList.value[idx] = {...itemToSave};
+            async function saveShoppingItem() {
+    if(!newShoppingItem.name) return;
+
+    const finalImages = await processUploadQueue();
+
+    const itemToSave = {
+        ...newShoppingItem,
+        images: finalImages,
+        imageURL: finalImages.length > 0 ? finalImages[0] : '',
+        linkURL: newShoppingItem.linkURL || ''
+    };
+
+    // 🔧 FIX: detect & delete removed images from Supabase Storage
+    if (itemToSave.id) {
+        const oldItem = shoppingList.value.find(x => x.id === itemToSave.id);
+        if (oldItem) {
+            const oldImgs =
+                oldItem.images ||
+                (oldItem.imageURL ? [oldItem.imageURL] : []);
+
+            const deleted = oldImgs.filter(
+                url =>
+                    url &&
+                    !finalImages.includes(url) &&
+                    url.includes('/uploads/')
+            );
+
+            if (deleted.length > 0) {
+                await supabaseClient
+                    .storage
+                    .from('uploads')
+                    .remove(deleted.map(u => u.split('/uploads/')[1]));
             }
-            shoppingModalOpen.value = false; 
-            saveAll();
         }
+    }
+
+    if(!itemToSave.id) {
+        shoppingList.value.push({ ...itemToSave, id: generateId() });
+    } else {
+        const idx = shoppingList.value.findIndex(x => x.id === itemToSave.id);
+        if(idx !== -1) shoppingList.value[idx] = { ...itemToSave };
+    }
+
+    shoppingModalOpen.value = false;
+    saveAll();
+}
         async function removeShoppingItem(id) { 
             if(!confirm('Delete this item?')) return;
             const item = shoppingList.value.find(x => x.id === id);
