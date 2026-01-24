@@ -2106,28 +2106,24 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         async function savePreNoteEdit() {
             if(!editingPreNote.name) return;
             const finalImages = await processUploadQueue();
-            const itemToSave = { 
-  ...editingPreNote, 
-  images: finalImages,
-  imageURL: finalImages.length > 0 ? finalImages[0] : '', 
-  linkURL: editingPreNote.linkURL || '' 
-};
+                        const itemToSave = { 
+                ...editingPreNote, 
+                images: finalImages,
+                imageURL: finalImages.length > 0 ? finalImages[0] : '', 
+                linkURL: editingPreNote.linkURL || '' 
+            };
 
-// Fix: detect & delete removed images
-if (itemToSave.id) {
-  const oldItem = preTripNotes.value.find(x => x.id === itemToSave.id);
-  if (oldItem) {
-    const oldImgs = oldItem.images || (oldItem.imageURL ? [oldItem.imageURL] : []);
-    const deleted = oldImgs.filter(
-      url => url && !finalImages.includes(url) && url.includes('/uploads/')
-    );
-    if (deleted.length > 0) {
-      await supabaseClient
-        .storage
-        .from('uploads')
-        .remove(deleted.map(u => u.split('/uploads/')[1]));
-    }
-  }
+            // Fix: Detect and delete removed images from storage
+            if (itemToSave.id) {
+                const oldItem = preTripNotes.value.find(x => x.id === itemToSave.id);
+                if (oldItem) {
+                    const oldImgs = oldItem.images || (oldItem.imageURL ? [oldItem.imageURL] : []);
+                    const deleted = oldImgs.filter(url => url && !finalImages.includes(url) && url.includes('/uploads/'));
+                    if (deleted.length > 0) supabaseClient.storage.from('uploads').remove(deleted.map(u => u.split('/uploads/')[1]));
+                }
+            }
+
+            if(!itemToSave.id) preTripNotes.value.push({ ...itemToSave, id: generateId() });
             else { 
                 const idx = preTripNotes.value.findIndex(x=>x.id===itemToSave.id);
                 if(idx!==-1) preTripNotes.value[idx] = {...itemToSave};
@@ -2171,52 +2167,26 @@ if (itemToSave.id) {
         async function saveShoppingItem() {
             if(!newShoppingItem.name) return;
             const finalImages = await processUploadQueue();
-            async function saveShoppingItem() {
-    if(!newShoppingItem.name) return;
-
-    const finalImages = await processUploadQueue();
-
-    const itemToSave = {
-        ...newShoppingItem,
-        images: finalImages,
-        imageURL: finalImages.length > 0 ? finalImages[0] : '',
-        linkURL: newShoppingItem.linkURL || ''
-    };
-
-    // 🔧 FIX: detect & delete removed images from Supabase Storage
-    if (itemToSave.id) {
-        const oldItem = shoppingList.value.find(x => x.id === itemToSave.id);
-        if (oldItem) {
-            const oldImgs =
-                oldItem.images ||
-                (oldItem.imageURL ? [oldItem.imageURL] : []);
-
-            const deleted = oldImgs.filter(
-                url =>
-                    url &&
-                    !finalImages.includes(url) &&
-                    url.includes('/uploads/')
-            );
-
-            if (deleted.length > 0) {
-                await supabaseClient
-                    .storage
-                    .from('uploads')
-                    .remove(deleted.map(u => u.split('/uploads/')[1]));
+                        const itemToSave = { ...newShoppingItem, images: finalImages, imageURL: finalImages.length > 0 ? finalImages[0] : '', linkURL: newShoppingItem.linkURL || '' };
+            
+            // Fix: Detect and delete removed images from storage
+            if (itemToSave.id) {
+                const oldItem = shoppingList.value.find(x => x.id === itemToSave.id);
+                if (oldItem) {
+                    const oldImgs = oldItem.images || (oldItem.imageURL ? [oldItem.imageURL] : []);
+                    const deleted = oldImgs.filter(url => url && !finalImages.includes(url) && url.includes('/uploads/'));
+                    if (deleted.length > 0) supabaseClient.storage.from('uploads').remove(deleted.map(u => u.split('/uploads/')[1]));
+                }
             }
+
+            if(!itemToSave.id) shoppingList.value.push({ ...itemToSave, id: generateId() });
+            else { 
+                const idx = shoppingList.value.findIndex(x=>x.id===itemToSave.id);
+                if(idx!==-1) shoppingList.value[idx] = {...itemToSave};
+            }
+            shoppingModalOpen.value = false; 
+            saveAll();
         }
-    }
-
-    if(!itemToSave.id) {
-        shoppingList.value.push({ ...itemToSave, id: generateId() });
-    } else {
-        const idx = shoppingList.value.findIndex(x => x.id === itemToSave.id);
-        if(idx !== -1) shoppingList.value[idx] = { ...itemToSave };
-    }
-
-    shoppingModalOpen.value = false;
-    saveAll();
-}
         async function removeShoppingItem(id) { 
             if(!confirm('Delete this item?')) return;
             const item = shoppingList.value.find(x => x.id === id);
