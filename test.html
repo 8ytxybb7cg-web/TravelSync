@@ -347,6 +347,16 @@
         </div>
     </div>
 
+        <div v-if="settings.showNavPill !== false" 
+         class="dynamic-nav-pill" 
+         :class="{'pill-breathing': !!settings.navAddress}"
+         @pointerdown="handlePillDown" 
+         @pointerup="handlePillUp" 
+         @pointerleave="handlePillLeave">
+        <i :class="navPillIcon"></i>
+        <span>{{ navPillLabel }}</span>
+    </div>
+
     <div class="bg-fixed-layer">
         <img src="./IMG_1641.jpeg" alt="Background">
         <div class="bg-overlay"></div>
