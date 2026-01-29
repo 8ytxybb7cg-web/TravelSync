@@ -1820,7 +1820,78 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             if(url) window.open(url, '_blank');
         }
 
-        function openExternalLink(url) { if (url) window.open(url, '_blank'); }
+                function openExternalLink(url) { if (url) window.open(url, '_blank');
+}
+
+        // --- Dynamic Navigation Pill Logic ---
+        const navPillModalOpen = ref(false);
+        const newNavAddress = ref('');
+        const pillDisplayMode = ref('weather'); // 'weather' | 'nav'
+        let pillLoopTimer = null;
+        let pillPressTimer = null;
+
+        const navPillLabel = computed(() => {
+            if (!settings.navAddress) return `${weather.temp}°`;
+            if (pillDisplayMode.value === 'weather') return `${weather.temp}°`;
+            return lang.value === 'zh' ? '導航' : 'Navigate';
+        });
+
+        const navPillIcon = computed(() => {
+            if (pillDisplayMode.value === 'weather' || !settings.navAddress) return weatherIconClass.value;
+            return 'ph-fill ph-navigation-arrow';
+        });
+
+        function handlePillDown() {
+            pillPressTimer = setTimeout(() => {
+                pillPressTimer = null;
+                openNavModal();
+            }, 500);
+        }
+
+        function handlePillLeave() {
+            if (pillPressTimer) { clearTimeout(pillPressTimer); pillPressTimer = null; }
+        }
+
+        function handlePillUp() {
+            if (pillPressTimer) {
+                clearTimeout(pillPressTimer);
+                pillPressTimer = null;
+                // Short click action
+                if (settings.navAddress) openMap(settings.navAddress);
+                else openNavModal();
+            }
+        }
+
+        function openNavModal() {
+            newNavAddress.value = settings.navAddress || '';
+            navPillModalOpen.value = true;
+        }
+
+        function saveNavAddress() {
+            settings.navAddress = newNavAddress.value;
+            navPillModalOpen.value = false;
+            saveAll();
+        }
+
+        function startPillLoop() {
+            stopPillLoop();
+            if (!settings.navAddress) {
+                pillDisplayMode.value = 'weather';
+                return;
+            }
+            const cycle = () => {
+                pillDisplayMode.value = 'weather';
+                pillLoopTimer = setTimeout(() => {
+                    pillDisplayMode.value = 'nav';
+                    pillLoopTimer = setTimeout(cycle, 6000);
+                }, 4000);
+            };
+            cycle();
+        }
+
+        function stopPillLoop() { if(pillLoopTimer) clearTimeout(pillLoopTimer); }
+
+        watch(() => settings.navAddress, startPillLoop);
 
         // --- 8. Feature: Upload & Image Viewer ---
         const tempImages = ref([]);
@@ -2500,9 +2571,10 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             runIntroSequence();
             Object.assign(editingSettings, settings);
             initApp().then(() => {
-                introAppReady.value = true;
-                fetchRate(); fetchWeather();
-                autoToggleFlightCard();
+                                introAppReady.value = true;
+                fetchRate(); fetchWeather(); startPillLoop();
+   
+             autoToggleFlightCard();
                 nextTick(() => { 
                     if(currentTab.value === '首頁' && isPreTrip.value) initSortable('sortable-pre-home', preTripNotes.value); 
                     initSortable('sortable-info', infoList.value);
@@ -2556,7 +2628,8 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             tempImages, handleMultiFileUpload, removeTempImage, closeImageViewer,
             handleViewerTouchStart, handleViewerTouchMove, handleViewerTouchEnd,
             dayColors, settlementCanvas, activeCategory, handleChartClick, catColors,
-            isAdminLoggedIn, adminLoginOpen, adminEditOpen, adminCreds, attemptAdminLogin, saveActiveTripId, newTripIdInput, goToPrepInput
+                        isAdminLoggedIn, adminLoginOpen, adminEditOpen, adminCreds, attemptAdminLogin, saveActiveTripId, newTripIdInput, goToPrepInput,
+            navPillModalOpen, newNavAddress, navPillLabel, navPillIcon, handlePillDown, handlePillUp, handlePillLeave, saveNavAddress
         };
       }
     }).mount('#app');
