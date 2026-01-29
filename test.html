@@ -1381,6 +1381,20 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         </div>
     </div>
 
+        <div v-if="navPillModalOpen" class="modal-backdrop" @click.self="navPillModalOpen=false">
+        <div class="ios-modal-container" style="max-width: 320px;">
+            <div class="ios-modal-header">{{ t('setDest') }}</div>
+            <div class="ios-modal-body space-y-3">
+                <p class="text-xs text-gray-400 px-2">{{ t('setDestDesc') }}</p>
+                <input v-model="newNavAddress" class="ios-input font-bold" :placeholder="t('mapAddr')">
+            </div>
+            <div class="ios-modal-footer">
+                <button @click="navPillModalOpen=false" class="btn-ios-cancel">{{ t('cancel') }}</button>
+                <button @click="saveNavAddress" class="btn-ios-primary">{{ t('save') }}</button>
+            </div>
+        </div>
+    </div>
+
     <div v-if="adminEditOpen" class="modal-backdrop">
         <div class="ios-modal-container" style="max-width: 320px;">
             <div class="ios-modal-header">Active Trip ID</div>
