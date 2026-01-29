@@ -1067,10 +1067,20 @@
              </div>
 
              <div class="mt-4">
-                 <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('homeDataCard') }}</label>
+                                  <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('homeDataCard') }}</label>
                  <div class="bg-gray-200/50 p-1 rounded-xl flex">
-                     <button @click="editingSettings.showInfoCard = true" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all" :class="editingSettings.showInfoCard !== false ? 'bg-white shadow-sm text-black' : 'text-gray-500'">{{ t('show') }}</button>
-                     <button @click="editingSettings.showInfoCard = false" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all" :class="editingSettings.showInfoCard === false ? 'bg-white shadow-sm text-black' : 'text-gray-500'">{{ t('hide') }}</button>
+                     <button @click="editingSettings.showInfoCard = true" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all" :class="editingSettings.showInfoCard !== false ?
+'bg-white shadow-sm text-black' : 'text-gray-500'">{{ t('show') }}</button>
+                     <button @click="editingSettings.showInfoCard = false" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all" :class="editingSettings.showInfoCard === false ?
+'bg-white shadow-sm text-black' : 'text-gray-500'">{{ t('hide') }}</button>
+                 </div>
+             </div>
+
+             <div class="mt-4">
+                 <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('showNavPill') }}</label>
+                 <div class="bg-gray-200/50 p-1 rounded-xl flex">
+                     <button @click="editingSettings.showNavPill = true" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all" :class="editingSettings.showNavPill !== false ? 'bg-white shadow-sm text-black' : 'text-gray-500'">{{ t('show') }}</button>
+                     <button @click="editingSettings.showNavPill = false" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all" :class="editingSettings.showNavPill === false ? 'bg-white shadow-sm text-black' : 'text-gray-500'">{{ t('hide') }}</button>
                  </div>
              </div>
 
