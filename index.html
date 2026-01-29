@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v13.98</title>
+  <title>Travel Sync v14.02</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -294,9 +294,43 @@
 
     /* 簡單的圖示彈跳動畫 */
     .icon-bounce { animation: icon-bounce 1s infinite alternate ease-in-out; }
-    @keyframes icon-bounce { from { transform: translateY(0); } to { transform: translateY(-3px); } }
+        @keyframes icon-bounce { from { transform: translateY(0); } to { transform: translateY(-3px);
+} }
+
+    /* Dynamic Navigation Pill */
+        .dynamic-nav-pill {
+        position: fixed;
+        top: calc(env(safe-area-inset-top) + 12px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: #000000;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 24px;
+        z-index: 60;
+        /* Above Header(50), Below Modal(100) */
+        display: flex; align-items: center; justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        font-size: 13px; font-weight: 600;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        cursor: pointer;
+        user-select: none;
+        touch-action: none; /* Prevent browser zooming/scrolling on the pill */
+        width: 90px; /* Fix: Fixed width to prevent resize jitter */
+        box-sizing: border-box;
+    }
+                .dynamic-nav-pill span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            text-align: center;
+    }
+    .pill-breathing { animation: pill-breathe 3s infinite ease-in-out; }
+    @keyframes pill-breathe {
+        0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.25); transform: translateX(-50%) scale(1); }
+        50% { box-shadow: 0 8px 25px rgba(0,0,0,0.4); transform: translateX(-50%) scale(1.03); }
+    }
 
   </style>
+
 </head>
 
 <body>
@@ -318,6 +352,16 @@
         </div>
     </div>
 
+        <div v-if="settings.showNavPill !== false" 
+         class="dynamic-nav-pill" 
+         :class="{'pill-breathing': !!settings.navAddress}"
+         @pointerdown="handlePillDown" 
+         @pointerup="handlePillUp" 
+         @pointerleave="handlePillLeave">
+        <i :class="navPillIcon"></i>
+        <span>{{ navPillLabel }}</span>
+    </div>
+
     <div class="bg-fixed-layer">
         <img src="./IMG_1641.jpeg" alt="Background">
         <div class="bg-overlay"></div>
@@ -326,8 +370,8 @@
         <header @click="scrollToTop" class="cursor-pointer fixed top-0 left-0 right-0 z-50 pt-8 pb-3 px-6 flex justify-between items-end bg-white/10 backdrop-blur-xl border-b border-white/10 transition-all duration-300">
 
       <div>
-        <div class="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-0.5 font-mono flex items-center gap-2">
-           TRAVEL SYNC {{ appVersion }}
+        <div class="text-[10px] font-bold text-gray-500 tracking-wide mb-0.5 font-mono flex items-center gap-2">
+           TRAVEL SYNC
             <div class="flex items-center gap-1.5">
                <div class="w-2 h-2 rounded-full transition-all duration-300"
                     :class="{'bg-[#34C759]': syncState === 'synced', 'bg-[#FFCC00] animate-pulse': syncState === 'syncing', 'bg-[#FF3B30]': syncState === 'error', 'bg-gray-400': syncState === 'offline'}"></div>
@@ -1028,10 +1072,20 @@
              </div>
 
              <div class="mt-4">
-                 <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('homeDataCard') }}</label>
+                                  <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('homeDataCard') }}</label>
                  <div class="bg-gray-200/50 p-1 rounded-xl flex">
-                     <button @click="editingSettings.showInfoCard = true" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all" :class="editingSettings.showInfoCard !== false ? 'bg-white shadow-sm text-black' : 'text-gray-500'">{{ t('show') }}</button>
-                     <button @click="editingSettings.showInfoCard = false" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all" :class="editingSettings.showInfoCard === false ? 'bg-white shadow-sm text-black' : 'text-gray-500'">{{ t('hide') }}</button>
+                     <button @click="editingSettings.showInfoCard = true" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all" :class="editingSettings.showInfoCard !== false ?
+'bg-white shadow-sm text-black' : 'text-gray-500'">{{ t('show') }}</button>
+                     <button @click="editingSettings.showInfoCard = false" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all" :class="editingSettings.showInfoCard === false ?
+'bg-white shadow-sm text-black' : 'text-gray-500'">{{ t('hide') }}</button>
+                 </div>
+             </div>
+
+             <div class="mt-4">
+                 <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('showNavPill') }}</label>
+                 <div class="bg-gray-200/50 p-1 rounded-xl flex">
+                     <button @click="editingSettings.showNavPill = true" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all" :class="editingSettings.showNavPill !== false ? 'bg-white shadow-sm text-black' : 'text-gray-500'">{{ t('show') }}</button>
+                     <button @click="editingSettings.showNavPill = false" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all" :class="editingSettings.showNavPill === false ? 'bg-white shadow-sm text-black' : 'text-gray-500'">{{ t('hide') }}</button>
                  </div>
              </div>
 
@@ -1342,6 +1396,20 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         </div>
     </div>
 
+        <div v-if="navPillModalOpen" class="modal-backdrop" @click.self="navPillModalOpen=false">
+        <div class="ios-modal-container" style="max-width: 320px;">
+            <div class="ios-modal-header">{{ t('setDest') }}</div>
+            <div class="ios-modal-body space-y-3">
+                <p class="text-xs text-gray-400 px-2">{{ t('setDestDesc') }}</p>
+                <input v-model="newNavAddress" class="ios-input font-bold" :placeholder="t('mapAddr')">
+            </div>
+            <div class="ios-modal-footer">
+                <button @click="navPillModalOpen=false" class="btn-ios-cancel">{{ t('cancel') }}</button>
+                <button @click="saveNavAddress" class="btn-ios-primary">{{ t('save') }}</button>
+            </div>
+        </div>
+    </div>
+
     <div v-if="adminEditOpen" class="modal-backdrop">
         <div class="ios-modal-container" style="max-width: 320px;">
             <div class="ios-modal-header">Active Trip ID</div>
@@ -1402,7 +1470,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260118-13.98');
+        const appVersion = ref('v260118-14.02');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1436,8 +1504,8 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         // --- 2. Data Models ---
         const settings = reactive({
             route: 'HKG ✈️ KIX', startDate: '2026-03-22', endDate: '2026-03-27',
-            localCurrency: 'TWD', homeCurrency: 'HKD', weatherLoc: '台北', weatherLocEn: 'Taipei',
-            showInfoCard: true
+                        localCurrency: 'TWD', homeCurrency: 'HKD', weatherLoc: '台北', weatherLocEn: 'Taipei',
+            showInfoCard: true, showNavPill: true, navAddress: ''
         });
         const editingSettings = reactive({});
         const itinerary = reactive([[], [], [], [], [], []]);
@@ -1545,7 +1613,9 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
                 'localCurr': { zh: '當地貨幣', en: 'Local Currency' }, 'homeCurr': { zh: '本國貨幣', en: 'Home Currency' },
                 'weatherLoc': { zh: '天氣地點', en: 'Weather Location' }, 'openMaps': { zh: '打開地圖', en: 'Open Maps' }, 'navigate': { zh: '導航', en: 'Navigate' },
                 'mapApp': { zh: '地圖 App', en: 'Map App' }, 'map_name_Google': { zh: 'Google', en: 'Google' }, 'map_name_Apple': { zh: 'Apple', en: 'Apple' },
-                'map_name_NAVER': { zh: 'NAVER', en: 'NAVER' }, 'map_name_Amap': { zh: '高德', en: 'A-map' }
+                                'map_name_NAVER': { zh: 'NAVER', en: 'NAVER' }, 'map_name_Amap': { zh: '高德', en: 'A-map' },
+                'showNavPill': { zh: '導航動態島', en: 'Nav Pill' }, 'setDest': { zh: '設定目的地', en: 'Set Destination' },
+                'setDestDesc': { zh: '輸入地址後，點擊膠囊即可導航', en: 'Enter address for quick navigation' }
             };
             return dict[k]?.[lang.value] || k;
         };
@@ -1741,9 +1811,9 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             localStorage.setItem('mapApp', app);
         }
 
-        function openMap(addr) {
+                function openMap(addr) {
             if(!addr) return;
-            const app = tempMapApp.value; // Strictly use tempMapApp (Modal Scope)
+            const app = tempMapApp.value || mapApp.value;
             const q = encodeURIComponent(addr);
             let url = '';
             
@@ -1755,7 +1825,78 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             if(url) window.open(url, '_blank');
         }
 
-        function openExternalLink(url) { if (url) window.open(url, '_blank'); }
+                function openExternalLink(url) { if (url) window.open(url, '_blank');
+}
+
+        // --- Dynamic Navigation Pill Logic ---
+        const navPillModalOpen = ref(false);
+        const newNavAddress = ref('');
+        const pillDisplayMode = ref('weather'); // 'weather' | 'nav'
+        let pillLoopTimer = null;
+        let pillPressTimer = null;
+
+        const navPillLabel = computed(() => {
+            if (!settings.navAddress) return `${weather.temp}°`;
+            if (pillDisplayMode.value === 'weather') return `${weather.temp}°`;
+            return lang.value === 'zh' ? '導航' : 'Nav';
+        });
+
+                const navPillIcon = computed(() => {
+            if (pillDisplayMode.value === 'weather' || !settings.navAddress) return weatherIconClass.value;
+            return 'ph-fill ph-navigation-arrow';
+        });
+
+        function handlePillDown() {
+            pillPressTimer = setTimeout(() => {
+                pillPressTimer = null;
+                openNavModal();
+            }, 500);
+        }
+
+        function handlePillLeave() {
+            if (pillPressTimer) { clearTimeout(pillPressTimer); pillPressTimer = null; }
+        }
+
+        function handlePillUp() {
+            if (pillPressTimer) {
+                clearTimeout(pillPressTimer);
+                pillPressTimer = null;
+                // Short click action
+                if (settings.navAddress) openMap(settings.navAddress);
+                else openNavModal();
+            }
+        }
+
+        function openNavModal() {
+            newNavAddress.value = settings.navAddress || '';
+            navPillModalOpen.value = true;
+        }
+
+        function saveNavAddress() {
+            settings.navAddress = newNavAddress.value;
+            navPillModalOpen.value = false;
+            saveAll();
+        }
+
+        function startPillLoop() {
+            stopPillLoop();
+            if (!settings.navAddress) {
+                pillDisplayMode.value = 'weather';
+                return;
+            }
+            const cycle = () => {
+                pillDisplayMode.value = 'weather';
+                pillLoopTimer = setTimeout(() => {
+                    pillDisplayMode.value = 'nav';
+                    pillLoopTimer = setTimeout(cycle, 6000);
+                }, 4000);
+            };
+            cycle();
+        }
+
+        function stopPillLoop() { if(pillLoopTimer) clearTimeout(pillLoopTimer); }
+
+        watch(() => settings.navAddress, startPillLoop);
 
         // --- 8. Feature: Upload & Image Viewer ---
         const tempImages = ref([]);
@@ -2435,9 +2576,10 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             runIntroSequence();
             Object.assign(editingSettings, settings);
             initApp().then(() => {
-                introAppReady.value = true;
-                fetchRate(); fetchWeather();
-                autoToggleFlightCard();
+                                introAppReady.value = true;
+                fetchRate(); fetchWeather(); startPillLoop();
+   
+             autoToggleFlightCard();
                 nextTick(() => { 
                     if(currentTab.value === '首頁' && isPreTrip.value) initSortable('sortable-pre-home', preTripNotes.value); 
                     initSortable('sortable-info', infoList.value);
@@ -2491,7 +2633,8 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             tempImages, handleMultiFileUpload, removeTempImage, closeImageViewer,
             handleViewerTouchStart, handleViewerTouchMove, handleViewerTouchEnd,
             dayColors, settlementCanvas, activeCategory, handleChartClick, catColors,
-            isAdminLoggedIn, adminLoginOpen, adminEditOpen, adminCreds, attemptAdminLogin, saveActiveTripId, newTripIdInput, goToPrepInput
+                        isAdminLoggedIn, adminLoginOpen, adminEditOpen, adminCreds, attemptAdminLogin, saveActiveTripId, newTripIdInput, goToPrepInput,
+            navPillModalOpen, newNavAddress, navPillLabel, navPillIcon, handlePillDown, handlePillUp, handlePillLeave, saveNavAddress
         };
       }
     }).mount('#app');
