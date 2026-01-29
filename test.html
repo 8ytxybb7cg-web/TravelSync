@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v14.01</title>
+  <title>Travel Sync v14.02</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -298,7 +298,7 @@
 } }
 
     /* Dynamic Navigation Pill */
-    .dynamic-nav-pill {
+        .dynamic-nav-pill {
         position: fixed;
         top: calc(env(safe-area-inset-top) + 12px);
         left: 50%;
@@ -307,17 +307,21 @@
         color: white;
         padding: 8px 16px;
         border-radius: 24px;
-        z-index: 60;         /* Above Header(50), Below Modal(100) */
-        display: flex; align-items: center; justify-content: center; gap: 8px;
+        z-index: 60;
+        /* Above Header(50), Below Modal(100) */
+        display: flex; align-items: center; justify-content: center;
+        gap: 8px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.25);
         font-size: 13px; font-weight: 600;
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         cursor: pointer;
         user-select: none;
         touch-action: none; /* Prevent browser zooming/scrolling on the pill */
-        max-width: 160px;
+        width: 132px; /* Fix: Fixed width to prevent resize jitter */
+        box-sizing: border-box;
     }
-        .dynamic-nav-pill span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; text-align: center;
+                .dynamic-nav-pill span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            text-align: center;
     }
     .pill-breathing { animation: pill-breathe 3s infinite ease-in-out; }
     @keyframes pill-breathe {
@@ -1466,7 +1470,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260118-14.01');
+        const appVersion = ref('v260118-14.02');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
