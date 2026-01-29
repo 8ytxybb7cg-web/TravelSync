@@ -317,7 +317,7 @@
         cursor: pointer;
         user-select: none;
         touch-action: none; /* Prevent browser zooming/scrolling on the pill */
-        width: 100px; /* Fix: Fixed width to prevent resize jitter */
+        width: 85px; /* Fix: Fixed width to prevent resize jitter */
         box-sizing: border-box;
     }
                 .dynamic-nav-pill span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -1614,7 +1614,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
                 'weatherLoc': { zh: '天氣地點', en: 'Weather Location' }, 'openMaps': { zh: '打開地圖', en: 'Open Maps' }, 'navigate': { zh: '導航', en: 'Navigate' },
                 'mapApp': { zh: '地圖 App', en: 'Map App' }, 'map_name_Google': { zh: 'Google', en: 'Google' }, 'map_name_Apple': { zh: 'Apple', en: 'Apple' },
                                 'map_name_NAVER': { zh: 'NAVER', en: 'NAVER' }, 'map_name_Amap': { zh: '高德', en: 'A-map' },
-                'showNavPill': { zh: '全域導航膠囊', en: 'Nav Pill' }, 'setDest': { zh: '設定目的地', en: 'Set Destination' },
+                'showNavPill': { zh: '導航動態島', en: 'Nav Pill' }, 'setDest': { zh: '設定目的地', en: 'Set Destination' },
                 'setDestDesc': { zh: '輸入地址後，點擊膠囊即可導航', en: 'Enter address for quick navigation' }
             };
             return dict[k]?.[lang.value] || k;
@@ -1838,7 +1838,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         const navPillLabel = computed(() => {
             if (!settings.navAddress) return `${weather.temp}°`;
             if (pillDisplayMode.value === 'weather') return `${weather.temp}°`;
-            return lang.value === 'zh' ? '導航' : 'Navigate';
+            return lang.value === 'zh' ? '導航' : 'Nav';
         });
 
                 const navPillIcon = computed(() => {
