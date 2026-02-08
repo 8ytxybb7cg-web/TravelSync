@@ -1078,7 +1078,7 @@
              </div>
              <div>
                  <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('routeHeader') }}</label>
-                 <input v-model="editingSettings.route" class="ios-input font-bold" placeholder="HKG ✈️ KIX">
+                 <input v-model="editingSettings.route" class="ios-input font-bold" placeholder="HKG <i class="ph ph-airplane-tilt"></i> TPE">
              </div>
              <div class="grid grid-cols-2 gap-4">
                  <div><label class="block text-xs font-bold text-gray-400 mb-2 uppercase">{{ t('startDate') }}</label><input v-model="editingSettings.startDate" type="date" class="ios-input"></div>
@@ -1693,7 +1693,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
 
         // --- 2. Data Models ---
         const settings = reactive({
-            route: 'HKG ✈️ TPE', startDate: '2026-03-22', endDate: '2026-03-27',
+            route: 'HKG <i class="ph ph-airplane-tilt"></i> TPE', startDate: '2026-03-22', endDate: '2026-03-27',
                         localCurrency: 'TWD', homeCurrency: 'HKD', weatherLoc: '台北', weatherLocEn: 'Taipei',
             showInfoCard: true, showNavPill: true, navAddress: ''
         });
