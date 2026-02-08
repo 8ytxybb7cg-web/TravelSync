@@ -858,11 +858,19 @@
 
                  </div>
                  
-                 <p v-if="sortedItinerary.length === 0" class="py-12 text-center text-gray-400 text-sm">
-                    <i class="ph ph-coffee text-3xl mb-2 block text-gray-300"></i>
-          
-                 今日無行程，享受自由時光
-                 </p>
+                                  <div v-if="sortedItinerary.length === 0" class="py-12 flex flex-col items-center justify-center text-center">
+                    <div v-if="!isAiLoading">
+                        <i class="ph ph-coffee text-3xl mb-2 block text-gray-300"></i>
+                        <p class="text-sm text-gray-400 mb-4">{{ t('noItems') }}</p>
+                        <button v-if="!hasAiGenerated" @click="triggerColdStart" class="ai-capsule !m-0 !text-[#007AFF] !border-[#007AFF]/30">
+                            <i class="ph-fill ph-sparkle ai-sparkle"></i> AI 智能生成行程
+                        </button>
+                    </div>
+                    <div v-else class="flex flex-col items-center gap-3">
+                        <i class="ph-bold ph-spinner animate-spin text-2xl text-[#007AFF]"></i>
+                        <span class="text-xs font-bold text-[#007AFF] animate-pulse">AI 正在規劃中...</span>
+                    </div>
+                 </div>
              </div>
         </div>
 
