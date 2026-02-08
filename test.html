@@ -246,11 +246,13 @@
       transition: all 0.2s; z-index: 5;
     }
     .ai-capsule:active { transform: scale(0.96); background: rgba(255, 255, 255, 0.6); }
-    .ai-capsule::before {
+        .ai-capsule::before {
         content: ''; position: absolute; top: -16px; bottom: -16px; left: 50%; width: 1px;
         background: linear-gradient(to bottom, transparent, rgba(0, 122, 255, 0.3), transparent);
         border-left: 1px dashed rgba(0, 122, 255, 0.4); z-index: -1;
     }
+    .ai-capsule.no-line::before { display: none; }
+
     .ai-suggestion-card {
         background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px) saturate(180%);
         border: 1px solid rgba(255, 255, 255, 0.6); box-shadow: 0 10px 40px rgba(0,0,0,0.1);
@@ -869,7 +871,8 @@
                     <div v-if="!isAiLoading">
                         <i class="ph ph-coffee text-3xl mb-2 block text-gray-300"></i>
                         <p class="text-sm text-gray-400 mb-4">{{ t('noItems') }}</p>
-                        <button v-if="!hasAiGenerated" @click="triggerColdStart" class="ai-capsule !m-0 !text-[#007AFF] !border-[#007AFF]/30">
+                        <button v-if="!hasAiGenerated" @click="triggerColdStart" class="ai-capsule no-line !m-0 !text-[#007AFF] !border-[#007AFF]/30">
+
                             <i class="ph-fill ph-sparkle ai-sparkle"></i> AI 智能生成行程
                         </button>
                     </div>
