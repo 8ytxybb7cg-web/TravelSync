@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v14.02</title>
+  <title>Travel Sync v15.00</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -234,6 +234,30 @@
 }
     .bounce-right { animation: bounce-limit-right 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
 }
+
+    /* AI Feature Styles */
+    .ai-capsule {
+      position: relative; display: flex; align-items: center; gap: 8px;
+      padding: 6px 16px; margin: 16px auto; width: fit-content;
+      border-radius: 50px; border: 1px solid rgba(255, 255, 255, 0.6);
+      background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(12px) saturate(150%);
+      box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15);
+      font-size: 12px; font-weight: 600; color: #007AFF;
+      transition: all 0.2s; z-index: 5;
+    }
+    .ai-capsule:active { transform: scale(0.96); background: rgba(255, 255, 255, 0.6); }
+    .ai-capsule::before {
+        content: ''; position: absolute; top: -16px; bottom: -16px; left: 50%; width: 1px;
+        background: linear-gradient(to bottom, transparent, rgba(0, 122, 255, 0.3), transparent);
+        border-left: 1px dashed rgba(0, 122, 255, 0.4); z-index: -1;
+    }
+    .ai-suggestion-card {
+        background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.6); box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        border-radius: 24px; padding: 20px;
+    }
+    .ai-sparkle { animation: sparkle 2s infinite; }
+    @keyframes sparkle { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.2); } }
 
     /* --- Intro Loading Layer (Sketch Style) --- */
     .intro-layer {
@@ -1470,7 +1494,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260118-14.02');
+        const appVersion = ref('v260208-15.00');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
