@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v15.04</title>
+  <title>Travel Sync v15.05</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1546,7 +1546,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260208-15.04');
+        const appVersion = ref('v260208-15.05');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1577,9 +1577,123 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             return '準備出發～就快得啦';
         });
 
+                // --- AI Feature Logic ---
+        const aiModalOpen = ref(false);
+        const isAiLoading = ref(false);
+        const aiSuggestions = ref([]);
+        const hasAiGenerated = ref(false); // Flag to prevent duplicate cold start
+
+        // Gap Calculation
+        const calculateGap = (t1, t2) => {
+            if(!t1 || !t2) return 0;
+            const toMins = (s) => { const [h,m]=s.split(':').map(Number); return h*60+m; };
+            return toMins(t2) - toMins(t1);
+        };
+
+        // Edge Function Callers
+        const callEdgeFunction = async (funcName, body) => {
+            const { data, error } = await supabaseClient.functions.invoke(funcName, { body });
+            if (error) throw error;
+            return data;
+        };
+
+        // 1. Cold Start Logic
+        const triggerColdStart = async () => {
+            if(!tripId.value) return;
+            isAiLoading.value = true;
+            try {
+                // Determine destination from settings or first flight
+                const dest = settings.weatherLoc || (flights.outbound ? flights.outbound.toCode : 'Japan');
+                const result = await callEdgeFunction('generate-itinerary', { 
+                    destination: dest, 
+                    days: 3 // Default as per requirement
+                });
+                
+                if (Array.isArray(result)) {
+                    // Cold start fills the first few days
+                    result.forEach(item => {
+                         // Default logic from previous turn: handleAddAiSuggestion (inline simplified)
+                         const dayIdx = item.dayIndex || 0;
+                         if(dayIdx < itinerary.length) {
+                             handleAddAiSuggestion(item, dayIdx, itinerary);
+                         }
+                    });
+                    hasAiGenerated.value = true;
+                    saveAll();
+                    showToast('行程已自動生成！');
+                }
+            } catch (e) {
+                console.error(e);
+                showToast('AI 生成失敗，請稍後再試');
+            } finally {
+                isAiLoading.value = false;
+            }
+        };
+
+        // 2. Gap Filling Logic
+        const triggerGapFill = async (prevItem, nextItem) => {
+            isAiLoading.value = true;
+            aiSuggestions.value = [];
+            aiModalOpen.value = true;
+            try {
+                const dest = settings.weatherLoc || 'Local';
+                const suggestions = await callEdgeFunction('suggest-gap-fill', {
+                    destination: dest,
+                    startTime: prevItem.time,
+                    endTime: nextItem.time,
+                    context: {
+                        previous: prevItem.title,
+                        next: nextItem.title,
+                        address: prevItem.address
+                    }
+                });
+                if(Array.isArray(suggestions)) {
+                    aiSuggestions.value = suggestions;
+                }
+            } catch (e) {
+                 showToast('無法取得建議');
+                 aiModalOpen.value = false;
+            } finally {
+                isAiLoading.value = false;
+            }
+        };
+
+        // 3. Insert Payload Handler (From Requirement)
+        const handleAddAiSuggestion = (suggestion, dayIdx, currentItinerary) => {
+             const sanitizeTime = (timeStr) => {
+                if(!timeStr) return "12:00";
+                const [hrs, mins] = timeStr.split(':');
+                return `${hrs.padStart(2, '0')}:${mins.padStart(2, '0')}`;
+             };
+             
+             const newEntry = {
+                ...suggestion,
+                id: `${Date.now()}${Math.random().toString(36).substring(2, 9)}`,
+                time: sanitizeTime(suggestion.time),
+                dayIndex: dayIdx,
+                colorClass: "border-blue-400", // Default AI color
+                is_ai_generated: true
+             };
+
+             if (!currentItinerary[dayIdx]) currentItinerary[dayIdx] = [];
+             currentItinerary[dayIdx].push(newEntry);
+             currentItinerary[dayIdx].sort((a, b) => (a.time||'').localeCompare(b.time||''));
+        };
+
+        const acceptAiSuggestion = (sugg) => {
+            // Suggestion card doesn't have dayIndex, use current selectedDay
+            const dIdx = typeof selectedDay.value === 'number' ? selectedDay.value : 0;
+            handleAddAiSuggestion(sugg, dIdx, itinerary);
+            saveAll();
+            showToast('已加入行程');
+            // Remove from list to avoid double add
+            aiSuggestions.value = aiSuggestions.value.filter(x => x !== sugg);
+            if(aiSuggestions.value.length === 0) aiModalOpen.value = false;
+        };
+
         // --- 2. Data Models ---
         const settings = reactive({
-            route: 'HKG ✈️ KIX', startDate: '2026-03-22', endDate: '2026-03-27',
+            route: 'HKG ✈️ TPE', startDate: '2026-03-22', endDate: '2026-03-27',
                         localCurrency: 'TWD', homeCurrency: 'HKD', weatherLoc: '台北', weatherLocEn: 'Taipei',
             showInfoCard: true, showNavPill: true, navAddress: ''
         });
