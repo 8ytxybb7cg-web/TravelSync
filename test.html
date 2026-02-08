@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v15.02</title>
+  <title>Travel Sync v15.03</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -814,10 +814,17 @@
 
              <div v-else>
                  <div class="relative pl-4 border-l-2 border-gray-300/50 ml-3 space-y-3 py-2">
-                        <div v-for="it in sortedItinerary" :key="it.id"
+                                                <div v-for="(it, idx) in sortedItinerary" :key="it.id"
                           @click="showLocationOnMap(it)"
-     
                           class="relative group cursor-pointer">
+                            <div v-if="idx < sortedItinerary.length - 1 && calculateGap(it.time, sortedItinerary[idx+1].time) >= 240" 
+                                 class="flex justify-center -my-2 relative z-20" @click.stop>
+                                <button @click="triggerGapFill(it, sortedItinerary[idx+1])" class="ai-capsule">
+                                    <i class="ph-fill ph-magic-wand"></i>
+                                    <span>空閒 {{ Math.floor(calculateGap(it.time, sortedItinerary[idx+1].time)/60) }} 小時，查看建議</span>
+                                </button>
+                            </div>
+
                         <div class="absolute -left-[23px] top-1 w-3.5 h-3.5 rounded-full bg-white border-[3px] border-gray-300 group-hover:border-[#007AFF] transition-colors z-10 shadow-sm"></div>
                    
                         <div class="bg-white/70 backdrop-blur-xl rounded-2xl p-3 border border-white/60 shadow-sm transition-all 
@@ -1502,7 +1509,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260208-15.02');
+        const appVersion = ref('v260208-15.03');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
