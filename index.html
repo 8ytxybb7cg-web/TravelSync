@@ -16,7 +16,14 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "@google/generative-ai": "https://esm.run/@google/generative-ai"
+      }
+    }
+  </script>
 
   <style>
             :root {
@@ -1701,7 +1708,14 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
   </div>
 </body>
 <script>
-    const { createApp, ref, reactive, computed, onMounted, nextTick, watch } = Vue;
+            const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
+        import { GoogleGenerativeAI } from "@google/generative-ai";
+
+        const app = createApp({
+            setup() {
+                // 初始化 Gemini (使用你提供的 API Key)
+                const genAI = new GoogleGenerativeAI("AIzaSyAeLsIJMgm9zwo2stpQaUU7w1cmYoybTP0");
+                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     // Supabase Config
     const SUPABASE_URL = 'https://myrhatzdypiwwgmmfbuw.supabase.co';
