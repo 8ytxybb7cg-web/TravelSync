@@ -1755,73 +1755,84 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             const toMins = (s) => { const [h,m]=s.split(':').map(Number); return h*60+m; };
             return toMins(t2) - toMins(t1);
         };
-        // Edge Function Callers (PWA Fix: Added Headers to prevent caching)
-        const callEdgeFunction = async (funcName, body) => {
-            const { data, error } = await supabaseClient.functions.invoke(funcName, { 
-                body,
-                headers: { 'Cache-Control': 'no-store', 'Pragma': 'no-cache' } 
+                // 直接使用 Gemini API (不上線/自用版本)
+        const callGeminiAPI = async (promptText) => {
+            const apiKey = 'AIzaSyAeLsIJMgm9zwo2stpQaUU7w1cmYoybTP0';
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: promptText }] }],
+                    // 強制設定為純 JSON 輸出，避免 AI 加上 markdown 標籤
+                    generationConfig: { response_mime_type: "application/json" }
+                })
             });
-            if (error) throw error;
-            return data;
+            
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error?.message || 'Gemini API Error');
+            
+            return JSON.parse(data.candidates[0].content.parts[0].text);
         };
 
-        // 1. Cold Start Logic
+                // 1. Cold Start Logic
         const triggerColdStart = async () => {
             if(!tripId.value) return;
             isAiLoading.value = true;
             try {
-                // Determine destination from settings or first flight
-                const dest = settings.weatherLoc ||
-                (flights.outbound ? flights.outbound.toCode : 'Japan');
-                const result = await callEdgeFunction('generate-itinerary', { 
-                    destination: dest, 
-                    days: 3 // Default as per requirement
-                });
-                if (Array.isArray(result)) {
-                    // Cold start fills the first few days
-                    result.forEach(item => {
-                         // Default logic from previous turn: handleAddAiSuggestion (inline simplified)
-                         const dayIdx = item.dayIndex || 0;
-                         if(dayIdx < itinerary.length) {
-                             handleAddAiSuggestion(item, dayIdx, itinerary);
-                         }
-                    });
-                    hasAiGenerated.value = true;
-                    saveAll();
-                    showToast('行程已自動生成！');
-                }
-            } catch (e) {
-                console.error(e);
-                showToast('AI 生成失敗，請稍後再試');
+                const dest = settings.weatherLoc || (flights.outbound ? flights.outbound.toCode : 'Japan');
+                
+                // 嚴格定義 JSON 格式以符合原有 itineraryDays.value 嘅結構
+                const prompt = `你是一個專業的旅遊規劃師。請為我規劃前往「${dest}」的 3 天行程。
+必須回傳包含 "itinerary" 屬性的 JSON 物件。
+格式必須為：
+{
+  "itinerary": [
+    [ {"time": "10:00", "title": "景點1", "note": "簡介", "address": "地址"} ],
+    [ {"time": "10:00", "title": "景點2", "note": "簡介", "address": "地址"} ],
+    [ {"time": "10:00", "title": "景點3", "note": "簡介", "address": "地址"} ]
+  ]
+}
+外層是3個陣列，分別代表第1至3天的行程。`;
+
+                const result = await callGeminiAPI(prompt);
+                
+                itineraryDays.value = result.itinerary;
+                hasAiGenerated.value = true;
+            } catch (error) {
+                console.error('AI Error (Cold Start):', error);
+                alert('Failed to generate itinerary. Please try again.');
             } finally {
                 isAiLoading.value = false;
             }
         };
 
-        // 2. Gap Filling Logic
+                // 2. Gap Filling Logic
         const triggerGapFill = async (prevItem, nextItem) => {
             isAiLoading.value = true;
             aiSuggestions.value = [];
             aiModalOpen.value = true;
             try {
-                const dest = settings.weatherLoc ||
-                'Local';
-                const suggestions = await callEdgeFunction('suggest-gap-fill', {
-                    destination: dest,
-                    startTime: prevItem.time,
-                    endTime: nextItem.time,
-                    context: {
-                        previous: prevItem.title,
-                        next: nextItem.title,
-                        address: prevItem.address
-                    }
-                });
-                if(Array.isArray(suggestions)) {
-                    aiSuggestions.value = suggestions;
-                }
-            } catch (e) {
-                 showToast('無法取得建議');
-                 aiModalOpen.value = false;
+                const dest = settings.weatherLoc || 'Local';
+                const gapMins = calculateGap(prevItem.time, nextItem.time);
+                const gapHours = gapMins > 0 ? (gapMins / 60).toFixed(1) : 1;
+                
+                const prompt = `我目前在「${dest}」旅遊。
+上一個行程是 ${prevItem.time} 的「${prevItem.title}」(位置：${prevItem.address || '不詳'})。
+下一個行程是 ${nextItem.time} 的「${nextItem.title}」。
+中間約有 ${gapHours} 小時空檔。請推薦 1-2 個順路可安排的活動或景點。
+必須直接回傳 JSON 陣列，格式如下：
+[
+  {"time": "建議時間HH:MM", "title": "景點或活動名稱", "note": "推薦原因", "address": "地址"}
+]`;
+
+                const suggestions = await callGeminiAPI(prompt);
+                aiSuggestions.value = suggestions;
+                hasAiGenerated.value = true;
+            } catch (error) {
+                console.error('AI Error (Gap Fill):', error);
+                aiSuggestions.value = [{ title: '系統繁忙', note: '無法取得 AI 建議，請稍後再試。', time: '' }];
             } finally {
                 isAiLoading.value = false;
             }
