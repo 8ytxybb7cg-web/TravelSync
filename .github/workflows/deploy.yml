@@ -1,0 +1,24 @@
+name: Deploy Website
+
+on:
+  push:
+    branches:
+      - main  # 當你 push 到 main branch 時觸發
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Replace API Key
+        run: |
+          # 呢行會將 index.html 入面嘅 placeholder 換成真正的 Secret
+          sed -i 's/YOUR_API_KEY_PLACEHOLDER/${{ secrets.MY_API_KEY }}/g' index.html
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./  # 如果你嘅 HTML 喺根目錄就寫 ./
