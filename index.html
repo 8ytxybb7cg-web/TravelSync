@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v16.02</title>
+  <title>Travel Sync v16.03</title>
 
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#F2F2F7">
@@ -1711,7 +1711,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260412-16.02');
+        const appVersion = ref('v260412-16.03');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1756,8 +1756,8 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             return toMins(t2) - toMins(t1);
         };
                 // 直接使用 Gemini API (不上線/自用版本)
-        const callGeminiAPI = async (promptText) => {
-            const apiKey = 'AIzaSyAeLsIJMgm9zwo2stpQaUU7w1cmYoybTP0';
+                const callGeminiAPI = async (promptText) => {
+            const apiKey = 'AIzaSyAeLsIJMgm9zwo2stpQaUU7w1cmYoybTP0'; // 若您有更換，請確認此處為有效的 API Key
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
             
             const response = await fetch(url, {
@@ -1765,15 +1765,22 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: promptText }] }],
-                    // 強制設定為純 JSON 輸出，避免 AI 加上 markdown 標籤
-                    generationConfig: { response_mime_type: "application/json" }
+                    // 修正 1：Gemini API 正確的參數名稱為駝峰式 responseMimeType
+                    generationConfig: { responseMimeType: "application/json" }
                 })
             });
-            
             const data = await response.json();
             if (!response.ok) throw new Error(data.error?.message || 'Gemini API Error');
             
-            return JSON.parse(data.candidates[0].content.parts[0].text);
+            if (!data.candidates || data.candidates.length === 0) {
+                throw new Error('AI 回傳空值，可能觸發了安全過濾');
+            }
+
+            let text = data.candidates[0].content.parts[0].text;
+            // 修正 2：雙重保險，手動移除 AI 有時仍會強制加上的 Markdown JSON 語法區塊，避免 JSON.parse 崩潰
+            text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+            
+            return JSON.parse(text);
         };
 
                 // 1. Cold Start Logic
@@ -1796,10 +1803,18 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
 }
 外層是3個陣列，分別代表第1至3天的行程。`;
 
-                const result = await callGeminiAPI(prompt);
+                                const result = await callGeminiAPI(prompt);
                 
-                itineraryDays.value = result.itinerary;
+                // 修正 3：對應正確的 reactive 狀態變數 `itinerary`，處理未定義舊變數 itineraryDays 導致的錯誤
+                if (result && result.itinerary) {
+                    result.itinerary.forEach((dayItems, index) => {
+                        if (index < itinerary.length) {
+                            itinerary[index] = dayItems;
+                        }
+                    });
+                }
                 hasAiGenerated.value = true;
+                saveAll(); // 確保資料即時儲存
             } catch (error) {
                 console.error('AI Error (Cold Start):', error);
                 alert('Failed to generate itinerary. Please try again.');
