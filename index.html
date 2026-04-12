@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync</title>
+  <title>Travel Sync Dev v16.01</title>
 
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#F2F2F7">
@@ -1302,7 +1302,6 @@ top-1 w-3.5 h-3.5 rounded-full bg-white border-[3px] border-gray-300 group-hover
                             <option :value="settings.localCurrency">{{ settings.localCurrency }}</option>
                             <option :value="settings.homeCurrency">{{ settings.homeCurrency }}</option>
                             <option value="USD">USD</option>
-                            <option value="JPY">JPY</option>
                          </select>
                          <i class="ph ph-caret-down absolute right-2 top-[18px] text-gray-400 text-xs pointer-events-none"></i>
                      </div>
@@ -1712,7 +1711,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260213-15.03');
+        const appVersion = ref('v260213-16.01');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -2139,7 +2138,17 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
 
         const expenseFilter = ref('all');
         const filteredExpenses = computed(() => {
-            let list = [...expenses.value].sort((a,b) => new Date(b.date) - new Date(a.date));
+            let list = [...expenses.value].sort((a,b) => {
+                if (a.order_index !== undefined && b.order_index !== undefined) return a.order_index - b.order_index;
+                if (a.order_index === undefined && b.order_index !== undefined) return -1;
+                if (a.order_index !== undefined && b.order_index === undefined) return 1;
+
+                const dateA = new Date(a.date).getTime();
+                const dateB = new Date(b.date).getTime();
+                if (dateA !== dateB) return dateB - dateA;
+
+                return (b.created_at || 0) - (a.created_at || 0);
+            });
             if(expenseFilter.value === 'credit') return list.filter(e => e.paymentMethod === 'credit_card');
             if(expenseFilter.value === 'cash') return list.filter(e => e.paymentMethod === 'cash');
             return list;
@@ -2980,7 +2989,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         async function fetchCloud() {
             if (!tripId.value) return;
             try {
-                const { data } = await supabaseClient.from('private_trip_data').select('content').eq('id', tripId.value).single();
+                const { data } = await supabaseClient.from('trip_data').select('content').eq('id', tripId.value).single();
                 if(data?.content) {
                     const c = data.content;
                     if(c.settings) { Object.assign(settings, c.settings); Object.assign(editingSettings, settings); }
@@ -3001,7 +3010,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             if(!isInitialized.value || !tripId.value) return;
             syncState.value = 'saving';
             const payload = { settings, itinerary, preTripNotes: preTripNotes.value, shoppingList: shoppingList.value, expenses: expenses.value, infoList: infoList.value, flights, members: members.value };
-            await supabaseClient.from('private_trip_data').upsert({ id: tripId.value, content: payload, updated_at: new Date() });
+            await supabaseClient.from('trip_data').upsert({ id: tripId.value, content: payload, updated_at: new Date() });
             setTimeout(() => syncState.value = 'synced', 800);
         }
 
@@ -3047,6 +3056,25 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
         function initSortable(id, list) {
             const el = document.getElementById(id);
             if(el) Sortable.create(el, { handle:'.drag-handle', animation:150, onEnd:(evt)=>{ const item = list.splice(evt.oldIndex, 1)[0]; list.splice(evt.newIndex, 0, item); saveAll(); }});
+        }
+
+        function initExpenseSortable() {
+            const el = document.getElementById('sortable-expenses');
+            if(el) Sortable.create(el, {
+                handle: '.drag-handle',
+                animation: 150,
+                onEnd: () => {
+                    const itemEls = Array.from(el.children);
+                    itemEls.forEach((child, index) => {
+                        const id = child.getAttribute('data-id');
+                        if (id) {
+                            const exp = expenses.value.find(x => x.id === id);
+                            if (exp) exp.order_index = index;
+                        }
+                    });
+                    saveAll();
+                }
+            });
         }
 
         function runIntroSequence() {
@@ -3112,8 +3140,10 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
                     initSortable('sortable-info', infoList.value);
                     if(currentTab.value === '購物') initSortable('sortable-shop-page', shoppingList.value);
                     if(currentTab.value === '行程' && selectedDay.value === 'prep') initSortable('sortable-pre-notes', preTripNotes.value);
+                    if(currentTab.value === '記帳' && expenseFilter.value === 'all') initExpenseSortable();
                 });
             });
+
             setInterval(fetchRate, 600000);
         });
 
@@ -3124,14 +3154,14 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             if(val === '行程' && selectedDay.value === 'prep') nextTick(() => initSortable('sortable-pre-notes', preTripNotes.value));
             if(val === '首頁' && isPreTrip.value) nextTick(() => initSortable('sortable-pre-home', preTripNotes.value));
             if(val === '購物') nextTick(() => initSortable('sortable-shop-page', shoppingList.value));
+            if(val === '記帳' && expenseFilter.value === 'all') nextTick(initExpenseSortable);
         });
-
         watch(selectedDay, (val) => {
             if(val === 'prep' && currentTab.value === '行程') nextTick(() => initSortable('sortable-pre-notes', preTripNotes.value));
         });
-
         watch(expenseFilter, (val) => {
             if (val === 'settlement') { activeCategory.value = null; nextTick(drawSettlementChart); }
+            else if (val === 'all' && currentTab.value === '記帳') { nextTick(initExpenseSortable); }
         });
         watch([expenses, lang], () => { if (expenseFilter.value === 'settlement') nextTick(drawSettlementChart); }, { deep: true });
         
