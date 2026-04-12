@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="robots" content="noindex, nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <title>Travel Sync v16.01</title>
+  <title>Travel Sync v16.02</title>
 
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#F2F2F7">
@@ -1711,7 +1711,7 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
     createApp({
       setup() {
         // --- 1. App State & Core Config ---
-        const appVersion = ref('v260213-16.01');
+        const appVersion = ref('v260213-16.02');
         const currentTab = ref('首頁');
         const syncState = ref('loading');
         const isInitialized = ref(false);
@@ -1755,28 +1755,47 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             const toMins = (s) => { const [h,m]=s.split(':').map(Number); return h*60+m; };
             return toMins(t2) - toMins(t1);
         };
-        // Edge Function Callers (PWA Fix: Added Headers to prevent caching)
-        const callEdgeFunction = async (funcName, body) => {
-            const { data, error } = await supabaseClient.functions.invoke(funcName, { 
-                body,
-                headers: { 'Cache-Control': 'no-store', 'Pragma': 'no-cache' } 
+                // 直接使用 Gemini API (只限不上線/自用測試)
+        const GEMINI_API_KEY = 'AIzaSyAeLsIJMgm9zwo2stpQaUU7w1cmYoybTP0';
+        
+        const callGeminiAPI = async (promptText) => {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: promptText }] }],
+                    // 強制 Gemini 穩定輸出 JSON 格式
+                    generationConfig: { response_mime_type: "application/json" }
+                })
             });
-            if (error) throw error;
-            return data;
+            
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error?.message || 'Gemini API Error');
+            
+            // 擷取並解析回傳的 JSON 內容
+            const text = data.candidates[0].content.parts[0].text;
+            return JSON.parse(text);
         };
 
-        // 1. Cold Start Logic
+                // 1. Cold Start Logic
         const triggerColdStart = async () => {
             if(!tripId.value) return;
             isAiLoading.value = true;
             try {
-                // Determine destination from settings or first flight
-                const dest = settings.weatherLoc ||
-                (flights.outbound ? flights.outbound.toCode : 'Japan');
-                const result = await callEdgeFunction('generate-itinerary', { 
-                    destination: dest, 
-                    days: 3 // Default as per requirement
-                });
+                const dest = settings.weatherLoc || (flights.outbound ? flights.outbound.toCode : 'Japan');
+                
+                // 設定俾 Gemini 嘅 Prompt
+                const prompt = `你是一個專業的旅遊規劃師。請為我規劃前往「${dest}」的 3 天行程。
+請直接以 JSON Array 格式回覆。JSON 陣列內的每個物件必須包含以下 key：
+- "dayIndex": 數字 (0, 1 或 2，代表第幾天)
+- "time": 字串 (格式為 "HH:MM")
+- "title": 字串 (景點或活動名稱)
+- "note": 字串 (簡短說明)
+- "address": 字串 (詳細地址或區域)`;
+
+                // 呼叫 Gemini API
+                const result = await callGeminiAPI(prompt);
                 if (Array.isArray(result)) {
                     // Cold start fills the first few days
                     result.forEach(item => {
@@ -1798,24 +1817,29 @@ focus:bg-white border border-transparent focus:border-blue-200 transition-all" p
             }
         };
 
-        // 2. Gap Filling Logic
+                // 2. Gap Filling Logic
         const triggerGapFill = async (prevItem, nextItem) => {
             isAiLoading.value = true;
             aiSuggestions.value = [];
             aiModalOpen.value = true;
             try {
-                const dest = settings.weatherLoc ||
-                'Local';
-                const suggestions = await callEdgeFunction('suggest-gap-fill', {
-                    destination: dest,
-                    startTime: prevItem.time,
-                    endTime: nextItem.time,
-                    context: {
-                        previous: prevItem.title,
-                        next: nextItem.title,
-                        address: prevItem.address
-                    }
-                });
+                const dest = settings.weatherLoc || 'Local';
+                const gapHours = Math.floor(calculateGap(prevItem.time, nextItem.time) / 60);
+                
+                // 設定俾 Gemini 填補空檔嘅 Prompt
+                const prompt = `我目前在「${dest}」旅遊，行程中出現了空檔。
+上一個行程是 ${prevItem.time} 的「${prevItem.title}」(位置：${prevItem.address || '不詳'})。
+下一個行程是 ${nextItem.time} 的「${nextItem.title}」。
+中間大約有 ${gapHours} 小時的空檔。
+請為我建議 1 到 2 個適合在這段時間安排的順路行程。
+請直接以 JSON Array 格式回覆。JSON 陣列內的每個物件必須包含以下 key：
+- "time": 字串 (建議前往的時間，格式 "HH:MM")
+- "title": 字串 (景點或活動名稱)
+- "note": 字串 (簡短建議原因)
+- "address": 字串 (詳細地址)`;
+
+                // 呼叫 Gemini API
+                const suggestions = await callGeminiAPI(prompt);
                 if(Array.isArray(suggestions)) {
                     aiSuggestions.value = suggestions;
                 }
